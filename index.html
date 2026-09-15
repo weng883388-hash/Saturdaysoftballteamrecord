@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>振宇五金壘球記分</title>
 <meta name="description" content="手機版壘球攻守即時記錄：打線編排、即時攻守紀錄、換人與戰績統計">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -446,6 +446,8 @@
     #app:has(.stats-body), #app:has(.attendance-body){ max-width:820px; }
   }
 </style>
+
+
 </head>
 <body>
 <div id="app"></div>
@@ -2634,13 +2636,14 @@ function renderGame(){
         <div style="display:flex;gap:8px;">
           <div class="field" style="flex:1;margin-bottom:0;">
             <label>對方背號</label>
-            <div class="static-val">${g.oppNumber?('#'+esc(g.oppNumber)):'未填'}</div>
+            <input type="text" inputmode="numeric" maxlength="3" value="${esc(g.oppNumber)}" placeholder="未填" onchange="editOppBatterNumber(this.value)">
           </div>
           <div class="field" style="flex:2;margin-bottom:0;">
             <label>備註／綽號（選填）</label>
             <input type="text" value="${esc(g.oppNote)}" onchange="AppState.game.oppNote=this.value;persistGame();render();">
           </div>
         </div>
+        <div class="hint" style="margin:0;">開賽前沒填到的背號可以直接在這裡補上；代打上場時也可以直接改成新打者的背號，右側的歷史落點分析會立刻換成該背號的資料。</div>
       </div>
       ${renderResultGrid('opp')}`;
     actionZone = oppDefenseZoneCardHTML(g);
@@ -2706,6 +2709,23 @@ function pickOppBatter(idx){
   g.oppBattingIdx = idx;
   g.oppNumber = b.number;
   g.oppNote = b.name;
+  persistGame(); render();
+}
+// Manually correct/replace the opponent batter currently at the plate
+// (e.g. the slot's number was never filled in before the game, or a
+// pinch hitter just came in). Also writes the new number back into the
+// current oppRoster slot so it "sticks" the next time this batting
+// position comes around, not just for this one at-bat; the historical
+// zone-analysis card (oppDefenseZoneCardHTML) keys off g.oppNumber and
+// re-renders automatically, so no extra wiring is needed for it to pick
+// up the new player's data right away.
+function editOppBatterNumber(value){
+  const g = AppState.game;
+  g.oppNumber = (value||"").trim();
+  if (g.oppRoster && g.oppRoster.length){
+    const idx = (g.oppBattingIdx||0) % g.oppRoster.length;
+    if (g.oppRoster[idx]) g.oppRoster[idx].number = g.oppNumber;
+  }
   persistGame(); render();
 }
 function renderResultGrid(side){
@@ -3655,5 +3675,6 @@ if (window.claude && window.claude.hot){
   boot();
 }
 </script>
+
 </body>
 </html>
