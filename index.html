@@ -462,8 +462,8 @@
      使用 Claude 內建的 db（不受影響）。
 ================================================================ -->
 <script>
-  window.SUPABASE_URL = "https://jxoapjcghyigbeuiwvfu.supabase.co";
-  window.SUPABASE_ANON_KEY = "sb_publishable_IcLR-Z62kgkXpcId8hs2MQ_AyuUWWJt";
+  window.SUPABASE_URL = "https://jxoapjcghyigbeuiwvfu.supabase.co";       // 例如 https://xxxxxxxx.supabase.co
+  window.SUPABASE_ANON_KEY = "sb_publishable_IcLR-Z62kgkXpcId8hs2MQ_AyuUWWJt";  // Supabase 專案 Settings → API → anon public key
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
@@ -930,7 +930,7 @@ const Store = (function(){
    When still running inside a Claude Artifact, this is skipped
    entirely (Claude's own admin/viewer sharing rules still apply).
 --------------------------------------------------------------------- */
-const ADMIN_PASSWORD = "qazwsxedc";
+const ADMIN_PASSWORD = "qazwsxedc"; // <-- 部署前務必修改
 let adminUnlocked = false;
 function requireAdmin(actionLabel){
   if (!(window.SUPABASE_URL && window.SUPABASE_ANON_KEY)) return true; // Claude Artifact: unaffected
@@ -976,6 +976,7 @@ const AppState = {
     showBox:false,
     showEndGame:false,
     showEditGame:false,
+    showLeagueGamesModal:false,
     confirmMsg:null,
     alertMsg:null,
     endWinPitcher:null,
@@ -1581,25 +1582,45 @@ function selectTeamRecordCompetition(v){ AppState.ui.teamRecordCompetitionFilter
 // Add/remove a manually-entered result for a game between two OTHER
 // teams (see computeFullStandings) — admin-gated the same way editing an
 // already-final game is, since a wrong entry here silently distorts the
-// standings for everyone, not just the person who typed it.
-async function addLeagueGame(){
-  if (!requireAdmin("登錄其他球隊賽果")) return;
+// standings for everyone, not just the person who typed it. Entry happens
+// in a dedicated modal (renderLeagueGamesModal) that takes up to
+// LEAGUE_GAME_BATCH_ROWS rows at once, so a weekly catch-up of several
+// other-team results doesn't need one open-close round trip per game.
+const LEAGUE_GAME_BATCH_ROWS = 7;
+function openLeagueGamesModal(){ AppState.ui.showLeagueGamesModal = true; render(); }
+function closeLeagueGamesModal(){ AppState.ui.showLeagueGamesModal = false; render(); }
+async function saveLeagueGamesBatch(){
   const $ = id => document.getElementById(id);
-  const teamA = ($('lgTeamA').value||"").trim();
-  const teamB = ($('lgTeamB').value||"").trim();
-  const scoreA = $('lgScoreA').value;
-  const scoreB = $('lgScoreB').value;
-  const date = $('lgDate').value || "";
-  if (!teamA || !teamB || scoreA==="" || scoreB===""){ appAlert("請填寫兩隊隊名與比分。"); return; }
+  const rows = [];
+  for (let i=0; i<LEAGUE_GAME_BATCH_ROWS; i++){
+    const teamA = ($(`lgTeamA${i}`).value||"").trim();
+    const teamB = ($(`lgTeamB${i}`).value||"").trim();
+    const scoreA = $(`lgScoreA${i}`).value;
+    const scoreB = $(`lgScoreB${i}`).value;
+    const date = $(`lgDate${i}`).value || "";
+    // A fully blank row just means "not using this slot" — skip it rather
+    // than treating it as an error, since the form always shows all 7.
+    if (!teamA && !teamB && scoreA==="" && scoreB==="") continue;
+    if (!teamA || !teamB || scoreA==="" || scoreB===""){
+      appAlert(`第 ${i+1} 筆資料不完整，請確認兩隊隊名與比分都已填寫（或整列留白略過這一筆）。`);
+      return;
+    }
+    rows.push({ teamA, teamB, scoreA: Number(scoreA)||0, scoreB: Number(scoreB)||0, date });
+  }
+  if (!rows.length){ appAlert("尚未填寫任何一筆對戰紀錄。"); return; }
+  if (!requireAdmin("登錄其他球隊賽果")) return;
   const seasonFilter = AppState.ui.teamRecordSeasonFilter || SEASON_DEFAULT;
   const competitionFilter = AppState.ui.teamRecordCompetitionFilter || "全部";
   const season = seasonFilter==="生涯" ? SEASON_DEFAULT : seasonFilter;
   const competitionType = competitionFilter==="全部" ? "聯賽" : competitionFilter;
-  AppState.leagueGames.push({
-    id: "lg_"+uid(), season, competitionType, date,
-    teamA, teamB, scoreA: Number(scoreA)||0, scoreB: Number(scoreB)||0,
+  rows.forEach(r=>{
+    AppState.leagueGames.push({
+      id: "lg_"+uid(), season, competitionType, date: r.date,
+      teamA: r.teamA, teamB: r.teamB, scoreA: r.scoreA, scoreB: r.scoreB,
+    });
   });
   await Store.saveLeagueGames(AppState.leagueGames);
+  AppState.ui.showLeagueGamesModal = false;
   render();
 }
 async function deleteLeagueGame(id){
@@ -1608,6 +1629,38 @@ async function deleteLeagueGame(id){
   AppState.leagueGames = AppState.leagueGames.filter(lg=>lg.id!==id);
   await Store.saveLeagueGames(AppState.leagueGames);
   render();
+}
+function renderLeagueGamesModal(){
+  const teamRecordSeason = AppState.ui.teamRecordSeasonFilter || SEASON_DEFAULT;
+  const teamRecordCompetition = AppState.ui.teamRecordCompetitionFilter || "全部";
+  const leagueGamesInScope = filterLeagueGames(AppState.leagueGames, teamRecordSeason, teamRecordCompetition);
+  const scopeSeason = esc(teamRecordSeason==='生涯' ? SEASON_DEFAULT : teamRecordSeason);
+  const scopeCompetition = esc(teamRecordCompetition==='全部' ? '聯賽' : teamRecordCompetition);
+  const rowInputs = Array.from({length: LEAGUE_GAME_BATCH_ROWS}, (_, i) => `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-bottom:6px;">
+      <div class="field" style="margin-bottom:0;flex:1;min-width:88px;">${i===0?'<label>球隊A</label>':''}<input type="text" id="lgTeamA${i}"></div>
+      <div class="field" style="margin-bottom:0;width:52px;">${i===0?'<label>比分</label>':''}<input type="text" inputmode="numeric" id="lgScoreA${i}"></div>
+      <div class="field" style="margin-bottom:0;width:52px;">${i===0?'<label>比分</label>':''}<input type="text" inputmode="numeric" id="lgScoreB${i}"></div>
+      <div class="field" style="margin-bottom:0;flex:1;min-width:88px;">${i===0?'<label>球隊B</label>':''}<input type="text" id="lgTeamB${i}"></div>
+      <div class="field" style="margin-bottom:0;min-width:110px;">${i===0?'<label>日期（選填）</label>':''}<input type="date" id="lgDate${i}"></div>
+    </div>`).join("");
+  return `<div class="modal-back" onclick="if(event.target===this){closeLeagueGamesModal();}">
+    <div class="modal">
+      <button class="close-x" onclick="closeLeagueGamesModal();">×</button>
+      <h3>登錄其他球隊比分</h3>
+      <div class="hint" style="margin-bottom:10px;">會歸入目前的「${scopeSeason}／${scopeCompetition}」篩選；可先關閉本視窗切換上方球季/賽事類別後再開啟。</div>
+      ${leagueGamesInScope.length ? `
+      <div class="stat-table-wrap" style="margin-bottom:12px;">
+        <table class="stats">
+          <thead><tr><th>球隊A</th><th>比分</th><th>球隊B</th><th>日期</th><th></th></tr></thead>
+          <tbody>${leagueGamesInScope.map(lg=>`<tr><td class="name">${esc(lg.teamA)}</td><td class="tabular">${lg.scoreA}:${lg.scoreB}</td><td class="name">${esc(lg.teamB)}</td><td class="tabular">${esc(lg.date||'-')}</td><td><button class="row-x" onclick="deleteLeagueGame('${lg.id}')">✕</button></td></tr>`).join("")}</tbody>
+        </table>
+      </div>` : ``}
+      <h3 style="font-size:15px;margin-top:8px;">新增（最多 ${LEAGUE_GAME_BATCH_ROWS} 筆，留空整列可略過）</h3>
+      <div style="max-height:320px;overflow-y:auto;margin-top:4px;">${rowInputs}</div>
+      <button class="btn primary block" style="margin-top:10px;" onclick="saveLeagueGamesBatch()">儲存</button>
+    </div>
+  </div>`;
 }
 function selectStatsPitcher(v){ AppState.ui.statsPitcherFilter=v; render(); }
 function selectStatsPitcherSeason(v){ AppState.ui.statsPitcherSeasonFilter=v; render(); }
@@ -2062,23 +2115,7 @@ function renderStatsView(){
         </table>
       </div>` : `<div class="hint">這個篩選條件下，用本 App 記錄且已完賽的比賽目前還沒有資料。</div>`}
 
-      <div class="k" style="font-size:13px;color:var(--ink-dim);margin:14px 0 4px;">其他球隊之間的比賽結果登錄</div>
-      <div class="hint" style="margin-top:0;">用來算出上方的完整排名——本隊自己的比賽不用在這裡輸入（App 記錄的比賽會自動算），只需要登錄「跟本隊無關」的其他球隊對戰比分。新增的紀錄會歸入目前選擇的「${esc(teamRecordSeason==='生涯'?SEASON_DEFAULT:teamRecordSeason)}」球季／「${esc(teamRecordCompetition==='全部'?'聯賽':teamRecordCompetition)}」賽事類別（可在上方切換球季/賽事類別後再新增）。</div>
-      ${leagueGamesInScope.length ? `
-      <div class="stat-table-wrap" style="margin-bottom:6px;">
-        <table class="stats">
-          <thead><tr><th>球隊A</th><th>比分</th><th>球隊B</th><th>日期</th><th></th></tr></thead>
-          <tbody>${leagueGamesInScope.map(lg=>`<tr><td class="name">${esc(lg.teamA)}</td><td class="tabular">${lg.scoreA}:${lg.scoreB}</td><td class="name">${esc(lg.teamB)}</td><td class="tabular">${esc(lg.date||'-')}</td><td><button class="row-x" onclick="deleteLeagueGame('${lg.id}')">✕</button></td></tr>`).join("")}</tbody>
-        </table>
-      </div>` : ``}
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-bottom:4px;">
-        <div class="field" style="margin-bottom:0;flex:1;min-width:88px;"><label>球隊A</label><input type="text" id="lgTeamA"></div>
-        <div class="field" style="margin-bottom:0;width:52px;"><label>比分</label><input type="text" inputmode="numeric" id="lgScoreA"></div>
-        <div class="field" style="margin-bottom:0;width:52px;"><label>比分</label><input type="text" inputmode="numeric" id="lgScoreB"></div>
-        <div class="field" style="margin-bottom:0;flex:1;min-width:88px;"><label>球隊B</label><input type="text" id="lgTeamB"></div>
-        <div class="field" style="margin-bottom:0;min-width:120px;"><label>日期（選填）</label><input type="date" id="lgDate"></div>
-        <button class="btn primary" style="flex:none;" onclick="addLeagueGame()">新增</button>
-      </div>
+      <button class="btn ghost block" style="margin-top:12px;" onclick="openLeagueGamesModal()">📋 登錄其他球隊比分${leagueGamesInScope.length ? `（已登錄 ${leagueGamesInScope.length} 筆）` : ''}</button>
 
       ${showImportedStandings ? `
       <div class="k" style="font-size:13px;color:var(--ink-dim);margin:14px 0 4px;">「${esc(teamRecordSeason)}」球季積分表（球隊試算表／紙本紀錄匯入，僅聯賽全組排名參考）</div>
@@ -2219,6 +2256,7 @@ function renderStatsView(){
       </div>
     </div>
     </div>
+    ${AppState.ui.showLeagueGamesModal ? renderLeagueGamesModal() : ""}
   `;
 }
 
