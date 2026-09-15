@@ -1783,6 +1783,10 @@ function deriveWTLFromResults(results){
   return out;
 }
 
+// Standard CPBL-style win rate: 勝／(勝+敗) — ties are excluded from both
+// numerator and denominator (a tie neither helps nor hurts win rate).
+function winRate(w,l){ return (w+l)>0 ? w/(w+l) : 0; }
+
 // A single stat line for one of our players, by jersey number — falls
 // back to an all-zero row (using the roster name) so the career-query
 // selector can include players who haven't recorded a single play yet
@@ -1904,10 +1908,13 @@ function renderStatsView(){
       </div>
 
       <div class="k" style="font-size:13px;color:var(--ink-dim);margin:10px 0 4px;">用本 App 記錄的比賽（${liveTeamRecord.W+liveTeamRecord.T+liveTeamRecord.L} 場已完賽）</div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;margin-bottom:8px;">
-        <div class="tabular" style="font-size:22px;font-weight:800;">${liveTeamRecord.W}勝${liveTeamRecord.T}和${liveTeamRecord.L}敗</div>
-        <div style="color:var(--ink-dim);font-size:13px;">積分 ${liveTeamRecord.points}（勝2分／和1分／敗0分）· 得失分 ${liveTeamRecord.RF}:${liveTeamRecord.RA}</div>
+      <div class="stat-table-wrap" style="margin-bottom:4px;">
+        <table class="stats">
+          <thead><tr><th>球隊</th><th>出賽數</th><th>勝-和-敗</th><th>勝率</th><th>積分</th></tr></thead>
+          <tbody><tr style="font-weight:800;color:var(--accent);"><td class="name">振宇五金</td><td class="tabular">${liveTeamRecord.W+liveTeamRecord.T+liveTeamRecord.L}</td><td class="tabular">${liveTeamRecord.W}-${liveTeamRecord.T}-${liveTeamRecord.L}</td><td class="tabular">${fmt3(winRate(liveTeamRecord.W,liveTeamRecord.L))}</td><td class="tabular">${liveTeamRecord.points}</td></tr></tbody>
+        </table>
       </div>
+      <div style="color:var(--ink-dim);font-size:12px;margin-bottom:8px;">得失分 ${liveTeamRecord.RF}:${liveTeamRecord.RA}</div>
       ${liveTeamRecord.byOpponent.length ? `
       <div class="stat-table-wrap" style="margin-bottom:4px;">
         <table class="stats">
@@ -1920,12 +1927,15 @@ function renderStatsView(){
       <div class="k" style="font-size:13px;color:var(--ink-dim);margin:14px 0 4px;">「${esc(teamRecordSeason)}」球季積分表（球隊試算表／紙本紀錄匯入，僅聯賽全組排名參考）</div>
       <div class="stat-table-wrap">
         <table class="stats">
-          <thead><tr><th>排名</th><th>球隊</th><th>積分</th><th>戰績</th></tr></thead>
+          <thead><tr><th>排名</th><th>球隊</th><th>出賽數</th><th>勝-和-敗</th><th>勝率</th><th>積分</th></tr></thead>
           <tbody>${teamRecordImportedRows.slice().sort((a,b)=>(a.rank||99)-(b.rank||99)).map(r=>{
+            const hasResults = r.results && r.results.length;
             const wtl = deriveWTLFromResults(r.results);
-            const wtlLabel = (r.results&&r.results.length) ? `${wtl.W}勝${wtl.T}和${wtl.L}敗` : '（無逐場資料）';
+            const games = hasResults ? (wtl.W+wtl.T+wtl.L) : (SEASON_GAME_COUNTS[teamRecordSeason]||null);
+            const wtlLabel = hasResults ? `${wtl.W}-${wtl.T}-${wtl.L}` : '（無逐場資料）';
+            const rateLabel = hasResults ? fmt3(winRate(wtl.W,wtl.L)) : '-';
             const hl = r.team==='振宇五金' ? 'style="font-weight:800;color:var(--accent);"' : '';
-            return `<tr ${hl}><td class="tabular">${r.rank!=null?'#'+r.rank:'-'}</td><td class="name">${esc(r.team)}</td><td class="tabular">${r.points!=null?r.points:'-'}</td><td class="tabular">${esc(wtlLabel)}</td></tr>`;
+            return `<tr ${hl}><td class="tabular">${r.rank!=null?'#'+r.rank:'-'}</td><td class="name">${esc(r.team)}</td><td class="tabular">${games!=null?games:'-'}</td><td class="tabular">${esc(wtlLabel)}</td><td class="tabular">${rateLabel}</td><td class="tabular">${r.points!=null?r.points:'-'}</td></tr>`;
           }).join("")}</tbody>
         </table>
       </div>` : ``}
