@@ -748,6 +748,42 @@ const Store = (function(){
       return [];
     },
 
+    // Manually-entered results for games this app never recorded — i.e.
+    // games BETWEEN TWO OTHER TEAMS (this app only lets a scorer record
+    // 振宇五金's own at-bats, so it has no way to generate a game between
+    // two opponents on its own). This is what lets 球隊戰績 show a real
+    // multi-team standings table for the CURRENT season going forward,
+    // instead of only being possible for a past season via a one-time
+    // spreadsheet/photo import (see TEAM_RECORD_IMPORT_KEYS) — see
+    // computeFullStandings() below. Single doc "team/leaguegames", one
+    // flat array covering every season (each row tags its own `season`/
+    // `competitionType`, same pattern as a game document) so there's no
+    // per-season doc management; editable going forward via 球隊戰績's
+    // 「其他球隊比分」card (admin-gated, same as editing a final game).
+    async getLeagueGames(){
+      await ready;
+      if (db){
+        try{
+          const snap = await db.doc("team/leaguegames").get();
+          if (snap.exists) return clone(snap.data().rows || []);
+        }catch(e){}
+      }
+      try{
+        const raw = localStorage.getItem("sb_leaguegames_v1");
+        if (raw) return JSON.parse(raw);
+      }catch(e){}
+      return [];
+    },
+    async saveLeagueGames(rows){
+      await ready;
+      if (db){
+        try{ await db.doc("team/leaguegames").set({rows, updatedAt:Date.now()}); return {ok:true}; }
+        catch(e){ return {ok:false, code:e&&e.code}; }
+      }
+      try{ localStorage.setItem("sb_leaguegames_v1", JSON.stringify(rows)); }catch(e){}
+      return {ok:true};
+    },
+
     // Finished games live in "games_final", which is write-locked to
     // admins (see the db rules declared on publish) — anyone can still
     // read them for stats, but only an admin can edit or delete one.
@@ -923,6 +959,10 @@ const AppState = {
   // keyed the same way as seasonStats but for win/tie/loss records rather
   // than per-player batting.
   seasonTeamRecords:{ teamrecord_2025:[], teamrecord_2025_2026:[] },
+  // Manually-entered results for games between two OTHER teams (not
+  // involving 振宇五金) — see Store.getLeagueGames(). Each row:
+  // {id, season, competitionType, date, teamA, teamB, scoreA, scoreB}.
+  leagueGames:[],
   ui:{                  // transient UI state, not persisted
     pendingResult:null, // {code, side:'us'|'opp'}
     pendingScorers:[],
@@ -1532,10 +1572,43 @@ async function goStats(){
   AppState.seasonStats.season_2025_2026 = await Store.getSeasonStats("season_2025_2026");
   AppState.seasonTeamRecords.teamrecord_2025 = await Store.getTeamRecord("teamrecord_2025");
   AppState.seasonTeamRecords.teamrecord_2025_2026 = await Store.getTeamRecord("teamrecord_2025_2026");
+  AppState.leagueGames = await Store.getLeagueGames();
   AppState.view="stats"; render();
 }
 function selectTeamRecordSeason(v){ AppState.ui.teamRecordSeasonFilter=v; render(); }
 function selectTeamRecordCompetition(v){ AppState.ui.teamRecordCompetitionFilter=v; render(); }
+
+// Add/remove a manually-entered result for a game between two OTHER
+// teams (see computeFullStandings) — admin-gated the same way editing an
+// already-final game is, since a wrong entry here silently distorts the
+// standings for everyone, not just the person who typed it.
+async function addLeagueGame(){
+  if (!requireAdmin("登錄其他球隊賽果")) return;
+  const $ = id => document.getElementById(id);
+  const teamA = ($('lgTeamA').value||"").trim();
+  const teamB = ($('lgTeamB').value||"").trim();
+  const scoreA = $('lgScoreA').value;
+  const scoreB = $('lgScoreB').value;
+  const date = $('lgDate').value || "";
+  if (!teamA || !teamB || scoreA==="" || scoreB===""){ appAlert("請填寫兩隊隊名與比分。"); return; }
+  const seasonFilter = AppState.ui.teamRecordSeasonFilter || SEASON_DEFAULT;
+  const competitionFilter = AppState.ui.teamRecordCompetitionFilter || "全部";
+  const season = seasonFilter==="生涯" ? SEASON_DEFAULT : seasonFilter;
+  const competitionType = competitionFilter==="全部" ? "聯賽" : competitionFilter;
+  AppState.leagueGames.push({
+    id: "lg_"+uid(), season, competitionType, date,
+    teamA, teamB, scoreA: Number(scoreA)||0, scoreB: Number(scoreB)||0,
+  });
+  await Store.saveLeagueGames(AppState.leagueGames);
+  render();
+}
+async function deleteLeagueGame(id){
+  if (!requireAdmin("刪除其他球隊賽果")) return;
+  if (!(await appConfirm("刪除這筆比分紀錄？"))) return;
+  AppState.leagueGames = AppState.leagueGames.filter(lg=>lg.id!==id);
+  await Store.saveLeagueGames(AppState.leagueGames);
+  render();
+}
 function selectStatsPitcher(v){ AppState.ui.statsPitcherFilter=v; render(); }
 function selectStatsPitcherSeason(v){ AppState.ui.statsPitcherSeasonFilter=v; render(); }
 function selectStatsOpponent(v){
@@ -1787,6 +1860,57 @@ function deriveWTLFromResults(results){
 // numerator and denominator (a tie neither helps nor hurts win rate).
 function winRate(w,l){ return (w+l)>0 ? w/(w+l) : 0; }
 
+// Manually-entered results for games between two OTHER teams (see
+// Store.getLeagueGames/saveLeagueGames) — filtered by season/賽事類別
+// the same way teamRecordFromGames filters this app's own games, so the
+// two sources combine consistently under one 球季／賽事類別 selection.
+function filterLeagueGames(leagueGames, seasonKey, competitionFilter){
+  return (leagueGames||[]).filter(lg=>{
+    if (seasonKey && seasonKey!=="生涯" && (lg.season||SEASON_DEFAULT)!==seasonKey) return false;
+    if (competitionFilter && competitionFilter!=="全部" && (lg.competitionType||"聯賽")!==competitionFilter) return false;
+    return true;
+  });
+}
+
+// A real multi-team standings table for the CURRENT (or any future)
+// season, built by combining what this app already knows exactly (our
+// own games, via teamRecordFromGames) with manually-entered results for
+// games between two other teams. Returns null when there are no
+// other-team entries in scope — the caller then falls back to just
+// showing our own team's single-row record (see renderStatsView), since
+// a real standings table needs to know how every OTHER team did too, not
+// only how they did against us. Unlike the one-time imported historical
+// standings (TEAM_RECORD_IMPORT_KEYS), this recomputes from scratch every
+// time — new results (ours or manually-entered) instantly reflect in an
+// up-to-date ranking, with no separate "re-import" step ever needed.
+function computeFullStandings(games, leagueGames, seasonKey, competitionFilter){
+  const otherGames = filterLeagueGames(leagueGames, seasonKey, competitionFilter);
+  if (!otherGames.length) return null;
+  const live = teamRecordFromGames(games, seasonKey, competitionFilter);
+  const table = {};
+  function ensure(team){
+    if (!table[team]) table[team] = {team, W:0, T:0, L:0, RF:0, RA:0};
+    return table[team];
+  }
+  const us = ensure("振宇五金");
+  us.W=live.W; us.T=live.T; us.L=live.L; us.RF=live.RF; us.RA=live.RA;
+  // Each opponent's record vs us is just our own byOpponent row, mirrored.
+  live.byOpponent.forEach(o=>{
+    const opp = ensure(o.team);
+    opp.W+=o.L; opp.T+=o.T; opp.L+=o.W; opp.RF+=o.RA; opp.RA+=o.RF;
+  });
+  otherGames.forEach(lg=>{
+    const a = ensure(lg.teamA), b = ensure(lg.teamB);
+    const sa = Number(lg.scoreA)||0, sb = Number(lg.scoreB)||0;
+    a.RF+=sa; a.RA+=sb; b.RF+=sb; b.RA+=sa;
+    if (sa>sb){ a.W++; b.L++; } else if (sa<sb){ a.L++; b.W++; } else { a.T++; b.T++; }
+  });
+  const rows = Object.values(table).map(r=>({...r, games:r.W+r.T+r.L, points:r.W*2+r.T, rate:winRate(r.W,r.L)}));
+  rows.sort((x,y)=> y.points-x.points || y.rate-x.rate || x.team.localeCompare(y.team,"zh-Hant"));
+  rows.forEach((r,i)=>{ r.rank=i+1; });
+  return rows;
+}
+
 // A single stat line for one of our players, by jersey number — falls
 // back to an all-zero row (using the roster name) so the career-query
 // selector can include players who haven't recorded a single play yet
@@ -1851,6 +1975,11 @@ function renderStatsView(){
   // "生涯"（全部賽季）sums every season together — teamRecordFromGames
   // already treats seasonKey==="生涯" as "no season filter" (see below).
   const liveTeamRecord = teamRecordFromGames(games, teamRecordSeason, teamRecordCompetition);
+  // Real multi-team standings (see computeFullStandings) once the user has
+  // logged at least one other-team result for this 球季／賽事類別 scope;
+  // otherwise null and the card falls back to a single 振宇五金 row.
+  const leagueGamesInScope = filterLeagueGames(AppState.leagueGames, teamRecordSeason, teamRecordCompetition);
+  const fullStandings = computeFullStandings(games, AppState.leagueGames, teamRecordSeason, teamRecordCompetition);
   const teamRecordImportKey = TEAM_RECORD_IMPORT_KEYS[teamRecordSeason];
   const teamRecordImportedRows = teamRecordImportKey ? (AppState.seasonTeamRecords[teamRecordImportKey]||[]) : [];
   const showImportedStandings = teamRecordImportedRows.length && (teamRecordCompetition==='全部'||teamRecordCompetition==='聯賽');
@@ -1907,14 +2036,24 @@ function renderStatsView(){
         </div>
       </div>
 
-      <div class="k" style="font-size:13px;color:var(--ink-dim);margin:10px 0 4px;">用本 App 記錄的比賽（${liveTeamRecord.W+liveTeamRecord.T+liveTeamRecord.L} 場已完賽）</div>
+      <div class="k" style="font-size:13px;color:var(--ink-dim);margin:10px 0 4px;">${fullStandings ? `完整排名（本隊比賽用 App 自動計算＋其他球隊比分用下方登錄）` : `用本 App 記錄的比賽（${liveTeamRecord.W+liveTeamRecord.T+liveTeamRecord.L} 場已完賽）`}</div>
+      ${fullStandings ? `
+      <div class="stat-table-wrap" style="margin-bottom:4px;">
+        <table class="stats">
+          <thead><tr><th>排名</th><th>球隊</th><th>出賽數</th><th>勝-和-敗</th><th>勝率</th><th>積分</th></tr></thead>
+          <tbody>${fullStandings.map(r=>{
+            const hl = r.team==='振宇五金' ? 'style="font-weight:800;color:var(--accent);"' : '';
+            return `<tr ${hl}><td class="tabular">#${r.rank}</td><td class="name">${esc(r.team)}</td><td class="tabular">${r.games}</td><td class="tabular">${r.W}-${r.T}-${r.L}</td><td class="tabular">${fmt3(r.rate)}</td><td class="tabular">${r.points}</td></tr>`;
+          }).join("")}</tbody>
+        </table>
+      </div>` : `
       <div class="stat-table-wrap" style="margin-bottom:4px;">
         <table class="stats">
           <thead><tr><th>球隊</th><th>出賽數</th><th>勝-和-敗</th><th>勝率</th><th>積分</th></tr></thead>
           <tbody><tr style="font-weight:800;color:var(--accent);"><td class="name">振宇五金</td><td class="tabular">${liveTeamRecord.W+liveTeamRecord.T+liveTeamRecord.L}</td><td class="tabular">${liveTeamRecord.W}-${liveTeamRecord.T}-${liveTeamRecord.L}</td><td class="tabular">${fmt3(winRate(liveTeamRecord.W,liveTeamRecord.L))}</td><td class="tabular">${liveTeamRecord.points}</td></tr></tbody>
         </table>
-      </div>
-      <div style="color:var(--ink-dim);font-size:12px;margin-bottom:8px;">得失分 ${liveTeamRecord.RF}:${liveTeamRecord.RA}</div>
+      </div>`}
+      <div style="color:var(--ink-dim);font-size:12px;margin-bottom:8px;">振宇五金得失分 ${liveTeamRecord.RF}:${liveTeamRecord.RA}</div>
       ${liveTeamRecord.byOpponent.length ? `
       <div class="stat-table-wrap" style="margin-bottom:4px;">
         <table class="stats">
@@ -1922,6 +2061,24 @@ function renderStatsView(){
           <tbody>${liveTeamRecord.byOpponent.map(r=>`<tr><td class="name">${esc(r.team)}</td><td class="tabular">${r.W}</td><td class="tabular">${r.T}</td><td class="tabular">${r.L}</td><td class="tabular">${r.RF}</td><td class="tabular">${r.RA}</td></tr>`).join("")}</tbody>
         </table>
       </div>` : `<div class="hint">這個篩選條件下，用本 App 記錄且已完賽的比賽目前還沒有資料。</div>`}
+
+      <div class="k" style="font-size:13px;color:var(--ink-dim);margin:14px 0 4px;">其他球隊之間的比賽結果登錄</div>
+      <div class="hint" style="margin-top:0;">用來算出上方的完整排名——本隊自己的比賽不用在這裡輸入（App 記錄的比賽會自動算），只需要登錄「跟本隊無關」的其他球隊對戰比分。新增的紀錄會歸入目前選擇的「${esc(teamRecordSeason==='生涯'?SEASON_DEFAULT:teamRecordSeason)}」球季／「${esc(teamRecordCompetition==='全部'?'聯賽':teamRecordCompetition)}」賽事類別（可在上方切換球季/賽事類別後再新增）。</div>
+      ${leagueGamesInScope.length ? `
+      <div class="stat-table-wrap" style="margin-bottom:6px;">
+        <table class="stats">
+          <thead><tr><th>球隊A</th><th>比分</th><th>球隊B</th><th>日期</th><th></th></tr></thead>
+          <tbody>${leagueGamesInScope.map(lg=>`<tr><td class="name">${esc(lg.teamA)}</td><td class="tabular">${lg.scoreA}:${lg.scoreB}</td><td class="name">${esc(lg.teamB)}</td><td class="tabular">${esc(lg.date||'-')}</td><td><button class="row-x" onclick="deleteLeagueGame('${lg.id}')">✕</button></td></tr>`).join("")}</tbody>
+        </table>
+      </div>` : ``}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-bottom:4px;">
+        <div class="field" style="margin-bottom:0;flex:1;min-width:88px;"><label>球隊A</label><input type="text" id="lgTeamA"></div>
+        <div class="field" style="margin-bottom:0;width:52px;"><label>比分</label><input type="text" inputmode="numeric" id="lgScoreA"></div>
+        <div class="field" style="margin-bottom:0;width:52px;"><label>比分</label><input type="text" inputmode="numeric" id="lgScoreB"></div>
+        <div class="field" style="margin-bottom:0;flex:1;min-width:88px;"><label>球隊B</label><input type="text" id="lgTeamB"></div>
+        <div class="field" style="margin-bottom:0;min-width:120px;"><label>日期（選填）</label><input type="date" id="lgDate"></div>
+        <button class="btn primary" style="flex:none;" onclick="addLeagueGame()">新增</button>
+      </div>
 
       ${showImportedStandings ? `
       <div class="k" style="font-size:13px;color:var(--ink-dim);margin:14px 0 4px;">「${esc(teamRecordSeason)}」球季積分表（球隊試算表／紙本紀錄匯入，僅聯賽全組排名參考）</div>
