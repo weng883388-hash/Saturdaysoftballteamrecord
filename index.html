@@ -1,0 +1,3659 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>振宇五金壘球記分</title>
+<meta name="description" content="手機版壘球攻守即時記錄：打線編排、即時攻守紀錄、換人與戰績統計">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+  /* ============ Design tokens ============ */
+  :root{
+    --bg:#f3f0e6;
+    --surface:#ffffff;
+    --surface-2:#eae4d3;
+    --ink:#1c2620;
+    --ink-dim:#5c6a5e;
+    --line:#dcd5bf;
+    --accent:#2f6b3a;
+    --accent-ink:#ffffff;
+    --accent-soft:#e2ecdf;
+    --clay:#b8622f;
+    --clay-soft:#f4e2cf;
+    --danger:#a23b2f;
+    --danger-soft:#f6dfd8;
+    --gold:#9c7a1a;
+    --gold-soft:#f2e6c2;
+    --shadow:0 1px 2px rgba(28,38,32,.06), 0 6px 16px rgba(28,38,32,.08);
+    --font-display:'Teko','Arial Narrow',sans-serif;
+    --font-body:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10140f;
+      --surface:#1a2118;
+      --surface-2:#212a1d;
+      --ink:#e8ece5;
+      --ink-dim:#9db09f;
+      --line:#2c3527;
+      --accent:#63b573;
+      --accent-ink:#08130a;
+      --accent-soft:#1f2f20;
+      --clay:#e3935d;
+      --clay-soft:#3a2717;
+      --danger:#e2705d;
+      --danger-soft:#3a201b;
+      --gold:#e0c15f;
+      --gold-soft:#332c14;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10140f;
+    --surface:#1a2118;
+    --surface-2:#212a1d;
+    --ink:#e8ece5;
+    --ink-dim:#9db09f;
+    --line:#2c3527;
+    --accent:#63b573;
+    --accent-ink:#08130a;
+    --accent-soft:#1f2f20;
+    --clay:#e3935d;
+    --clay-soft:#3a2717;
+    --danger:#e2705d;
+    --danger-soft:#3a201b;
+    --gold:#e0c15f;
+    --gold-soft:#332c14;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:calc(84px + env(safe-area-inset-bottom));
+    min-height:100vh;
+  }
+  h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:.02em;text-wrap:balance;margin:0;}
+  button{font-family:inherit;}
+  .tabular{font-variant-numeric:tabular-nums;}
+  ::selection{background:var(--accent-soft);}
+
+  #app{max-width:560px;margin:0 auto;padding:0 14px;}
+
+  /* ============ Top bar ============ */
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    box-shadow:var(--shadow);
+  }
+  .topbar-inner{max-width:560px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px;}
+  .brand{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;}
+  .brand-mark{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--accent);white-space:nowrap;}
+  .brand-sub{font-size:11px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .icon-btn{
+    border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:10px;padding:7px 10px;font-size:13px;font-weight:500;
+    display:flex;align-items:center;gap:5px;cursor:pointer;
+  }
+  .icon-btn:active{background:var(--surface-2);}
+
+  /* ============ Scoreboard ============ */
+  .scoreboard{
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    margin-top:12px;box-shadow:var(--shadow);overflow:hidden;
+  }
+  .sb-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 4px;flex-wrap:wrap;gap:4px;}
+  .sb-status{display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .sb-half{
+    font-family:var(--font-display);font-size:20px;font-weight:600;
+    color:var(--ink);white-space:nowrap;
+  }
+  .sb-inplay{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:700;letter-spacing:.03em;white-space:nowrap;}
+  .sb-inplay.off{background:var(--accent-soft);color:var(--accent);}
+  .sb-inplay.def{background:var(--clay-soft);color:var(--clay);}
+  .outs-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-dim);white-space:nowrap;}
+  .out-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--danger);}
+  .out-dot.on{background:var(--danger);}
+
+  .linescore{width:100%;border-collapse:collapse;font-size:12px;}
+  .linescore th,.linescore td{
+    padding:5px 3px;text-align:center;border-bottom:1px solid var(--line);
+    min-width:20px;
+  }
+  .linescore th{color:var(--ink-dim);font-weight:500;font-size:10.5px;}
+  .linescore td.team{text-align:left;font-weight:700;padding-left:10px;white-space:nowrap;}
+  .linescore tr.batting td.team{color:var(--accent);}
+  .linescore td.tot{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink);}
+  .linescore-wrap{overflow-x:auto;padding:0 6px 10px;}
+
+  /* ============ Batter card ============ */
+  .batter-card{
+    text-align:center;margin-top:14px;
+  }
+  .batter-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+    font-family:var(--font-display);font-size:18px;font-weight:700;margin-right:8px;vertical-align:middle;
+  }
+  .batter-num.def{background:var(--clay);}
+  .batter-name{font-size:16px;font-weight:700;vertical-align:middle;}
+  .batter-meta{font-size:11.5px;color:var(--ink-dim);margin-top:2px;}
+
+  /* ============ Sections / cards ============ */
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    padding:14px;margin-top:12px;box-shadow:var(--shadow);
+  }
+  .card h2{font-size:20px;margin-bottom:2px;}
+  .card .hint{font-size:12px;color:var(--ink-dim);margin-bottom:10px;}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+  .field label{font-size:12.5px;font-weight:700;color:var(--ink-dim);}
+  .field input[type=text],.field input[type=number],.field input[type=date],.field select{
+    font-family:inherit;font-size:16px;padding:10px 12px;border-radius:10px;
+    border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;
+  }
+  /* Read-only stand-in for an input — used where a value is derived
+     automatically (e.g. current opponent batting-order number) rather
+     than freely typed, so it shouldn't invite editing. */
+  .field .static-val{
+    font-family:inherit;font-size:16px;padding:10px 12px;border-radius:10px;
+    border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+    width:100%;box-sizing:border-box;font-weight:700;text-align:center;
+  }
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .seg button{flex:1;padding:10px;border:none;background:var(--surface);color:var(--ink);font-size:14px;font-weight:700;cursor:pointer;}
+  .seg button.active{background:var(--accent);color:var(--accent-ink);}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    padding:11px 16px;border-radius:11px;border:1px solid var(--line);
+    background:var(--surface);color:var(--ink);font-size:14.5px;font-weight:700;cursor:pointer;
+  }
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+  .btn.ghost{background:transparent;}
+  .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff;}
+  .btn.block{width:100%;}
+  .btn:active{filter:brightness(.94);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+  /* lineup rows */
+  .lineup-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .lineup-row:last-child{border-bottom:none;}
+  .order-num{width:22px;text-align:center;font-family:var(--font-display);font-size:17px;color:var(--ink-dim);flex:none;}
+  .num-input{width:70px;flex:none;text-align:center;font-weight:700;font-size:16px;}
+  .name-out{flex:1;min-width:0;font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .name-out.empty{color:var(--ink-dim);font-weight:400;}
+  /* Lineup-builder-only name display: fixed to roughly fit 3 Chinese
+     characters (this row already shows the jersey number, so the name
+     doesn't need to claim the rest of the row's width like name-out
+     does elsewhere, e.g. the substitution modal's longer "#88 王小明 (投)"
+     rows, which still use .name-out and must NOT be narrowed). */
+  .lb-name{flex:0 0 50px;width:50px;font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-name.empty{color:var(--ink-dim);font-weight:400;}
+  .pos-select{width:78px;flex:none;font-size:16px;padding:8px 2px;}
+  .row-x{flex:none;width:28px;height:28px;border:none;background:none;color:var(--ink-dim);font-size:18px;cursor:pointer;}
+  .bench-chip{
+    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+    background:var(--surface-2);font-size:13px;font-weight:600;margin:3px 4px 3px 0;
+  }
+  .bench-chip button{border:none;background:none;color:var(--ink-dim);cursor:pointer;font-size:14px;padding:0;}
+  .roster-hint{font-size:11.5px;color:var(--ink-dim);}
+
+  /* result grid */
+  .result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .rbtn{
+    padding:14px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
+    font-family:var(--font-display);font-size:19px;font-weight:700;color:var(--ink);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:1px;
+  }
+  .rbtn small{font-family:var(--font-body);font-size:10px;font-weight:500;color:var(--ink-dim);}
+  .rbtn.hit{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+  .rbtn.hit small{color:var(--accent);opacity:.8;}
+  .rbtn.out{background:var(--danger-soft);border-color:var(--danger);color:var(--danger);}
+  .rbtn.out small{color:var(--danger);opacity:.8;}
+  .rbtn.reach{background:var(--clay-soft);border-color:var(--clay);color:var(--clay);}
+  .rbtn.reach small{color:var(--clay);opacity:.8;}
+  .rbtn:active{filter:brightness(.95);}
+
+  /* play confirm panel */
+  .confirm-box{border:1px dashed var(--line);border-radius:12px;padding:12px;margin-top:12px;background:var(--surface-2);}
+  .confirm-title{font-weight:700;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .stepper{display:flex;align-items:center;gap:10px;}
+  .stepper button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:16px;font-weight:700;cursor:pointer;}
+  .stepper .val{min-width:22px;text-align:center;font-family:var(--font-display);font-size:18px;font-weight:700;}
+  .kv-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;}
+  .kv-row .k{font-size:13px;color:var(--ink-dim);}
+  .chip-picker{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:600;cursor:pointer;}
+  .chip.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+
+  .field-svg{width:100%;max-width:320px;display:block;margin:0 auto;}
+  .field-svg-lg{max-width:480px;}
+  .fz-wedge{fill:var(--surface-2);stroke:var(--bg);stroke-width:2;cursor:pointer;}
+  .fz-wedge.out{fill:var(--accent-soft);}
+  .fz-wedge.in{fill:var(--clay-soft);}
+  .fz-wedge.sel{fill:var(--clay);}
+  .fz-label{font-family:var(--font-body);font-size:11px;font-weight:700;fill:var(--ink-dim);pointer-events:none;}
+  .fz-label.sel{fill:#fff;}
+  .fz-foul{stroke:var(--ink-dim);stroke-width:1;opacity:.45;}
+  .fz-fence{fill:none;stroke:var(--ink-dim);stroke-width:1.5;opacity:.55;}
+  .fz-home{fill:var(--ink);}
+
+  /* end-half banner */
+  .half-banner{
+    background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold);
+    border-radius:12px;padding:14px;text-align:center;margin-top:12px;
+  }
+  .half-banner .btn{margin-top:8px;background:var(--gold);border-color:var(--gold);color:#241c05;}
+
+  /* box score table */
+  .stat-table-wrap{overflow-x:auto;}
+  table.stats{border-collapse:collapse;width:100%;font-size:12.5px;}
+  table.stats th,table.stats td{padding:6px 7px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;}
+  table.stats th{color:var(--ink-dim);font-weight:600;font-size:11px;}
+  table.stats td.name{text-align:left;font-weight:700;}
+  table.stats.sortable thead th{cursor:pointer;user-select:none;}
+  table.stats.sortable thead th:hover{color:var(--accent);}
+  table.stats.sortable thead th.sort-asc::after{content:" ▲";font-size:8px;}
+  table.stats.sortable thead th.sort-desc::after{content:" ▼";font-size:8px;}
+
+  /* game list */
+  .game-item{
+    display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);
+    border-radius:12px;margin-bottom:8px;cursor:pointer;background:var(--surface);
+  }
+  .game-item .gi-vs{flex:1;min-width:0;}
+  .gi-opp{font-weight:700;font-size:15px;}
+  .gi-meta{font-size:11.5px;color:var(--ink-dim);margin-top:1px;}
+  .gi-score{font-family:var(--font-display);font-size:22px;font-weight:700;}
+  .status-pill{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700;}
+  .status-pill.live{background:var(--danger-soft);color:var(--danger);}
+  .status-pill.final{background:var(--surface-2);color:var(--ink-dim);}
+
+  /* modal */
+  .modal-back{position:fixed;inset:0;background:rgba(10,14,10,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center;}
+  .modal{
+    background:var(--surface);width:100%;max-width:560px;border-radius:18px 18px 0 0;
+    padding:16px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow);
+  }
+  .modal h3{font-size:19px;margin-bottom:10px;}
+  .close-x{float:right;border:none;background:var(--surface-2);color:var(--ink);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;}
+
+  /* bottom action bar */
+  .action-bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    background:var(--surface);border-top:1px solid var(--line);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    box-shadow:0 -4px 16px rgba(0,0,0,.06);
+  }
+  .action-bar-inner{max-width:560px;margin:0 auto;display:flex;gap:8px;}
+  .action-bar-inner .btn{flex:1;}
+  .action-bar-inner.three .btn{font-size:12.5px;padding:11px 4px;}
+
+  .empty-state{text-align:center;padding:40px 16px;color:var(--ink-dim);}
+  .empty-state .em{font-size:34px;margin-bottom:8px;}
+
+  a.link-reset{font-size:11.5px;color:var(--ink-dim);text-decoration:underline;cursor:pointer;}
+
+  @media (max-width:380px){
+    .result-grid{grid-template-columns:repeat(3,1fr);}
+    .zone-map{grid-template-columns:repeat(4,1fr);}
+  }
+
+  /* ============ 先前打擊成績 (recent-history) panel ============ */
+  .history-panel{margin-top:10px;}
+  .hist-title{font-size:11.5px;font-weight:700;color:var(--ink-dim);margin-bottom:6px;}
+  .hist-chips{display:flex;flex-wrap:wrap;gap:5px;}
+  .hist-chip{
+    font-family:var(--font-display);font-size:12.5px;font-weight:700;
+    padding:3px 9px;border-radius:999px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--ink-dim);
+  }
+  .hist-chip.hit{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+  .hist-chip.out{background:var(--danger-soft);border-color:var(--danger);color:var(--danger);}
+  .hist-chip.reach{background:var(--clay-soft);border-color:var(--clay);color:var(--clay);}
+  .zone-hint-card{text-align:center;}
+
+  /* ============ Landscape recording layout ============ */
+  /* renderGame() wraps the scoreboard/history, result-picker and
+     location/reference panels in .gb-left / .gb-mid / .gb-zone inside
+     .game-body. In portrait these are just three stacked blocks (no
+     behavior change). Landscape phones get real screen width, so we lay
+     them out as three side-by-side columns between the sticky top bar
+     and the fixed bottom action bar, and let each column scroll on its
+     own — that's what keeps the "選結果 / 記落點" screen on one view
+     without having to swipe the whole page up and down mid-play. */
+  @media (orientation:landscape) and (min-width:640px){
+    #app:has(.game-body){max-width:1100px;}
+    body:has(.game-body){padding-bottom:calc(56px + env(safe-area-inset-bottom));}
+    .game-body{
+      display:grid;
+      grid-template-columns:minmax(160px,0.9fr) minmax(220px,1.25fr) minmax(160px,0.9fr);
+      gap:10px;
+      margin-top:10px;
+      align-items:start;
+    }
+    .game-body .gb-col{
+      /* `100vh` is the classic mobile-Safari trap: it reports the
+         viewport as if the browser/app chrome (URL bar, and here also
+         the claude.ai artifact header above the iframe) were hidden,
+         even while it's actually on screen — so calc(100vh - Npx)
+         comes out taller than what's really visible. The column's own
+         scroll never kicks in, and instead the OUTER app page has to be
+         dragged to see the rest, losing the sticky topbar/action bar —
+         the opposite of what this layout is for. `100svh` ("small"
+         viewport height) is the standards fix — it always accounts for
+         visible chrome — layered in below for browsers that support it.
+         The 300px ceiling is the real safety net for everyone else: a
+         wrong/inflated vh can't push a column past a landscape phone's
+         actual usable height; a genuinely short viewport just shrinks
+         below it either way. The 105px subtracted is the topbar (~40px)
+         + action bar (~37px, more with a home-indicator safe area) +
+         .game-body's own top margin (10px), measured directly off the
+         rendered elements rather than guessed — a stale guess here is
+         exactly what under-sized the columns on a real device on
+         2026-09-14 (see changelog): re-measure before changing this
+         again rather than eyeballing a new constant. */
+      max-height:min(300px, calc(100vh - 105px));
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+    @supports (height:100svh){
+      .game-body .gb-col{ max-height:min(300px, calc(100svh - 105px)); }
+    }
+    .game-body .scoreboard{margin-top:0;}
+    .game-body .sb-head{padding:6px 8px 2px;}
+    .game-body .sb-half{font-size:15px;}
+    .game-body .sb-inplay{font-size:9px;padding:1px 5px;}
+    .game-body .outs-row{font-size:10.5px;}
+    .game-body .out-dot{width:8px;height:8px;}
+    .game-body .linescore-wrap{padding:0 4px 3px;}
+    .game-body .linescore th,.game-body .linescore td{padding:2px 2px;}
+    .game-body .linescore{font-size:10.5px;}
+    .game-body .linescore td.tot{font-size:13px;}
+    .game-body .batter-card{margin-top:3px;}
+    .game-body .batter-num{width:20px;height:20px;font-size:11px;margin-right:3px;}
+    .game-body .batter-name{font-size:11px;}
+    .game-body .batter-meta{font-size:8.5px;margin-top:0;}
+    .game-body .history-panel{margin-top:3px;}
+    .game-body .hist-title{font-size:9.5px;margin-bottom:2px;}
+    .game-body .hist-chip{font-size:10px;padding:1px 6px;}
+    .game-body .card{margin-top:4px;padding:6px 8px;}
+    .game-body .card:first-child{margin-top:0;}
+    .game-body .card .field{margin-bottom:4px;}
+    .game-body .card .field label{font-size:10.5px;}
+    .game-body .card .field input,.game-body .card .field .static-val{padding:4px 6px;font-size:12.5px;}
+    .game-body .card .hint{margin-bottom:3px;}
+    .game-body .result-grid{grid-template-columns:repeat(4,1fr);gap:4px;}
+    .game-body .rbtn{padding:4px 2px;font-size:11px;gap:0;}
+    .game-body .rbtn small{font-size:7px;}
+    .game-body .field-svg{max-width:175px;}
+    .action-bar{padding:4px 14px calc(4px + env(safe-area-inset-bottom));}
+    .action-bar-inner.three .btn{font-size:10px;padding:6px 4px;}
+    body:has(.game-body) .topbar-inner{padding:4px 10px;gap:6px;}
+    body:has(.game-body) .icon-btn{padding:4px 7px;font-size:11px;}
+    body:has(.game-body) .brand-mark{font-size:14px!important;}
+    body:has(.game-body) .roster-hint{font-size:9.5px;}
+    /* Zone/analysis cards (gb-zone column): the options row (metric
+       toggle / batted-type chips) is the one part that needs a tap, so
+       it stays put in normal reading order, right under the title —
+       forced onto a single row (flex-wrap:nowrap + tight padding) so
+       it costs one line instead of two. The long explanation paragraph
+       (oppDefenseZoneCardHTML's .zc-hint-bottom) is moved to the END,
+       after the diagram: it's read-once reference text, not something
+       tapped, so it's the thing that scrolls out of view first on a
+       short phone rather than eating space the diagram could use.
+       field-svg-lg (the defense-analysis diagram specifically) gets a
+       bigger max-width than plain field-svg, sized to use the height
+       freed by the single-row options + relocated hint. */
+    .game-body .zc-card h2{font-size:12.5px;margin-bottom:1px;}
+    .game-body .zc-card .hint.zc-label{font-size:9px;line-height:1.2;margin-bottom:2px;}
+    .game-body .zc-card .hint.zc-hint-bottom{margin-top:3px;margin-bottom:0;}
+    .game-body .zc-options.chip-picker{gap:2px;margin-bottom:2px;flex-wrap:nowrap;}
+    .game-body .zc-options .chip{padding:2px 4px;font-size:8.5px;white-space:nowrap;flex:1;text-align:center;}
+    .game-body .zc-diagram{margin:1px 0;}
+    .game-body .field-svg-lg{max-width:185px;}
+    /* Scoreboard column: same idea as the zone cards above — shrink
+       everything that isn't the at-bat count itself, since gb-left has
+       to fit the inning score grid AND the batter card in the same
+       tight budget. */
+    .game-body .linescore-wrap{padding:0 4px 6px;}
+    .game-body .linescore th,.game-body .linescore td{padding:3px 2px;}
+    .game-body .batter-card{margin-top:6px;}
+    .game-body .batter-num{width:26px;height:26px;font-size:14px;margin-right:5px;}
+    .game-body .batter-name{font-size:13px;}
+    .game-body .batter-meta{font-size:10px;margin-top:1px;}
+    .game-body .history-panel{margin-top:4px;}
+    .game-body .hist-title{margin-bottom:3px;}
+
+    /* 數據分析 (renderStatsView) / 出席與排行榜 (renderAttendanceView): plain
+       long pages of stacked .card blocks, not the fixed-height in-game
+       layout above — no vh math needed. Cards stay single-column and
+       stacked exactly like portrait (just scroll down); the only
+       landscape difference is a wider #app so each card — its tables
+       especially — gets to use the extra landscape width instead of
+       being squeezed into the same 560px column as portrait. */
+    #app:has(.stats-body), #app:has(.attendance-body){ max-width:820px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- ====== 資料庫設定（外部 Supabase，取代 Claude 帳號登入）======
+     部署到 GitHub Pages（或任何非 Claude 網址）之前，請先照《遷移到
+     Supabase＋GitHub Pages 操作指南》建立 Supabase 專案，並把下方兩個值
+     換成你自己的 Project URL 與 anon public key。
+     若這兩個值維持空白，網頁會自動改用瀏覽器本機儲存（localStorage）——
+     資料不會同步給其他人，僅供你自己這台裝置離線使用。
+     在 Claude 網址（Artifact）上開啟時，即使這兩個值是空的，也會照舊
+     使用 Claude 內建的 db（不受影響）。
+================================================================ -->
+<script>
+  window.SUPABASE_URL = "https://jxoapjcghyigbeuiwvfu.supabase.co";
+  window.SUPABASE_ANON_KEY = "sb_publishable_IcLR-Z62kgkXpcId8hs2MQ_AyuUWWJt";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<script>
+/* =====================================================================
+   振宇五金壘球記分 — data model & app logic
+   ===================================================================== */
+
+const DEFAULT_ROSTER = [
+  ["1","吳可恩"],["2","李俊毅"],["3","許皓傑"],["4","林慶宏"],["5","李明彰"],
+  ["6","黃冠中"],["8","羅暉舜"],["10","李念政"],["11","楊振彰"],["13","何朝欽"],
+  ["17","劉俊良"],["18","劉峻豪"],["19","鍾嘉文"],["23","周璟松"],["24","謝文隆"],
+  ["25","周景信"],["27","廖凱慶"],["31","林建安"],["36","陳柏穎"],["38","江上鋒"],
+  ["46","黃振維"],["47","詹彥信"],["56","黃奕宸"],["67","廖永仁"],["70","張瑋泰"],
+  ["74","翁敏捷"],["80","吳翌群"],["83","賴俊佑"],["86","蔡東和"],["87","周建林"],
+  ["88","賴俊成"],["93","黃一烘"]
+].map(([number,name])=>({number,name}));
+
+const POSITIONS = ["投","捕","一","二","三","游","左","中","右","自由","EP"];
+const ZONES = ["投","一","二","三","游","左","左中","中","中右","右"];
+const BATTED_TYPES = ["滾地","平飛","高飛","界外"];
+// Standard scouting-report abbreviations for each batted-ball type, used
+// when showing rates (GB%/LD%/FB%/FOUL%) instead of raw counts.
+const BATTED_TYPE_PCT_LABEL = {"滾地":"GB%","平飛":"LD%","高飛":"FB%","界外":"FOUL%"};
+
+// Spatial layout for the field diagram: 5 infield wedges + 5 outfield
+// wedges, each spanning an 18° slice of the 90° fair-territory fan
+// (foul line to foul line), left (3B side) to right (1B side).
+const FIELD_ZONES = [
+  {name:"三",  row:"in",  a1:-45, a2:-27},
+  {name:"游",  row:"in",  a1:-27, a2:-9},
+  {name:"投",  row:"in",  a1:-9,  a2:9},
+  {name:"二",  row:"in",  a1:9,   a2:27},
+  {name:"一",  row:"in",  a1:27,  a2:45},
+  {name:"左",  row:"out", a1:-45, a2:-27},
+  {name:"左中",row:"out", a1:-27, a2:-9},
+  {name:"中",  row:"out", a1:-9,  a2:9},
+  {name:"中右",row:"out", a1:9,   a2:27},
+  {name:"右",  row:"out", a1:27,  a2:45},
+];
+
+// result code metadata
+const RESULTS = {
+  "1B":{label:"一壘安打",cat:"hit",bases:1},
+  "2B":{label:"二壘安打",cat:"hit",bases:2},
+  "3B":{label:"三壘安打",cat:"hit",bases:3},
+  "HR":{label:"全壘打",cat:"hit",bases:4},
+  "BB":{label:"保送",cat:"walk"},
+  "K":{label:"三振",cat:"out",outs:1},
+  "GO":{label:"滾地出局",cat:"out",outs:1},
+  "FO":{label:"飛球出局",cat:"out",outs:1},
+  "FC":{label:"野手選擇",cat:"fc"},
+  "E":{label:"失誤上壘",cat:"error"},
+  "SF":{label:"高飛犧牲",cat:"sf",outs:1},
+  "DP":{label:"雙殺打",cat:"dp",outs:2},
+};
+const RESULT_ORDER = ["1B","2B","3B","HR","BB","K","GO","FO","FC","E","SF","DP"];
+
+// The season a NEW game defaults to — update this when the team moves on
+// to the next league season. Existing games keep whatever season they
+// were tagged with (or, for games recorded before this field existed,
+// fall back to "2025-2026聯賽" — see gameSeason()).
+const SEASON_DEFAULT = "2026聯賽賽季";
+// Seasons with historical data imported from the team spreadsheet (see
+// Store.getSeasonStats) — maps a season label to its db/localStorage key.
+// A season with no entry here (e.g. the current "2026聯賽賽季") has no
+// imported data; its stats come entirely from games recorded in this app.
+const SEASON_IMPORT_KEYS = { "2025":"season_2025", "2025-2026聯賽":"season_2025_2026" };
+// Seasons shown in order in the 球季 dropdown even if a given one
+// currently has zero games/imported rows, so the list doesn't jump
+// around as data comes and goes; anything else found on a game (a
+// custom/typo'd label) is appended after these, alphabetically.
+const KNOWN_SEASONS = ["2025", "2025-2026聯賽", "2026聯賽賽季"];
+// Historical TEAM-level (win/tie/loss) standings imported for the 球隊戰績
+// card — separate from SEASON_IMPORT_KEYS (which is per-player batting).
+// "2025" comes from a hand-written "A組積分表" group standings sheet — a
+// legend at the top (勝○=2分／和△=1分／敗x=0分) plus a 12-week grid where
+// each week actually holds 2 games (24 total, same shape as the spreadsheet
+// below), transcribed symbol-by-symbol and cross-checked against the
+// sheet's own handwritten running point totals and each team's final
+// score/rank — all 9 teams' derived totals matched exactly. "2025-2026
+//聯賽" comes from the team spreadsheet's own "2025-2026聯賽戰績" tab, which
+// has a clean typed 24-slot 勝/敗/和 sequence per team plus 積分／排名.
+// Neither source records WHICH opponent a given slot was against, so no
+// head-to-head breakdown is possible for these two seasons — only the
+// current/live-tracked season(s) get a per-opponent table, computed
+// directly from this App's own recorded games (see teamRecordFromGames).
+const TEAM_RECORD_IMPORT_KEYS = { "2025":"teamrecord_2025", "2025-2026聯賽":"teamrecord_2025_2026" };
+// Known total game count for a closed/imported season whose games were
+// never individually recorded in this app (see TEAM_RECORD_IMPORT_KEYS —
+// both "2025" and "2025-2026聯賽" are a fixed 24-game schedule). Attendance
+// and the leaderboard's minimum-PA qualification need a real "total games"
+// for these seasons; counting only `games`/`games_final` documents tagged
+// with that season would undercount badly (most of those 24 games were
+// never entered into the app at all, only their final W/T/L outcome was
+// imported). A season with no entry here (the current "2026聯賽賽季", or
+// any future season) has no fixed count — its total games is simply how
+// many games this app has actually recorded for it, which grows as the
+// team plays.
+const SEASON_GAME_COUNTS = { "2025":24, "2025-2026聯賽":24 };
+// Total games for a given attendance/leaderboard season scope. `games` is
+// already filtered to this season (or, for "生涯", every recorded game) —
+// see renderAttendanceView. For "生涯" we can't just use games.length: a
+// closed imported season's 24 games mostly aren't individual `games`/
+// `games_final` documents, so they'd be invisible to a plain count. Sum
+// each known imported season's fixed count, plus actually-recorded games
+// belonging to seasons NOT in that fixed map (the current season and any
+// future one), so a season already counted via its fixed total is never
+// double-counted even if a handful of its games also happen to exist as
+// real documents (e.g. a couple of manually-entered historical games).
+function totalGamesForScope(seasonFilter, gamesInScope, allGames){
+  if (seasonFilter !== "生涯"){
+    return SEASON_GAME_COUNTS[seasonFilter] != null ? SEASON_GAME_COUNTS[seasonFilter] : gamesInScope.length;
+  }
+  const fixedTotal = Object.values(SEASON_GAME_COUNTS).reduce((a,b)=>a+b,0);
+  const nonImportedCount = allGames.filter(g=>!g.oppLogOnly && SEASON_GAME_COUNTS[gameSeason(g)]==null).length;
+  return fixedTotal + nonImportedCount;
+}
+
+function uid(){ return Math.random().toString(36).slice(2,10)+Date.now().toString(36); }
+function todayStr(){
+  const d=new Date(); const p=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+/* ---------------------------------------------------------------------
+   Supabase adapter — implements the same tiny subset of the Firestore-
+   style db interface that Store below already speaks (doc().get/set/
+   delete, collection().orderBy().limit().get()), so Store itself needs
+   no changes at all: only which `db` object it's handed differs.
+   Backed by a single Postgres table "kv_store" (path text primary key,
+   collection text, data jsonb, created_at bigint) — see the migration
+   guide for the exact SQL. This means every existing doc path (e.g.
+   "team/roster", "games/xxx", "games_final/xxx") keeps working
+   unchanged; only the storage engine underneath is swapped out.
+--------------------------------------------------------------------- */
+function createSupabaseDb(url, anonKey){
+  const sb = window.supabase.createClient(url, anonKey);
+  function splitPath(path){
+    const i = path.indexOf("/");
+    return { collection: path.slice(0,i), id: path.slice(i+1) };
+  }
+  function docRef(path){
+    return {
+      async get(){
+        const { data, error } = await sb.from("kv_store").select("data").eq("path", path).maybeSingle();
+        if (error) throw error;
+        return { exists: !!data, data(){ return data ? data.data : undefined; } };
+      },
+      async set(obj){
+        const { collection } = splitPath(path);
+        const row = { path, collection, data: obj, created_at: obj.createdAt || Date.now() };
+        const { error } = await sb.from("kv_store").upsert(row, {onConflict:"path"});
+        if (error) throw error;
+      },
+      async delete(){
+        const { error } = await sb.from("kv_store").delete().eq("path", path);
+        if (error) throw error;
+      }
+    };
+  }
+  function collectionRef(name){
+    let _orderDir = null, _limit = null;
+    const builder = {
+      orderBy(field, dir){ _orderDir = dir; return builder; }, // only createdAt is ever ordered on
+      limit(n){ _limit = n; return builder; },
+      async get(){
+        let q = sb.from("kv_store").select("path,data").eq("collection", name);
+        if (_orderDir) q = q.order("created_at", { ascending: _orderDir !== "desc" });
+        if (_limit) q = q.limit(_limit);
+        const { data, error } = await q;
+        if (error) throw error;
+        return { docs: (data||[]).map(r => ({ id: r.path.slice(name.length+1), data: () => r.data })) };
+      }
+    };
+    return builder;
+  }
+  return { doc: docRef, collection: collectionRef };
+}
+
+/* ---------------------------------------------------------------------
+   Storage adapter: Supabase (if configured) → Claude db capability
+   (if running inside a Claude Artifact) → else localStorage.
+--------------------------------------------------------------------- */
+const Store = (function(){
+  let db = null;
+  let ready = (async () => {
+    try{
+      if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY && window.supabase && window.supabase.createClient){
+        db = createSupabaseDb(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+      } else if (window.claude && window.claude.use){
+        db = await window.claude.use("db");
+      }
+    }catch(e){ db = null; }
+    return db;
+  })();
+
+  const LS_ROSTER = "sb_roster_v1";
+  const LS_GAMES = "sb_games_v1";
+  const LS_ACTIVE = "sb_active_v1";
+
+  function lsGetGames(){ try{ return JSON.parse(localStorage.getItem(LS_GAMES)||"[]"); }catch(e){ return []; } }
+  function lsSaveGames(list){ try{ localStorage.setItem(LS_GAMES, JSON.stringify(list)); }catch(e){} }
+
+  return {
+    async usingDb(){ await ready; return !!db; },
+
+    async getRoster(){
+      await ready;
+      if (db){
+        try{
+          const snap = await db.doc("team/roster").get();
+          if (snap.exists && snap.data().players && snap.data().players.length){
+            // The db capability's own docs say it plainly: "Delivered
+            // snapshots and their data() are frozen ... clone a body
+            // before editing it for a write." Everything this Store
+            // hands back to the app crosses that boundary once, here,
+            // via clone() (JSON round-trip) — see the matching note on
+            // loadGame() below for the concrete bug this was causing.
+            return clone(snap.data().players);
+          }
+          await db.doc("team/roster").set({players:DEFAULT_ROSTER, updatedAt:Date.now()});
+          return DEFAULT_ROSTER;
+        }catch(e){ /* fall through to LS */ }
+      }
+      try{
+        const raw = localStorage.getItem(LS_ROSTER);
+        if (raw) return JSON.parse(raw);
+        localStorage.setItem(LS_ROSTER, JSON.stringify(DEFAULT_ROSTER));
+      }catch(e){}
+      return DEFAULT_ROSTER;
+    },
+
+    async saveRoster(players){
+      await ready;
+      if (db){
+        try{ await db.doc("team/roster").set({players, updatedAt:Date.now()}); return; }catch(e){}
+      }
+      try{ localStorage.setItem(LS_ROSTER, JSON.stringify(players)); }catch(e){}
+    },
+
+    // Read-only historical per-player season snapshots imported from the
+    // team's season-tracking spreadsheet (from before this app existed,
+    // or covering an already-closed season) — "season_2025" and
+    // "season_2025_2026" are the two keys currently populated. Each is a
+    // {rows:[...]} document of raw counting-stat lines (see
+    // BATTING_COUNT_FIELDS); there's no in-app editor for these, they're
+    // maintained by re-importing from the spreadsheet.
+    async getSeasonStats(key){
+      await ready;
+      if (db){
+        try{
+          const snap = await db.doc("team/"+key).get();
+          if (snap.exists) return clone(snap.data().rows || []);
+        }catch(e){}
+      }
+      try{
+        const raw = localStorage.getItem("sb_"+key+"_v1");
+        if (raw) return JSON.parse(raw);
+      }catch(e){}
+      return [];
+    },
+
+    // Read-only historical TEAM-level standings (see TEAM_RECORD_IMPORT_KEYS)
+    // imported from the team spreadsheet or a hand-written points sheet.
+    // Each row is {team, points, rank, results:[...]} — `results` (an
+    // ordered list of "勝"/"和"/"敗") is only present when the source had
+    // a clean per-slot sequence; otherwise it's an empty array.
+    async getTeamRecord(key){
+      await ready;
+      if (db){
+        try{
+          const snap = await db.doc("team/"+key).get();
+          if (snap.exists) return clone(snap.data().rows || []);
+        }catch(e){}
+      }
+      try{
+        const raw = localStorage.getItem("sb_"+key+"_v1");
+        if (raw) return JSON.parse(raw);
+      }catch(e){}
+      return [];
+    },
+
+    // Finished games live in "games_final", which is write-locked to
+    // admins (see the db rules declared on publish) — anyone can still
+    // read them for stats, but only an admin can edit or delete one.
+    // In-progress games live in plain "games", writable by any
+    // signed-in teammate helping to score.
+    async listGames(){
+      await ready;
+      if (db){
+        try{
+          const [liveQ, finalQ] = await Promise.all([
+            db.collection("games").orderBy("createdAt","desc").limit(30).get(),
+            db.collection("games_final").orderBy("createdAt","desc").limit(30).get(),
+          ]);
+          // clone() every doc here too — see loadGame() below for why this
+          // matters. Cheap insurance: nothing in this list is normally
+          // mutated in place (it's read for display/aggregation), but a
+          // frozen object silently swallowing a future edit is exactly the
+          // kind of bug that's nearly impossible to notice until someone
+          // hits it for real, so every document leaving Store is cloned,
+          // not just the one path that happened to get reported.
+          const all = [
+            ...liveQ.docs.map(d=>clone({id:d.id, ...d.data()})),
+            ...finalQ.docs.map(d=>clone({id:d.id, ...d.data()})),
+          ];
+          all.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+          return all;
+        }catch(e){}
+      }
+      return lsGetGames().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    },
+
+    async loadGame(id){
+      await ready;
+      if (db){
+        try{
+          // ⚠️ Root cause of "已完賽的打擊紀錄沒辦法編輯／改了資料庫沒跟著改"
+          // (see Version 27 in the changelog): the db capability's own
+          // type definitions say plainly that a delivered snapshot and its
+          // data() are FROZEN, and warn to "clone a body before editing it
+          // for a write." `{id, ...snap.data()}` only shallow-spreads the
+          // TOP level into a fresh object — game.plays (and every play
+          // object inside it, plus lineup/statOverrides/etc.) stayed the
+          // SAME frozen references from the snapshot. So editPlayField()
+          // etc. mutating `game.plays[idx].code = value` was a silent
+          // no-op (no error, because the page isn't in strict mode) —
+          // AppState.game.updatedAt (a fresh top-level property) still
+          // updated and still saved fine, which is exactly why persistGame()
+          // always reported success and the doc's version kept climbing,
+          // while every actual field stayed byte-identical. clone() here
+          // (a JSON round-trip) produces an entirely fresh, fully mutable
+          // object graph, so this can never happen again for anything
+          // loaded through Store.
+          const snap = await db.doc("games/"+id).get();
+          if (snap.exists) return clone({id, ...snap.data()});
+          const fsnap = await db.doc("games_final/"+id).get();
+          if (fsnap.exists) return clone({id, ...fsnap.data()});
+        }catch(e){}
+      }
+      return lsGetGames().find(g=>g.id===id) || null;
+    },
+
+    async saveGame(game){
+      await ready;
+      const coll = game.status==="final" ? "games_final" : "games";
+      if (db){
+        try{ await db.doc(coll+"/"+game.id).set(game); return {ok:true}; }
+        catch(e){ return {ok:false, code:e&&e.code}; }
+      }
+      const list = lsGetGames();
+      const idx = list.findIndex(g=>g.id===game.id);
+      if (idx>=0) list[idx]=game; else list.push(game);
+      lsSaveGames(list);
+      return {ok:true};
+    },
+
+    // Move a game between the live and final collections (a status
+    // transition), so it ends up gated by the right write rule.
+    async moveGame(game, fromColl, toColl){
+      await ready;
+      if (db){
+        try{ await db.doc(toColl+"/"+game.id).set(game); }
+        catch(e){ return {ok:false, code:e&&e.code}; }
+        try{
+          await db.doc(fromColl+"/"+game.id).delete();
+        }catch(e){
+          // Couldn't remove the old copy (e.g. a non-admin trying to
+          // reopen a finished game, where deleting from games_final
+          // needs admin). Roll back the write so we don't end up with
+          // the same game duplicated in both collections.
+          try{ await db.doc(toColl+"/"+game.id).delete(); }catch(e2){}
+          return {ok:false, code:e&&e.code};
+        }
+        return {ok:true};
+      }
+      const list = lsGetGames();
+      const idx = list.findIndex(g=>g.id===game.id);
+      if (idx>=0) list[idx]=game; else list.push(game);
+      lsSaveGames(list);
+      return {ok:true};
+    },
+
+    async deleteGame(id, wasFinal){
+      await ready;
+      const coll = wasFinal ? "games_final" : "games";
+      if (db){
+        try{ await db.doc(coll+"/"+id).delete(); return {ok:true}; }
+        catch(e){ return {ok:false, code:e&&e.code}; }
+      }
+      lsSaveGames(lsGetGames().filter(g=>g.id!==id));
+      return {ok:true};
+    },
+
+    async getActiveGameId(){
+      await ready;
+      if (db){
+        try{
+          const snap = await db.doc("team/state").get();
+          if (snap.exists) return snap.data().activeGameId || null;
+        }catch(e){}
+      }
+      try{ return localStorage.getItem(LS_ACTIVE) || null; }catch(e){ return null; }
+    },
+
+    async setActiveGameId(id){
+      await ready;
+      if (db){
+        try{ await db.doc("team/state").set({activeGameId:id||null, updatedAt:Date.now()}); return; }catch(e){}
+      }
+      try{
+        if (id) localStorage.setItem(LS_ACTIVE, id); else localStorage.removeItem(LS_ACTIVE);
+      }catch(e){}
+    },
+  };
+})();
+
+/* ---------------------------------------------------------------------
+   Admin password gate — ONLY relevant when running via the Supabase
+   adapter above (no Claude account, so no server-side admin/viewer
+   distinction). Editing/reopening/deleting an already-final game asks
+   for this password once per browser session (kept in memory only,
+   never persisted); this is a same-team deterrent against accidental
+   edits, NOT real security — anyone who reads the page source can see
+   ADMIN_PASSWORD, so don't put anything truly sensitive behind it.
+   When still running inside a Claude Artifact, this is skipped
+   entirely (Claude's own admin/viewer sharing rules still apply).
+--------------------------------------------------------------------- */
+const ADMIN_PASSWORD = "qazwsxedc";
+let adminUnlocked = false;
+function requireAdmin(actionLabel){
+  if (!(window.SUPABASE_URL && window.SUPABASE_ANON_KEY)) return true; // Claude Artifact: unaffected
+  if (adminUnlocked) return true;
+  const pw = window.prompt((actionLabel ? actionLabel+"——" : "")+"此操作僅供管理員，請輸入管理密碼：");
+  if (pw === null) return false;
+  if (pw !== ADMIN_PASSWORD){ appAlert("密碼錯誤。"); return false; }
+  adminUnlocked = true;
+  return true;
+}
+
+/* ---------------------------------------------------------------------
+   App state
+--------------------------------------------------------------------- */
+const AppState = {
+  view:"loading",      // loading | home | setup | lineup | game
+  roster:[],
+  games:[],             // list summaries
+  game:null,            // full active game object
+  // Imported historical per-player season snapshots (read-only), keyed
+  // the same as the db docs: season_2025 (closed 2025 season) and
+  // season_2025_2026 (the 2025-2026 season — the two spreadsheet tabs
+  // covering its earlier and later halves, already merged on import).
+  seasonStats:{ season_2025:[], season_2025_2026:[] },
+  // Imported historical TEAM-level standings (see TEAM_RECORD_IMPORT_KEYS) —
+  // keyed the same way as seasonStats but for win/tie/loss records rather
+  // than per-player batting.
+  seasonTeamRecords:{ teamrecord_2025:[], teamrecord_2025_2026:[] },
+  ui:{                  // transient UI state, not persisted
+    pendingResult:null, // {code, side:'us'|'opp'}
+    pendingScorers:[],
+    pendingRuns:0,
+    pendingRbi:0,
+    pendingOuts:0,
+    pendingErrorBy:null,
+    pendingZone:null,
+    pendingType:null,
+    showSub:false,
+    showBox:false,
+    showEndGame:false,
+    showEditGame:false,
+    confirmMsg:null,
+    alertMsg:null,
+    endWinPitcher:null,
+    endMvp:null,
+    statsOpponentFilter:"全部",
+    statsOpponentNumFilter:"全部",
+    statsUsPlayerFilter:"全部",
+    statsSeasonFilter:"生涯",
+    statsPitcherFilter:"全部",
+    statsPitcherSeasonFilter:"生涯",
+    teamRecordSeasonFilter:SEASON_DEFAULT,
+    teamRecordCompetitionFilter:"全部",
+    attendanceSeasonFilter:"生涯",
+    // Which metric each independent zone-diagram instance is showing
+    // (freq | avg | slg) — keyed so 球員生涯查詢/對手分析/紀錄頁面防守參考
+    // can each be toggled without affecting the others.
+    zoneMetric:{ us:"freq", opp:"freq", def:"freq" },
+  }
+};
+
+function rosterLookup(number){
+  const r = AppState.roster.find(p=>p.number===String(number));
+  if (r) return r.name;
+  const f = formerPlayersFromImports().find(p=>p.number===String(number));
+  return f ? f.name : "";
+}
+
+// Departed players who wore the same jersey number as a current roster
+// player are disambiguated in the imported historical data (see
+// team/season_2025, team/season_2025_2026) by suffixing their row's
+// `number` with "(原)" — e.g. old #19 王崇綺 is stored as "19(原)" so he
+// no longer collides with current #19 鍾嘉文 in battingKey()/mergeBattingLists.
+// This derives the selectable list of such players straight from whatever
+// imported rows carry that suffix, so 球員生涯查詢／投手成績查詢 can offer
+// them without hardcoding names/numbers here — any future duplicate-number
+// departure just needs the same "(原)" suffix applied to its imported rows.
+function formerPlayersFromImports(){
+  const seen = new Map();
+  Object.values(AppState.seasonStats||{}).forEach(rows=>{
+    (rows||[]).forEach(r=>{
+      if (r.number && String(r.number).includes("(原)") && !seen.has(r.number)){
+        seen.set(r.number, {number:String(r.number), name:r.name||""});
+      }
+    });
+  });
+  return Array.from(seen.values());
+}
+
+/* ---------------------------------------------------------------------
+   Game construction
+--------------------------------------------------------------------- */
+function newGame({opponent, batFirst, ourTeamName, date}){
+  return {
+    id: "g_"+uid(),
+    opponent: opponent || "對手",
+    ourTeamName: ourTeamName || "振宇五金",
+    date: date || todayStr(),
+    batFirst: !!batFirst,          // true: our team bats in the "top" half
+    status:"setup",                // setup | live | final
+    lineup: [],                    // {id, order, number, name, position}
+    bench: [],                     // {number, name}
+    oppRoster: [],                 // {number, name} — optional, no position, in batting order
+    oppBattingSlots: 10,            // total opponent batting-order slots (10 or 11); governs oppRoster's fixed length
+    battingIdx: 0,
+    oppBattingIdx: 0,
+    inning: 1,
+    half: "top",                   // top | bottom
+    outs: 0,
+    linescore: {top:[], bottom:[]},
+    plays: [],
+    oppNumber: "",
+    oppNote: "",
+    // Which season this game counts toward (see gameSeason()/SEASON_DEFAULT)
+    // and what kind of competition it is (see isLeagueGame()) — only
+    // "聯賽" (regular league) games feed the career/season totals in
+    // 球員生涯查詢; 盃賽/季後賽 games are tracked separately.
+    // Both are editable after creation (setup screen, or 編輯紀錄 for an
+    // already-started game) so a mis-tagged game can be corrected.
+    season: SEASON_DEFAULT,
+    competitionType: "聯賽",   // 聯賽 | 盃賽 | 季後賽
+    finalWinPitcher: null,   // {number,name} | null
+    finalMvp: null,          // {number,name} | null
+    // Admin-only manual corrections. Per-number partial overrides that win
+    // over whatever the play log computes — for fixing a typo'd RBI/K, or
+    // filling in a pitching line for a game with no per-batter defensive
+    // data (e.g. an imported historical result).
+    statOverrides: { batting:{}, pitching:{} },
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+}
+function ensureOverrides(g){
+  if (!g.statOverrides) g.statOverrides = {batting:{}, pitching:{}};
+  if (!g.statOverrides.batting) g.statOverrides.batting = {};
+  if (!g.statOverrides.pitching) g.statOverrides.pitching = {};
+  return g.statOverrides;
+}
+
+// Small "2026聯賽賽季" / "🏆 盃賽" style label for a game, used on the
+// live/final game screens and the home list so it's obvious at a glance
+// which season or competition a game is tagged as.
+function gameSeasonTagHTML(g){
+  const league = isLeagueGame(g);
+  const label = league ? gameSeason(g) : (g.competitionType||"");
+  return `${league?"":"🏆 "}${esc(label)}`;
+}
+
+function isOurHalf(game){
+  return (game.half==="top") === game.batFirst;
+}
+function ourRow(game){ return game.batFirst ? game.linescore.top : game.linescore.bottom; }
+function oppRow(game){ return game.batFirst ? game.linescore.bottom : game.linescore.top; }
+function ourTotal(game){ return ourRow(game).reduce((a,b)=>a+(b||0),0); }
+function oppTotal(game){ return oppRow(game).reduce((a,b)=>a+(b||0),0); }
+
+// The player currently assigned position "投" (pitcher) is automatically
+// the pitcher of record — no separate manual selection needed.
+function currentPitcher(game){
+  return game.lineup.find(r=>r.position==="投") || null;
+}
+
+// The opponent roster is kept in batting-order (insertion order); this
+// resolves whichever slot is "at bat" right now, cycling automatically.
+function currentOppBatter(game){
+  if (!game.oppRoster || !game.oppRoster.length) return null;
+  return game.oppRoster[(game.oppBattingIdx||0) % game.oppRoster.length];
+}
+function syncOppBatter(game){
+  const b = currentOppBatter(game);
+  if (b){ game.oppNumber = b.number; game.oppNote = b.name; }
+}
+
+// Games list to use for in-game reference lookups (e.g. the current
+// opponent batter's historical zone tendencies): AppState.games is a
+// snapshot loaded at boot/entry into other views, so it won't reflect
+// plays recorded so far in the CURRENTLY live game. Swap in the live
+// AppState.game itself so at-bats already recorded this game against this
+// same batter are counted too.
+function gamesForZoneRef(){
+  const g = AppState.game;
+  if (!g) return AppState.games||[];
+  const others = (AppState.games||[]).filter(x=>x.id!==g.id);
+  return [...others, g];
+}
+
+// Candidates for "who scored": the current batter plus up to the previous
+// 5 slots in the batting order (the only players who could plausibly be
+// on base right now).
+function scorerCandidates(game){
+  const n = game.lineup.length;
+  if (!n) return [];
+  const cur = game.battingIdx % n;
+  const count = Math.min(6, n);
+  const list = [];
+  for (let k=0;k<count;k++){ list.push(game.lineup[(cur - k + n*100) % n]); }
+  return list;
+}
+
+async function persistGame(){
+  if (AppState.game.status==="final" && !requireAdmin("修改已完賽的紀錄")){
+    return {ok:false, code:"admin-required"};
+  }
+  AppState.game.updatedAt = Date.now();
+  const res = await Store.saveGame(AppState.game);
+  if (res && res.ok===false){
+    appAlert("儲存失敗，請檢查網路連線後再試一次。");
+  }
+  return res;
+}
+
+/* ---------------------------------------------------------------------
+   Result engine — simplified: no base-runner tracking. Each recorded
+   play just needs an out count, and (for our own batting) which
+   teammates scored plus RBI, chosen directly by the scorer.
+--------------------------------------------------------------------- */
+function defaultOuts(code){ return (RESULTS[code].outs||0); }
+
+/* ---------------------------------------------------------------------
+   Rendering
+--------------------------------------------------------------------- */
+const $app = document.getElementById("app");
+// Click-to-sort for any <table class="stats sortable">: delegated on $app
+// (a stable node whose innerHTML gets replaced every render(), so this is
+// registered once here rather than re-attached per row/table) — clicking a
+// header cell sorts the tbody rows by that column, toggling asc/desc.
+$app.addEventListener("click", function(e){
+  const th = e.target.closest("table.sortable thead th");
+  if (!th) return;
+  sortStatsTable(th);
+});
+function sortStatsTable(th){
+  const table = th.closest("table");
+  const theadRow = th.parentElement;
+  const idx = Array.prototype.indexOf.call(theadRow.children, th);
+  const tbody = table.querySelector("tbody");
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+  // Placeholder "尚無資料" rows use a single colspan cell — nothing to sort.
+  if (!rows.length || rows.some(r=>r.children.length < theadRow.children.length)) return;
+  const dir = th.dataset.sortDir === "asc" ? "desc" : "asc";
+  Array.from(theadRow.children).forEach(h=>{
+    if (h!==th){ delete h.dataset.sortDir; h.classList.remove("sort-asc","sort-desc"); }
+  });
+  th.dataset.sortDir = dir;
+  th.classList.remove("sort-asc","sort-desc");
+  th.classList.add(dir==="asc" ? "sort-asc" : "sort-desc");
+  const isLabelCol = idx===0; // 球員／背號／投手 first column: always text
+  rows.sort((a,b)=>{
+    const av = a.children[idx].textContent.trim();
+    const bv = b.children[idx].textContent.trim();
+    if (isLabelCol) return dir==="asc" ? av.localeCompare(bv,"zh-Hant") : bv.localeCompare(av,"zh-Hant");
+    const an = parseFloat(av.replace(/[^0-9.\-]/g,""));
+    const bn = parseFloat(bv.replace(/[^0-9.\-]/g,""));
+    const aNum = isNaN(an) ? -Infinity : an;
+    const bNum = isNaN(bn) ? -Infinity : bn;
+    return dir==="asc" ? aNum-bNum : bNum-aNum;
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+function render(){
+  const s = AppState;
+  // Every view function rebuilds $app.innerHTML from scratch, which destroys
+  // and recreates any open modal (edit-game, box score, sub, end-game, etc.)
+  // on every single field edit. Without this, a user scrolled down a long
+  // modal (e.g. editing play #20 of 30 in a finished game) gets bounced back
+  // to the top of the modal after every keystroke/change, making it look
+  // like the edit did nothing even though it saved correctly. Capture the
+  // open modal's scroll position before re-rendering and restore it after.
+  const prevModal = document.querySelector(".modal-back .modal");
+  const prevScrollTop = prevModal ? prevModal.scrollTop : null;
+  if (s.view==="loading") renderLoading();
+  else if (s.view==="home") renderHome();
+  else if (s.view==="setup") renderSetup();
+  else if (s.view==="lineup") renderLineupBuilder();
+  else if (s.view==="game") renderGame();
+  else if (s.view==="stats") renderStatsView();
+  else if (s.view==="attendance") renderAttendanceView();
+  // Global confirm modal, appended after whichever view just rendered, so
+  // every confirm() call site works no matter which screen is showing.
+  if (s.ui && s.ui.confirmMsg){
+    $app.insertAdjacentHTML("beforeend", renderConfirmModal());
+  }
+  if (s.ui && s.ui.alertMsg){
+    $app.insertAdjacentHTML("beforeend", renderAlertModal());
+  }
+  if (prevScrollTop){
+    const nextModal = document.querySelector(".modal-back .modal");
+    if (nextModal) nextModal.scrollTop = prevScrollTop;
+  }
+}
+
+// window.confirm()/alert()/prompt() are unreliable inside a published
+// Artifact: the page runs in a sandboxed iframe on claude.ai, and a
+// sandbox without "allow-modals" silently suppresses native dialogs —
+// the call just returns false immediately with no dialog ever shown.
+// That reads to a user as "I tapped the button and nothing happened",
+// which is exactly the bug reported for 刪除紀錄 (delete). So every
+// destructive action goes through this in-page, Promise-based modal
+// instead of the native confirm(). Pattern: `if (!(await appConfirm(msg))) return;`
+// in an async function.
+let _pendingConfirmResolve = null;
+function appConfirm(message){
+  return new Promise(resolve=>{
+    _pendingConfirmResolve = resolve;
+    AppState.ui.confirmMsg = message;
+    render();
+  });
+}
+function resolveConfirm(v){
+  AppState.ui.confirmMsg = null;
+  const r = _pendingConfirmResolve;
+  _pendingConfirmResolve = null;
+  render();
+  if (r) r(v);
+}
+function renderConfirmModal(){
+  return `<div class="modal-back" style="z-index:200;" onclick="if(event.target===this){resolveConfirm(false);}">
+    <div class="modal" style="max-width:340px;">
+      <div style="font-size:15px;line-height:1.6;white-space:pre-wrap;">${esc(AppState.ui.confirmMsg)}</div>
+      <div class="btn-row" style="margin-top:18px;">
+        <button class="btn ghost" style="flex:1;" onclick="resolveConfirm(false)">取消</button>
+        <button class="btn danger" style="flex:1;" onclick="resolveConfirm(true)">確定</button>
+      </div>
+    </div>
+  </div>`;
+}
+// Same reasoning as appConfirm() above — native alert() is silently
+// suppressed inside the sandboxed Artifact iframe, so error/notice
+// messages (e.g. the admin-only permission notices) need their own
+// in-page modal too, or they'd vanish with no visible feedback at all.
+function appAlert(message){
+  AppState.ui.alertMsg = message;
+  render();
+}
+function closeAlert(){
+  AppState.ui.alertMsg = null;
+  render();
+}
+function renderAlertModal(){
+  return `<div class="modal-back" style="z-index:210;" onclick="if(event.target===this){closeAlert();}">
+    <div class="modal" style="max-width:340px;">
+      <div style="font-size:15px;line-height:1.6;white-space:pre-wrap;">${esc(AppState.ui.alertMsg)}</div>
+      <div class="btn-row" style="margin-top:18px;">
+        <button class="btn primary" style="flex:1;" onclick="closeAlert()">知道了</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderLoading(){
+  $app.innerHTML = `<div class="empty-state" style="padding-top:80px;"><div class="em">🥎</div>載入中…</div>`;
+}
+
+function esc(str){ return String(str==null?"":str).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmt3(n){ return (n||0).toFixed(3).replace(/^0\./,"."); }
+
+/* ---------- Season-wide aggregation (across all saved games) ---------- */
+const BATTING_COUNT_FIELDS = ["PA","AB","H","1B","2B","3B","HR","BB","SF","RBI","R","K","DP","E"];
+
+// Shared rate-stat pass: takes a list of rows that already have the raw
+// counting fields (PA/AB/H/…) filled in and adds AVG/OBP/SLG/OPS/ISO plus
+// a team-relative OPS+ computed from the SAME list's own combined line
+// (100 = exactly average across whatever this particular list covers —
+// one season, a merged career total, etc). Used by computeSeasonBatting
+// and by mergeBattingLists so every batting table in the app derives
+// rates the same way, whatever the source of the counting stats.
+function deriveBattingRates(list){
+  list.forEach(r=>{
+    r.AVG = r.AB>0 ? r.H/r.AB : 0;
+    r.OBP = (r.AB+r.BB+r.SF)>0 ? (r.H+r.BB)/(r.AB+r.BB+r.SF) : 0;
+    r.SLG = r.AB>0 ? (r["1B"]+2*r["2B"]+3*r["3B"]+4*r.HR)/r.AB : 0;
+    r.OPS = r.OBP+r.SLG;
+    r.ISO = r.SLG - r.AVG;
+  });
+  const totAB = list.reduce((a,r)=>a+r.AB,0);
+  const totH = list.reduce((a,r)=>a+r.H,0);
+  const totBB = list.reduce((a,r)=>a+r.BB,0);
+  const totSF = list.reduce((a,r)=>a+r.SF,0);
+  const tot1B = list.reduce((a,r)=>a+r["1B"],0);
+  const tot2B = list.reduce((a,r)=>a+r["2B"],0);
+  const tot3B = list.reduce((a,r)=>a+r["3B"],0);
+  const totHR = list.reduce((a,r)=>a+r.HR,0);
+  const teamOBP = (totAB+totBB+totSF)>0 ? (totH+totBB)/(totAB+totBB+totSF) : 0;
+  const teamSLG = totAB>0 ? (tot1B+2*tot2B+3*tot3B+4*totHR)/totAB : 0;
+  const teamOPS = teamOBP+teamSLG;
+  list.forEach(r=>{
+    r.OPSPlus = (teamOPS>0 && r.AB>0) ? Math.round(1000*r.OPS/teamOPS)/10 : 0;
+  });
+  return list;
+}
+
+function computeSeasonBatting(games){
+  // Built on top of computeBoxScore (rather than re-walking plays) so a
+  // per-game manual override is automatically reflected in the season
+  // totals too, in exactly one place.
+  const rows = {};
+  function ensure(num,name){
+    if (!rows[num]) rows[num] = {number:num,name,PA:0,AB:0,H:0,"1B":0,"2B":0,"3B":0,HR:0,BB:0,SF:0,RBI:0,R:0,K:0,DP:0,E:0};
+    return rows[num];
+  }
+  games.forEach(g=>{
+    computeBoxScore(g).forEach(gr=>{
+      const r = ensure(gr.number, gr.name);
+      BATTING_COUNT_FIELDS.forEach(f=>{ r[f] += gr[f]||0; });
+    });
+  });
+  return deriveBattingRates(Object.values(rows));
+}
+
+// Identity key for merging batting rows from different sources (live
+// in-app games, imported historical seasons) — by jersey number when one
+// is on record, else by name. Jersey numbers aren't reused within our own
+// roster, so this is stable across sources for current players; imported
+// guest/support players who have no number on file merge by name instead.
+function battingKey(r){ return r.number ? ("num:"+r.number) : ("name:"+(r.name||"")); }
+
+// Combine any number of raw-counting-stat row lists (e.g. an imported
+// season snapshot plus the live-tracked games for that same season) into
+// one list, summing counts per player and re-deriving rate stats from the
+// combined totals — never by averaging already-derived rates.
+function mergeBattingLists(...lists){
+  const rows = {};
+  lists.forEach(list=>{
+    (list||[]).forEach(r=>{
+      const key = battingKey(r);
+      if (!rows[key]) rows[key] = {number:r.number||"", name:r.name||"", PA:0,AB:0,H:0,"1B":0,"2B":0,"3B":0,HR:0,BB:0,SF:0,RBI:0,R:0,K:0,DP:0,E:0};
+      const row = rows[key];
+      BATTING_COUNT_FIELDS.forEach(f=>{ row[f] += r[f]||0; });
+      if (!row.name && r.name) row.name = r.name;
+    });
+  });
+  return deriveBattingRates(Object.values(rows));
+}
+
+// Result/zone/type breakdown for one side ("us" or "opp"). For "opp" the
+// `filterValue` is by opponent team name (game-level) and the optional
+// `numberFilter` narrows further to one opposing jersey number (play-level);
+// for "us" `filterValue` is our own player's jersey number (opponent name
+// doesn't mean anything for our own batting, so `numberFilter` is unused).
+// `numberFilter` is a composite "球隊||背號" key (see oppRowKey) — jersey
+// numbers repeat across different opponent teams, so a bare number is not
+// enough to identify one real player; matching always checks the team too.
+function computeZoneAnalysis(games, side, filterValue, numberFilter){
+  const isOpp = side==="opp";
+  const resultCounts = {}; RESULT_ORDER.forEach(c=>resultCounts[c]=0);
+  const zoneCounts = {}; FIELD_ZONES.forEach(z=>zoneCounts[z.name]=0);
+  // Per-zone breakdown beyond raw counts, so the zone diagram can also
+  // show "that zone's batting average / slugging" rather than just how
+  // often the ball went there. AB follows the same convention as
+  // computeOpponentBatting: every result except BB/SF counts as an AB
+  // (so FC/E/K/GO/FO/DP all count, matching standard scoring).
+  const zoneStats = {}; FIELD_ZONES.forEach(z=>zoneStats[z.name]={count:0,AB:0,H:0,TB:0});
+  const typeCounts = {}; BATTED_TYPES.forEach(t=>typeCounts[t]=0);
+  let totalPlays=0;
+  const gamesInvolved = new Set();
+  const numFilterParts = (isOpp && numberFilter && numberFilter!=="全部") ? numberFilter.split("||") : null;
+  games.forEach(g=>{
+    if (isOpp && filterValue && filterValue!=="全部" && g.opponent!==filterValue) return;
+    if (numFilterParts && g.opponent!==numFilterParts[0]) return;
+    (g.plays||[]).forEach(p=>{
+      if (p.side!==side) return;
+      if (!isOpp && filterValue && filterValue!=="全部" && String(p.batterNumber||"")!==String(filterValue)) return;
+      if (numFilterParts && String(p.batterNumber||"")!==numFilterParts[1]) return;
+      totalPlays++;
+      gamesInvolved.add(g.id);
+      if (resultCounts[p.code]!=null) resultCounts[p.code]++;
+      if (p.zone && zoneCounts[p.zone]!=null) zoneCounts[p.zone]++;
+      if (p.zone && zoneStats[p.zone]){
+        const zs = zoneStats[p.zone];
+        zs.count++;
+        const meta = RESULTS[p.code];
+        if (meta && p.code!=="BB" && p.code!=="SF"){
+          zs.AB++;
+          if (meta.cat==="hit"){ zs.H++; zs.TB += meta.bases; }
+        }
+      }
+      if (p.battedType && typeCounts[p.battedType]!=null) typeCounts[p.battedType]++;
+    });
+  });
+  return {resultCounts, zoneCounts, zoneStats, typeCounts, totalPlays, gamesCount:gamesInvolved.size};
+}
+
+// Opponent batting, broken down by team + jersey number. Different
+// opponent teams can (and do) reuse the same jersey number for a
+// different real player, so rows are always keyed by team+number, never
+// number alone — otherwise stats for two unrelated players would be
+// silently merged together. Batters with no number recorded are grouped
+// per-team into a "未填背號" bucket.
+function computeOpponentBatting(games, opponentFilter){
+  const filtered = (!opponentFilter || opponentFilter==="全部") ? games : games.filter(g=>g.opponent===opponentFilter);
+  const rows = {};
+  function ensure(team, num){
+    const key = (team||"") + "||" + (num || "__none__");
+    if (!rows[key]) rows[key] = {team:team||"", number:num||"", PA:0,AB:0,H:0,"1B":0,"2B":0,"3B":0,HR:0,BB:0,K:0,GO:0,FO:0,FC:0,E:0,SF:0,DP:0};
+    return rows[key];
+  }
+  filtered.forEach(g=>{
+    (g.plays||[]).forEach(p=>{
+      if (p.side!=="opp") return;
+      const r = ensure(g.opponent, p.batterNumber);
+      r.PA++;
+      if (p.code!=="BB" && p.code!=="SF") r.AB++;
+      if (["1B","2B","3B","HR"].includes(p.code)){ r.H++; r[p.code]++; }
+      ["BB","K","GO","FO","FC","E","SF","DP"].forEach(c=>{ if (p.code===c) r[c]++; });
+    });
+  });
+  return Object.values(rows).sort((a,b)=>{
+    if (a.team!==b.team) return (a.team||"").localeCompare(b.team||"", "zh-Hant");
+    const an = a.number===""?Infinity:(Number(a.number)||Infinity);
+    const bn = b.number===""?Infinity:(Number(b.number)||Infinity);
+    return an-bn;
+  });
+}
+// Composite key identifying one real opponent player uniquely across
+// teams — pair with the row's team so a shared jersey number never
+// collides between two different opponents.
+function oppRowKey(r){ return (r.team||"")+"||"+(r.number||""); }
+
+// Batted-ball type breakdown as rates (GB%/LD%/FB%/FOUL%) rather than raw
+// counts — the percentage of all recorded batted-ball types that were
+// each kind, e.g. GB% = 滾地 count / (滾地+平飛+高飛+界外 count).
+function battedTypeRateRows(typeCounts){
+  const total = BATTED_TYPES.reduce((a,t)=>a+(typeCounts[t]||0),0);
+  return BATTED_TYPES.map(t=>{
+    const pct = total>0 ? fmtPct(typeCounts[t]||0, total) : "—";
+    return `<tr><td class="name">${BATTED_TYPE_PCT_LABEL[t]}（${t}）</td><td class="tabular">${pct}</td></tr>`;
+  }).join("");
+}
+function fmtPct(part, total){ return total>0 ? (100*part/total).toFixed(1)+"%" : "—"; }
+
+// Blue (low) → yellow (mid) → red (high) heat-map color for t in [0,1].
+function heatColor(t){
+  t = Math.max(0, Math.min(1, t));
+  let c1,c2,f;
+  if (t<0.5){ c1=[59,130,246]; c2=[234,179,8]; f=t/0.5; }
+  else { c1=[234,179,8]; c2=[239,68,68]; f=(t-0.5)/0.5; }
+  const r=Math.round(c1[0]+(c2[0]-c1[0])*f);
+  const gC=Math.round(c1[1]+(c2[1]-c1[1])*f);
+  const b=Math.round(c1[2]+(c2[2]-c1[2])*f);
+  return `rgb(${r},${gC},${b})`;
+}
+
+const ZONE_METRIC_OPTS = [["freq","擊球機率"],["avg","該落點打擊率"],["slg","該落點長打率"]];
+
+// Button row for switching one zone-diagram instance's metric. `key`
+// identifies the instance (AppState.ui.zoneMetric.<key>) so several
+// diagrams on the same page (our own, opponent's, and the live in-game
+// defensive-reference one) toggle independently of one another.
+function zoneMetricToggleHTML(key){
+  const m = (AppState.ui.zoneMetric && AppState.ui.zoneMetric[key]) || "freq";
+  return `<div class="chip-picker zc-options" style="justify-content:center;margin-bottom:6px;">
+    ${ZONE_METRIC_OPTS.map(([v,label])=>`<button type="button" class="chip ${m===v?'sel':''}" onclick="selectZoneMetric('${key}','${v}')">${label}</button>`).join("")}
+  </div>`;
+}
+function selectZoneMetric(key, v){
+  if (!AppState.ui.zoneMetric) AppState.ui.zoneMetric = {};
+  AppState.ui.zoneMetric[key] = v;
+  render();
+}
+// Convenience: metric toggle + the diagram itself for one instance.
+function zoneDiagramBlock(key, zoneStats){
+  const m = (AppState.ui.zoneMetric && AppState.ui.zoneMetric[key]) || "freq";
+  return zoneMetricToggleHTML(key) + fieldDiagramCountsHTML(zoneStats, m);
+}
+
+// Read-only zone diagram driven by per-zone stats ({count,AB,H,TB} per
+// FIELD_ZONES name — see computeZoneAnalysis). `metric` selects what's
+// displayed/colored: "freq" = share of batted balls landing in that zone,
+// "avg" = batting average on balls hit to that zone, "slg" = slugging on
+// balls hit to that zone. Color is a blue→yellow→red heat scale relative
+// to the other zones' values for the same metric; zones with no
+// observations for avg/slg (no AB there yet) are shown neutral gray
+// rather than colored low, since "no data" isn't the same as "low value".
+function fieldDiagramCountsHTML(zoneStats, metric){
+  metric = metric || "freq";
+  zoneStats = zoneStats || {};
+  const cx=150, cy=200;
+  const zoneTotal = FIELD_ZONES.reduce((a,z)=>a+((zoneStats[z.name]&&zoneStats[z.name].count)||0),0);
+  const vals = FIELD_ZONES.map(z=>{
+    const zs = zoneStats[z.name] || {count:0,AB:0,H:0,TB:0};
+    if (metric==="avg") return zs.AB>0 ? zs.H/zs.AB : null;
+    if (metric==="slg") return zs.AB>0 ? zs.TB/zs.AB : null;
+    return zs.count; // freq: 0 is a real, colorable value (never "no data")
+  });
+  const known = vals.filter(v=>v!=null);
+  const vMin = known.length ? Math.min(...known) : 0;
+  const vMax = known.length ? Math.max(...known) : 0;
+  const wedges = FIELD_ZONES.map((z,i)=>{
+    const v = vals[i];
+    const isIn = z.row==="in";
+    const r1 = isIn ? 20 : 100;
+    const r2 = isIn ? 100 : 185;
+    const d = fzWedgePath(cx,cy,r1,r2,z.a1,z.a2);
+    // Infield wedges are much narrower near the middle of the band (they
+    // all converge toward home plate), so two stacked lines of text at
+    // the midpoint radius run into the neighboring wedge's text. Anchor
+    // infield labels close to the wide OUTER edge of the band instead,
+    // with smaller/tighter type, so each wedge's two lines fit within
+    // its own arc width; outfield wedges have plenty of room already.
+    const labelR = isIn ? (r2 - 14) : (r1+r2)/2;
+    const [lx,ly] = fzPolar(cx,cy,labelR,(z.a1+z.a2)/2);
+    let fill, valueLabel;
+    if (v==null){
+      fill = "var(--surface-2)";
+      valueLabel = "—";
+    } else {
+      const t = vMax>vMin ? (v-vMin)/(vMax-vMin) : (vMax>0?1:0);
+      fill = heatColor(t);
+      valueLabel = metric==="freq" ? (zoneTotal>0 ? Math.round(100*v/zoneTotal)+"%" : "0%") : fmt3(v);
+    }
+    const labelStyle = "fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.55);stroke-width:3px;stroke-linejoin:round;";
+    const nameSize = isIn ? 8.5 : 11;
+    const valueSize = isIn ? 9.5 : 13;
+    const dy1 = isIn ? 4 : 6;
+    const dy2 = isIn ? 6 : 9;
+    return `<path d="${d}" class="fz-wedge" style="fill:${fill};"></path>
+      <text x="${lx.toFixed(1)}" y="${(ly-dy1).toFixed(1)}" class="fz-label" text-anchor="middle" style="${labelStyle}font-size:${nameSize}px;">${z.name}</text>
+      <text x="${lx.toFixed(1)}" y="${(ly+dy2).toFixed(1)}" class="fz-label" text-anchor="middle" style="${labelStyle}font-size:${valueSize}px;font-weight:900;">${valueLabel}</text>`;
+  }).join("");
+  const [fx1,fy1] = fzPolar(cx,cy,185,-45);
+  const [fx2,fy2] = fzPolar(cx,cy,185,45);
+  return `<svg viewBox="0 0 300 205" class="field-svg field-svg-lg">
+    ${wedges}
+    <line x1="${cx}" y1="${cy}" x2="${fx1.toFixed(1)}" y2="${fy1.toFixed(1)}" class="fz-foul"/>
+    <line x1="${cx}" y1="${cy}" x2="${fx2.toFixed(1)}" y2="${fy2.toFixed(1)}" class="fz-foul"/>
+    <path d="M ${fx1.toFixed(1)} ${fy1.toFixed(1)} A 185 185 0 0 1 ${fx2.toFixed(1)} ${fy2.toFixed(1)}" class="fz-fence"/>
+    <circle cx="${cx}" cy="${cy}" r="4" class="fz-home"/>
+  </svg>`;
+}
+
+async function goStats(){
+  AppState.games = await Store.listGames();
+  AppState.seasonStats.season_2025 = await Store.getSeasonStats("season_2025");
+  AppState.seasonStats.season_2025_2026 = await Store.getSeasonStats("season_2025_2026");
+  AppState.seasonTeamRecords.teamrecord_2025 = await Store.getTeamRecord("teamrecord_2025");
+  AppState.seasonTeamRecords.teamrecord_2025_2026 = await Store.getTeamRecord("teamrecord_2025_2026");
+  AppState.view="stats"; render();
+}
+function selectTeamRecordSeason(v){ AppState.ui.teamRecordSeasonFilter=v; render(); }
+function selectTeamRecordCompetition(v){ AppState.ui.teamRecordCompetitionFilter=v; render(); }
+function selectStatsPitcher(v){ AppState.ui.statsPitcherFilter=v; render(); }
+function selectStatsPitcherSeason(v){ AppState.ui.statsPitcherSeasonFilter=v; render(); }
+function selectStatsOpponent(v){
+  AppState.ui.statsOpponentFilter=v;
+  // jersey numbers aren't comparable across teams, so switching team
+  // resets any jersey-level drill-down from the previous team.
+  AppState.ui.statsOpponentNumFilter="全部";
+  render();
+}
+function selectStatsOpponentNum(v){ AppState.ui.statsOpponentNumFilter=v; render(); }
+function selectStatsUsPlayer(v){ AppState.ui.statsUsPlayerFilter=v; render(); }
+function selectStatsSeason(v){ AppState.ui.statsSeasonFilter=v; render(); }
+
+// Which season a game counts toward. Games recorded before this field
+// existed have no `season` — back then the app always folded live games
+// into "2025-2026聯賽" (the season that was current at the time), so that
+// stays the fallback for anything untagged rather than silently dropping
+// those games from every season view.
+function gameSeason(g){ return g.season || "2025-2026聯賽"; }
+// Only "聯賽" (regular league) games — or games recorded before this
+// field existed, which were all league games — count toward season/career
+// totals. 盃賽 (cup) and 季後賽 (playoff) games are tracked separately
+// (see the 盃賽／季後賽戰績 card) and excluded here.
+function isLeagueGame(g){ return !g.competitionType || g.competitionType==="聯賽"; }
+
+// Season dropdown options: the known seasons (always shown, in a stable
+// order) plus any other season label actually present on a league game
+// (e.g. a typo'd or one-off label), appended afterward.
+function seasonOptionsFor(games){
+  const found = new Set((games||[]).filter(g=>!g.oppLogOnly && isLeagueGame(g)).map(gameSeason));
+  const extra = Array.from(found).filter(s=>!KNOWN_SEASONS.includes(s)).sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+  return [...KNOWN_SEASONS, ...extra];
+}
+
+// Our own team's batting line for one season/career view. A season with
+// imported spreadsheet data (see SEASON_IMPORT_KEYS) starts from that,
+// then adds whatever this app has itself tracked live and tagged with
+// that same season label — the app is the go-forward scorekeeper once a
+// season is underway. "生涯" (career) sums every league season together
+// (imported + all live league games, regardless of which season each is
+// tagged with). Non-league (盃賽/季後賽) games are never included here.
+function seasonBattingFor(seasonKey, games){
+  const leagueGames = (games||[]).filter(g=>!g.oppLogOnly && isLeagueGame(g));
+  if (seasonKey==="生涯"){
+    const imported = Object.values(SEASON_IMPORT_KEYS).flatMap(k=>AppState.seasonStats[k]||[]);
+    return mergeBattingLists(imported, computeSeasonBatting(leagueGames));
+  }
+  const importKey = SEASON_IMPORT_KEYS[seasonKey];
+  const imported = importKey ? (AppState.seasonStats[importKey]||[]) : [];
+  const liveForSeason = computeSeasonBatting(leagueGames.filter(g=>gameSeason(g)===seasonKey));
+  return mergeBattingLists(imported, liveForSeason);
+}
+
+// Batting totals for non-league games (盃賽/季後賽), optionally narrowed
+// to one competition type ("盃賽"|"季後賽"|"全部"). Kept entirely separate
+// from seasonBattingFor/生涯 per the team's request — cup and playoff
+// results shouldn't skew regular-season career numbers.
+function competitionBattingFor(competitionFilter, games){
+  const filtered = (games||[]).filter(g=>!g.oppLogOnly && !isLeagueGame(g) &&
+    (!competitionFilter || competitionFilter==="全部" || g.competitionType===competitionFilter));
+  return computeSeasonBatting(filtered);
+}
+
+// Which of our players count as "on the roster" for a given season view
+// (出席率／排行榜). For "生涯" this is just the full current roster, same
+// as before this feature existed. For one specific season, a current
+// squad member who wasn't actually part of the team that season (joined
+// later, or simply didn't play) is left out entirely rather than shown
+// with 0 attendance — membership is decided by whether they appear in
+// that season's imported spreadsheet data (the season's authoritative
+// roster, when one was imported) or in any game (any competition type)
+// tagged with that season.
+function rosterForSeason(seasonKey, games){
+  if (!seasonKey || seasonKey==="生涯") return AppState.roster;
+  const nums = new Set();
+  const importKey = SEASON_IMPORT_KEYS[seasonKey];
+  if (importKey){
+    (AppState.seasonStats[importKey]||[]).forEach(r=>{ if (r.number) nums.add(String(r.number)); });
+  }
+  (games||[]).forEach(g=>{
+    if (g.oppLogOnly || gameSeason(g)!==seasonKey) return;
+    (g.lineup||[]).forEach(r=>{ if (r.number) nums.add(String(r.number)); });
+    (g.bench||[]).forEach(b=>{ if (b.number) nums.add(String(b.number)); });
+    (g.plays||[]).forEach(p=>{ if (p.side==="us" && p.batterNumber) nums.add(String(p.batterNumber)); });
+  });
+  return AppState.roster.filter(p=>nums.has(String(p.number)));
+}
+
+// Imported historical attendance (出賽次數), where available, per jersey
+// number — see team/season_2025, team/season_2025_2026's `GP` field
+// (Version 23). Without this, a closed/imported season's attendance
+// count would only ever reflect games actually recorded as documents in
+// this App — which for "2025" and "2025-2026聯賽" is almost none, since
+// those seasons were mostly tracked as spreadsheet/paper records instead
+// (see SEASON_GAME_COUNTS) — so every player's attendance for those
+// seasons, and therefore for "生涯" too, would silently read as ~0
+// regardless of how much they actually played. `GP` was backfilled from
+// the team's own attendance tracking for exactly the players it covers;
+// anyone not covered is simply left alone (falls back to whatever this
+// App has actually recorded, same as before this field existed).
+function importedAttendance(seasonKey){
+  const importKey = SEASON_IMPORT_KEYS[seasonKey];
+  const rows = importKey ? (AppState.seasonStats[importKey]||[]) : [];
+  const out = {};
+  rows.forEach(r=>{ if (r.number!=null && r.GP!=null) out[String(r.number)] = r.GP; });
+  return out;
+}
+
+/* ---------- Pitching season/career query (投手成績查詢) ---------- */
+const PITCHING_COUNT_FIELDS = ["K","BB","R","outs"];
+
+// W (勝投) and G (出賽) aren't per-play counting stats like K/BB/R/outs, so
+// they're derived separately rather than via PITCHING_COUNT_FIELDS: G is
+// one per game a pitcher has any row in computePitching(g) (i.e. they threw
+// a pitch, or have a manual override for that game — see computePitching),
+// and W is one per game where that pitcher is recorded as g.finalWinPitcher
+// (set from the 結束比賽 flow). Both count only games actually recorded in
+// this App — see seasonPitchingFor for how imported historical W/G (when
+// available) gets merged in on top of this.
+function computeSeasonPitching(games){
+  const rows = {};
+  function ensure(num,name){
+    if (!rows[num]) rows[num] = {number:num,name,K:0,BB:0,R:0,outs:0,W:0,G:0};
+    return rows[num];
+  }
+  games.forEach(g=>{
+    computePitching(g).forEach(gr=>{
+      const r = ensure(gr.number, gr.name);
+      PITCHING_COUNT_FIELDS.forEach(f=>{ r[f] += gr[f]||0; });
+      r.G++;
+    });
+    if (g.finalWinPitcher && g.finalWinPitcher.number){
+      const num = String(g.finalWinPitcher.number);
+      const r = ensure(num, g.finalWinPitcher.name || rosterLookup(num) || ("#"+num));
+      r.W++;
+    }
+  });
+  return Object.values(rows);
+}
+
+// Unlike batting, pitching historically had no imported per-season source
+// in this App — until the 2025 season's 勝投／登板 (W/G) columns were
+// backfilled from the team spreadsheet (see team/season_2025's `rows`,
+// which now carry W/G alongside the batting counting stats on each
+// player's row — same source row, just extra fields). K/BB/R/outs are
+// still never imported (the spreadsheet never tracked those per pitcher),
+// so those always come entirely from games recorded in this App.
+// "2025-2026聯賽" has NO imported W/G: the spreadsheet tab covering that
+// season's second half is missing from the current file (its batting PA
+// no longer add up to what's already imported — see app changelog), so
+// backfilling W/G for it from the same source would be unreliable; that
+// season's W/G counts only what this App has itself recorded going
+// forward. Scoped the same way as batting: only league (聯賽) games/rows
+// count toward season/career; 盃賽／季後賽 are excluded (no separate
+// pitching card for those, unlike batting's 盃賽／季後賽戰績 — can be added
+// later if asked).
+function importedPitchingWG(rows){
+  return (rows||[]).filter(r=>r.W!=null || r.G!=null)
+    .map(r=>({number:r.number, name:r.name, W:r.W||0, G:r.G||0}));
+}
+function mergePitchingLists(...lists){
+  const rows = {};
+  lists.forEach(list=>{
+    (list||[]).forEach(r=>{
+      const key = battingKey(r);
+      if (!rows[key]) rows[key] = {number:r.number||"", name:r.name||"", K:0,BB:0,R:0,outs:0,W:0,G:0};
+      const row = rows[key];
+      PITCHING_COUNT_FIELDS.concat(["W","G"]).forEach(f=>{ row[f] += r[f]||0; });
+      if (!row.name && r.name) row.name = r.name;
+    });
+  });
+  return Object.values(rows);
+}
+function seasonPitchingFor(seasonKey, games){
+  const leagueGames = (games||[]).filter(g=>!g.oppLogOnly && isLeagueGame(g));
+  if (seasonKey==="生涯"){
+    const importedWG = Object.values(SEASON_IMPORT_KEYS).flatMap(k=>importedPitchingWG(AppState.seasonStats[k]));
+    return mergePitchingLists(importedWG, computeSeasonPitching(leagueGames));
+  }
+  const importKey = SEASON_IMPORT_KEYS[seasonKey];
+  const importedWG = importKey ? importedPitchingWG(AppState.seasonStats[importKey]) : [];
+  const live = computeSeasonPitching(leagueGames.filter(g=>gameSeason(g)===seasonKey));
+  return mergePitchingLists(importedWG, live);
+}
+
+function pitchingRowFor(list, number){
+  const found = list.find(r=>r.number===number);
+  if (found) return found;
+  const name = rosterLookup(number) || "";
+  return {number,name,K:0,BB:0,R:0,outs:0,W:0,G:0};
+}
+function pitchingRowHTML(r){
+  return `<tr>
+    <td class="name">${r.number?'#'+esc(r.number)+' ':''}${esc(r.name)}</td>
+    <td class="tabular">${(r.outs/3).toFixed(1)}</td><td class="tabular">${r.K}</td><td class="tabular">${r.BB}</td><td class="tabular">${r.R}</td>
+    <td class="tabular">${r.W||0}</td><td class="tabular">${r.G||0}</td>
+  </tr>`;
+}
+const PITCHING_TABLE_HEAD = `<tr><th>投手</th><th>局數</th><th>三振</th><th>保送</th><th>失分</th><th>勝投</th><th>出賽</th></tr>`;
+
+/* ---------- Team win/tie/loss record (球隊戰績) ---------- */
+function sumArr(arr){ return (arr||[]).reduce((a,b)=>a+(b||0),0); }
+function usScoreOf(g){ const ls=g.linescore||{top:[],bottom:[]}; return sumArr(g.batFirst?ls.top:ls.bottom); }
+function oppScoreOf(g){ const ls=g.linescore||{top:[],bottom:[]}; return sumArr(g.batFirst?ls.bottom:ls.top); }
+
+// Our team's win/tie/loss record — and breakdown by opponent — computed
+// directly from games recorded in this App (real opponent + real score for
+// every game, so this is exact, unlike the imported historical standings
+// below which only ever have an aggregate weekly result with no opponent
+// attached). Unlike seasonBattingFor, 盃賽／季後賽 games ARE includable here
+// (via competitionFilter) since a win/loss record doesn't have the "skews
+// career batting average" problem that kept cup/playoff out of career
+// totals — a cup win is still a win.
+function teamRecordFromGames(games, seasonKey, competitionFilter){
+  const filtered = (games||[]).filter(g=>{
+    if (g.oppLogOnly || g.status!=="final") return false;
+    if (seasonKey && seasonKey!=="生涯" && gameSeason(g)!==seasonKey) return false;
+    if (competitionFilter && competitionFilter!=="全部" && (g.competitionType||"聯賽")!==competitionFilter) return false;
+    return true;
+  });
+  let W=0,T=0,L=0,RF=0,RA=0;
+  const byOpp = {};
+  const gameRows = [];
+  filtered.forEach(g=>{
+    const us = usScoreOf(g), opp = oppScoreOf(g);
+    RF+=us; RA+=opp;
+    const res = us>opp ? "勝" : (us<opp ? "敗" : "和");
+    if (res==="勝") W++; else if (res==="敗") L++; else T++;
+    if (!byOpp[g.opponent]) byOpp[g.opponent] = {team:g.opponent,W:0,T:0,L:0,RF:0,RA:0};
+    const r = byOpp[g.opponent];
+    if (res==="勝") r.W++; else if (res==="敗") r.L++; else r.T++;
+    r.RF+=us; r.RA+=opp;
+    gameRows.push({date:g.date, opponent:g.opponent, us, opp, result:res, competitionType:g.competitionType||"聯賽"});
+  });
+  gameRows.sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const byOpponent = Object.values(byOpp).sort((a,b)=> (b.W-b.L)-(a.W-a.L) || a.team.localeCompare(b.team,"zh-Hant"));
+  return {W,T,L,points:W*2+T,RF,RA,byOpponent,games:gameRows};
+}
+
+// Win/tie/loss counts from an imported historical row's ordered "勝"/"和"/
+// "敗" sequence (may be empty — see TEAM_RECORD_IMPORT_KEYS).
+function deriveWTLFromResults(results){
+  const out = {W:0,T:0,L:0};
+  (results||[]).forEach(r=>{ if (r==="勝") out.W++; else if (r==="和") out.T++; else if (r==="敗") out.L++; });
+  return out;
+}
+
+// A single stat line for one of our players, by jersey number — falls
+// back to an all-zero row (using the roster name) so the career-query
+// selector can include players who haven't recorded a single play yet
+// (or, for a specific season, didn't appear in that season at all).
+function statsRowFor(battingList, number){
+  const found = battingList.find(r=>r.number===number);
+  if (found) return found;
+  const name = rosterLookup(number) || "";
+  return {number,name,PA:0,AB:0,H:0,"1B":0,"2B":0,"3B":0,HR:0,BB:0,SF:0,RBI:0,R:0,K:0,DP:0,E:0,AVG:0,OBP:0,SLG:0,OPS:0,ISO:0,OPSPlus:0};
+}
+function battingRowHTML(r){
+  return `<tr>
+    <td class="name">${r.number?'#'+esc(r.number)+' ':''}${esc(r.name)}</td>
+    <td class="tabular">${r.PA}</td><td class="tabular">${r.AB}</td><td class="tabular">${r.H}</td>
+    <td class="tabular">${fmt3(r.AVG)}</td><td class="tabular">${fmt3(r.OBP)}</td><td class="tabular">${fmt3(r.SLG)}</td><td class="tabular">${fmt3(r.OPS)}</td><td class="tabular">${fmt3(r.ISO)}</td><td class="tabular">${(r.OPSPlus||0).toFixed(1)}</td>
+    <td class="tabular">${r["1B"]}</td><td class="tabular">${r["2B"]}</td><td class="tabular">${r["3B"]}</td><td class="tabular">${r.HR}</td>
+    <td class="tabular">${r.BB}</td><td class="tabular">${r.SF}</td><td class="tabular">${r.RBI}</td><td class="tabular">${r.R}</td><td class="tabular">${r.K}</td><td class="tabular">${r.DP}</td><td class="tabular">${r.E}</td>
+  </tr>`;
+}
+const BATTING_TABLE_HEAD = `<tr><th>球員</th><th>打席</th><th>打數</th><th>安打</th><th>打擊率</th><th>上壘率</th><th>長打率</th><th>OPS</th><th>ISO</th><th>OPS+</th><th>1B</th><th>2B</th><th>3B</th><th>HR</th><th>BB</th><th>SF</th><th>打點</th><th>得分</th><th>K</th><th>DP</th><th>失誤</th></tr>`;
+
+function renderStatsView(){
+  const games = AppState.games||[];
+  const opponents = Array.from(new Set(games.map(g=>g.opponent).filter(Boolean)));
+  const filter = AppState.ui.statsOpponentFilter || "全部";
+  const oppNumFilter = AppState.ui.statsOpponentNumFilter || "全部";
+  const usFilter = AppState.ui.statsUsPlayerFilter || "全部";
+  const seasonFilter = AppState.ui.statsSeasonFilter || "生涯";
+  // Departed players sharing a jersey number with someone currently on the
+  // roster (see formerPlayersFromImports) — offered separately in the
+  // 球員／投手 dropdowns below so their historical stats stay reachable
+  // without being confused with the current same-numbered player's stats.
+  const formerPlayers = formerPlayersFromImports();
+  const seasonOptions = seasonOptionsFor(games);
+  const seasonBatting = seasonBattingFor(seasonFilter, games).sort((a,b)=> (Number(a.number)||0)-(Number(b.number)||0));
+  // 球員成績查詢 (formerly 球員生涯查詢): selecting "全部" shows every
+  // roster member's line for the selected season/生涯 scope at once,
+  // instead of only the per-player zone-diagram overview.
+  const allPlayersRows = usFilter==='全部' ? rosterForSeason(seasonFilter, games).map(p=>statsRowFor(seasonBatting, p.number)).sort((a,b)=>(Number(a.number)||0)-(Number(b.number)||0)) : [];
+  const oppAnalysis = computeZoneAnalysis(games, "opp", filter, oppNumFilter);
+  const usAnalysis = computeZoneAnalysis(games, "us", usFilter);
+  const oppBattingAll = computeOpponentBatting(games, filter);
+  // Jersey-number options, keyed by team+number (oppRowKey) — never by
+  // bare number, since different opponent teams can reuse the same
+  // jersey number for a different real player.
+  const oppNumberRows = oppBattingAll.filter(r=>r.number);
+  const oppBatting = oppNumFilter==='全部' ? oppBattingAll : oppBattingAll.filter(r=>oppRowKey(r)===oppNumFilter);
+
+  const oppTypeRows = battedTypeRateRows(oppAnalysis.typeCounts);
+  const usTypeRows = battedTypeRateRows(usAnalysis.typeCounts);
+
+  // 球隊戰績: live record from this App's own games (exact, incl. opponent
+  // breakdown) plus, when relevant, the imported historical group standings
+  // (aggregate only — see TEAM_RECORD_IMPORT_KEYS for why no opponent
+  // breakdown exists for those older seasons). The former standalone 盃賽／
+  // 季後賽戰績 card is folded into this same card (see competitionBatting
+  // below) — teamRecordCompetition now drives both the win/loss record AND
+  // that batting line together, instead of two separate 賽事類別 selectors.
+  const teamRecordSeasonOptions = seasonOptionsFor(games);
+  const teamRecordSeason = AppState.ui.teamRecordSeasonFilter || SEASON_DEFAULT;
+  const teamRecordCompetition = AppState.ui.teamRecordCompetitionFilter || "全部";
+  // "生涯"（全部賽季）sums every season together — teamRecordFromGames
+  // already treats seasonKey==="生涯" as "no season filter" (see below).
+  const liveTeamRecord = teamRecordFromGames(games, teamRecordSeason, teamRecordCompetition);
+  const teamRecordImportKey = TEAM_RECORD_IMPORT_KEYS[teamRecordSeason];
+  const teamRecordImportedRows = teamRecordImportKey ? (AppState.seasonTeamRecords[teamRecordImportKey]||[]) : [];
+  const showImportedStandings = teamRecordImportedRows.length && (teamRecordCompetition==='全部'||teamRecordCompetition==='聯賽');
+  // 盃賽／季後賽打擊成績 (formerly its own card) — shown only when the
+  // 賽事類別 filter isn't narrowed to 聯賽-only (聯賽 batting already has
+  // its own place: 球員成績查詢 below).
+  const competitionBatting = teamRecordCompetition!=='聯賽' ? competitionBattingFor(teamRecordCompetition, games).sort((a,b)=> (Number(a.number)||0)-(Number(b.number)||0)) : [];
+  const competitionGamesCount = games.filter(g=>!g.oppLogOnly && !isLeagueGame(g) && (teamRecordCompetition==='全部'||g.competitionType===teamRecordCompetition)).length;
+
+  // 投手成績查詢
+  const pitcherFilter = AppState.ui.statsPitcherFilter || "全部";
+  const pitcherSeasonFilter = AppState.ui.statsPitcherSeasonFilter || "生涯";
+  const pitcherSeasonPitching = seasonPitchingFor(pitcherSeasonFilter, games).sort((a,b)=> (Number(a.number)||0)-(Number(b.number)||0));
+  const pitcherCareerRow = pitcherFilter!=='全部' ? pitchingRowFor(pitcherSeasonPitching, pitcherFilter) : null;
+
+  // When showing multiple teams at once (無隊名篩選), prefix each row with
+  // the team name — otherwise "#5" from two different opponents would
+  // look like the same person.
+  const oppBattingRows = oppBatting.map(r=>`<tr>
+    <td class="name">${filter==='全部' && r.team ? esc(r.team)+' ' : ''}${r.number ? '#'+esc(r.number) : '未填背號'}</td>
+    <td class="tabular">${r.PA}</td><td class="tabular">${r.AB}</td><td class="tabular">${r.H}</td>
+    <td class="tabular">${r["1B"]}</td><td class="tabular">${r["2B"]}</td><td class="tabular">${r["3B"]}</td><td class="tabular">${r.HR}</td>
+    <td class="tabular">${r.BB}</td><td class="tabular">${r.K}</td><td class="tabular">${r.GO}</td><td class="tabular">${r.FO}</td><td class="tabular">${r.FC}</td><td class="tabular">${r.E}</td><td class="tabular">${r.SF}</td><td class="tabular">${r.DP}</td>
+  </tr>`).join("");
+
+  const careerRow = usFilter!=='全部' ? statsRowFor(seasonBatting, usFilter) : null;
+
+  $app.innerHTML = `
+    <div class="topbar"><div class="topbar-inner">
+      <button class="icon-btn" onclick="backHome()">‹ 返回</button>
+      <div class="brand" style="justify-content:center;"><span class="brand-mark" style="font-size:18px;">數據分析</span></div>
+      <span style="width:56px;"></span>
+    </div></div>
+
+    <div class="stats-body">
+    <div class="card">
+      <h2>球隊戰績</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div class="field" style="margin-bottom:8px;flex:1;min-width:140px;">
+          <label>球季</label>
+          <select onchange="selectTeamRecordSeason(this.value)">
+            <option value="生涯" ${teamRecordSeason==='生涯'?'selected':''}>全部賽季</option>
+            ${teamRecordSeasonOptions.map(s=>`<option ${teamRecordSeason===s?'selected':''}>${esc(s)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:8px;flex:1;min-width:140px;">
+          <label>賽事類別</label>
+          <select onchange="selectTeamRecordCompetition(this.value)">
+            <option ${teamRecordCompetition==='全部'?'selected':''}>全部</option>
+            <option ${teamRecordCompetition==='聯賽'?'selected':''}>聯賽</option>
+            <option ${teamRecordCompetition==='盃賽'?'selected':''}>盃賽</option>
+            <option ${teamRecordCompetition==='季後賽'?'selected':''}>季後賽</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="k" style="font-size:13px;color:var(--ink-dim);margin:10px 0 4px;">用本 App 記錄的比賽（${liveTeamRecord.W+liveTeamRecord.T+liveTeamRecord.L} 場已完賽）</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;margin-bottom:8px;">
+        <div class="tabular" style="font-size:22px;font-weight:800;">${liveTeamRecord.W}勝${liveTeamRecord.T}和${liveTeamRecord.L}敗</div>
+        <div style="color:var(--ink-dim);font-size:13px;">積分 ${liveTeamRecord.points}（勝2分／和1分／敗0分）· 得失分 ${liveTeamRecord.RF}:${liveTeamRecord.RA}</div>
+      </div>
+      ${liveTeamRecord.byOpponent.length ? `
+      <div class="stat-table-wrap" style="margin-bottom:4px;">
+        <table class="stats">
+          <thead><tr><th>對手</th><th>勝</th><th>和</th><th>敗</th><th>得分</th><th>失分</th></tr></thead>
+          <tbody>${liveTeamRecord.byOpponent.map(r=>`<tr><td class="name">${esc(r.team)}</td><td class="tabular">${r.W}</td><td class="tabular">${r.T}</td><td class="tabular">${r.L}</td><td class="tabular">${r.RF}</td><td class="tabular">${r.RA}</td></tr>`).join("")}</tbody>
+        </table>
+      </div>` : `<div class="hint">這個篩選條件下，用本 App 記錄且已完賽的比賽目前還沒有資料。</div>`}
+
+      ${showImportedStandings ? `
+      <div class="k" style="font-size:13px;color:var(--ink-dim);margin:14px 0 4px;">「${esc(teamRecordSeason)}」球季積分表（球隊試算表／紙本紀錄匯入，僅聯賽全組排名參考）</div>
+      <div class="stat-table-wrap">
+        <table class="stats">
+          <thead><tr><th>排名</th><th>球隊</th><th>積分</th><th>戰績</th></tr></thead>
+          <tbody>${teamRecordImportedRows.slice().sort((a,b)=>(a.rank||99)-(b.rank||99)).map(r=>{
+            const wtl = deriveWTLFromResults(r.results);
+            const wtlLabel = (r.results&&r.results.length) ? `${wtl.W}勝${wtl.T}和${wtl.L}敗` : '（無逐場資料）';
+            const hl = r.team==='振宇五金' ? 'style="font-weight:800;color:var(--accent);"' : '';
+            return `<tr ${hl}><td class="tabular">${r.rank!=null?'#'+r.rank:'-'}</td><td class="name">${esc(r.team)}</td><td class="tabular">${r.points!=null?r.points:'-'}</td><td class="tabular">${esc(wtlLabel)}</td></tr>`;
+          }).join("")}</tbody>
+        </table>
+      </div>` : ``}
+
+      ${teamRecordCompetition!=='聯賽' && competitionGamesCount>0 ? `
+      <div class="k" style="font-size:13px;color:var(--ink-dim);margin:14px 0 4px;">盃賽／季後賽打擊成績${teamRecordCompetition==='全部'?'（盃賽＋季後賽合計）':''}</div>
+      <div class="stat-table-wrap">
+        <table class="stats sortable">
+          <thead>${BATTING_TABLE_HEAD}</thead>
+          <tbody>${competitionBatting.map(battingRowHTML).join("") || '<tr><td colspan="21" style="color:var(--ink-dim);">尚無資料</td></tr>'}</tbody>
+        </table>
+      </div>` : ``}
+    </div>
+
+    <div class="card">
+      <h2>球員成績查詢</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div class="field" style="margin-bottom:8px;flex:1;min-width:140px;">
+          <label>球員</label>
+          <select onchange="selectStatsUsPlayer(this.value)">
+            <option ${usFilter==='全部'?'selected':''}>全部</option>
+            ${AppState.roster.map(p=>`<option value="${esc(p.number)}" ${usFilter===p.number?'selected':''}>#${esc(p.number)} ${esc(p.name)}</option>`).join("")}
+            ${formerPlayers.length ? `<optgroup label="已離隊（背號重複，資料獨立保留）">${formerPlayers.map(p=>`<option value="${esc(p.number)}" ${usFilter===p.number?'selected':''}>#${esc(p.number)} ${esc(p.name)}</option>`).join("")}</optgroup>` : ``}
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:8px;flex:1;min-width:140px;">
+          <label>球季</label>
+          <select onchange="selectStatsSeason(this.value)">
+            <option ${seasonFilter==='生涯'?'selected':''}>生涯</option>
+            ${seasonOptions.map(s=>`<option ${seasonFilter===s?'selected':''}>${esc(s)}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      ${careerRow ? `
+      <div class="stat-table-wrap" style="margin-bottom:10px;">
+        <table class="stats">
+          <thead>${BATTING_TABLE_HEAD}</thead>
+          <tbody>${battingRowHTML(careerRow)}</tbody>
+        </table>
+      </div>` : ``}
+      ${usFilter==='全部' ? `
+      <div class="stat-table-wrap" style="margin-bottom:10px;">
+        <table class="stats sortable">
+          <thead>${BATTING_TABLE_HEAD}</thead>
+          <tbody>${allPlayersRows.map(battingRowHTML).join("") || '<tr><td colspan="21" style="color:var(--ink-dim);">尚無資料</td></tr>'}</tbody>
+        </table>
+      </div>` : ``}
+      ${zoneDiagramBlock('us', usAnalysis.zoneStats)}
+      <div style="margin-top:10px;max-width:220px;">
+        <div class="k" style="font-size:13px;color:var(--ink-dim);margin-bottom:4px;">球種比例</div>
+        <table class="stats"><tbody>${usTypeRows}</tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>投手成績查詢</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div class="field" style="margin-bottom:8px;flex:1;min-width:140px;">
+          <label>投手</label>
+          <select onchange="selectStatsPitcher(this.value)">
+            <option ${pitcherFilter==='全部'?'selected':''}>全部</option>
+            ${AppState.roster.map(p=>`<option value="${esc(p.number)}" ${pitcherFilter===p.number?'selected':''}>#${esc(p.number)} ${esc(p.name)}</option>`).join("")}
+            ${formerPlayers.length ? `<optgroup label="已離隊（背號重複，資料獨立保留）">${formerPlayers.map(p=>`<option value="${esc(p.number)}" ${pitcherFilter===p.number?'selected':''}>#${esc(p.number)} ${esc(p.name)}</option>`).join("")}</optgroup>` : ``}
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:8px;flex:1;min-width:140px;">
+          <label>球季</label>
+          <select onchange="selectStatsPitcherSeason(this.value)">
+            <option ${pitcherSeasonFilter==='生涯'?'selected':''}>生涯</option>
+            ${seasonOptions.map(s=>`<option ${pitcherSeasonFilter===s?'selected':''}>${esc(s)}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      ${pitcherCareerRow ? `
+      <div class="stat-table-wrap">
+        <table class="stats">
+          <thead>${PITCHING_TABLE_HEAD}</thead>
+          <tbody>${pitchingRowHTML(pitcherCareerRow)}</tbody>
+        </table>
+      </div>` : `
+      <div class="stat-table-wrap">
+        <table class="stats">
+          <thead>${PITCHING_TABLE_HEAD}</thead>
+          <tbody>${pitcherSeasonPitching.map(pitchingRowHTML).join("") || '<tr><td colspan="7" style="color:var(--ink-dim);">尚無資料</td></tr>'}</tbody>
+        </table>
+      </div>`}
+    </div>
+
+    <div class="card">
+      <h2>對手分析</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div class="field" style="margin-bottom:8px;flex:1;min-width:140px;">
+          <label>對手</label>
+          <select onchange="selectStatsOpponent(this.value)">
+            <option ${filter==='全部'?'selected':''}>全部</option>
+            ${opponents.map(o=>`<option ${filter===o?'selected':''}>${esc(o)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:8px;flex:1;min-width:120px;">
+          <label>背號</label>
+          <select onchange="selectStatsOpponentNum(this.value)">
+            <option value="全部" ${oppNumFilter==='全部'?'selected':''}>全部</option>
+            ${oppNumberRows.map(r=>{
+              const key = oppRowKey(r);
+              const label = filter==='全部' ? `${r.team} #${r.number}` : `#${r.number}`;
+              return `<option value="${esc(key)}" ${oppNumFilter===key?'selected':''}>${esc(label)}</option>`;
+            }).join("")}
+          </select>
+        </div>
+      </div>
+      ${zoneDiagramBlock('opp', oppAnalysis.zoneStats)}
+      <div style="margin-top:10px;max-width:220px;">
+        <div class="k" style="font-size:13px;color:var(--ink-dim);margin-bottom:4px;">球種比例</div>
+        <table class="stats"><tbody>${oppTypeRows}</tbody></table>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="k" style="font-size:13px;color:var(--ink-dim);margin-bottom:6px;">依對方背號分析（無背號的紀錄歸入「未填背號」）</div>
+        <div class="stat-table-wrap">
+          <table class="stats sortable">
+            <thead><tr><th>背號</th><th>打席</th><th>打數</th><th>安打</th><th>1B</th><th>2B</th><th>3B</th><th>HR</th><th>BB</th><th>K</th><th>滾地出局</th><th>飛球出局</th><th>FC</th><th>失誤</th><th>SF</th><th>DP</th></tr></thead>
+            <tbody>${oppBattingRows || '<tr><td colspan="16" style="color:var(--ink-dim);">尚無資料</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </div>
+  `;
+}
+
+async function goAttendance(){
+  AppState.games = await Store.listGames();
+  AppState.seasonStats.season_2025 = await Store.getSeasonStats("season_2025");
+  AppState.seasonStats.season_2025_2026 = await Store.getSeasonStats("season_2025_2026");
+  AppState.view="attendance"; render();
+}
+function selectAttendanceSeason(v){ AppState.ui.attendanceSeasonFilter=v; render(); }
+function renderAttendanceView(){
+  const allGames = AppState.games||[];
+  const seasonFilter = AppState.ui.attendanceSeasonFilter || "生涯";
+  const seasonOptions = seasonOptionsFor(allGames);
+  // Exclude imported opponent-only aggregate logs (oppLogOnly) — they're
+  // not real games we played, so they must not count toward attendance.
+  // Attendance counts every game we actually fielded a team for
+  // (league／盃賽／季後賽 alike) — unlike the career/season batting totals,
+  // showing up for a cup game still counts as showing up.
+  const games = allGames.filter(g=>!g.oppLogOnly && (seasonFilter==='生涯' || gameSeason(g)===seasonFilter));
+  // For a closed/imported season (see SEASON_GAME_COUNTS), `games.length`
+  // alone badly undercounts — those 24-game seasons mostly aren't
+  // individual documents in this app, only their final W/T/L got
+  // imported. totalGamesForScope substitutes the season's known real
+  // total in that case (still just games.length for the current/any
+  // other season, where every game really is a document here).
+  const totalGames = totalGamesForScope(seasonFilter, games, allGames);
+  const attendance = {};
+  games.forEach(g=>{
+    const present = new Set();
+    (g.lineup||[]).forEach(r=>{ if (r.number) present.add(r.number); });
+    (g.bench||[]).forEach(b=>{ if (b.number) present.add(b.number); });
+    (g.plays||[]).forEach(p=>{ if (p.side==="us" && p.batterNumber) present.add(p.batterNumber); });
+    present.forEach(num=>{ attendance[num]=(attendance[num]||0)+1; });
+  });
+  // Layer in imported historical attendance (see importedAttendance)
+  // on top of whatever this App has actually recorded — for "生涯" every
+  // imported season contributes, for one specific season only that
+  // season's own import (if any). The two sources never overlap in
+  // practice (an imported season has essentially no game documents of
+  // its own), so this is a plain add, not a max/dedupe.
+  const importedSeasonKeys = seasonFilter==='生涯' ? Object.keys(SEASON_IMPORT_KEYS) : [seasonFilter];
+  importedSeasonKeys.forEach(sk=>{
+    const imp = importedAttendance(sk);
+    Object.keys(imp).forEach(num=>{ attendance[num] = (attendance[num]||0) + imp[num]; });
+  });
+  // For a specific season, only list players who were actually part of
+  // that season (imported spreadsheet roster, or appeared in a game
+  // tagged with that season) — a current squad member who joined later
+  // shouldn't show up with a misleading 0/24 for a season before their
+  // time.
+  const rosterRows = rosterForSeason(seasonFilter, allGames);
+  const attendRows = rosterRows.map(p=>{
+    const cnt = attendance[p.number]||0;
+    return {number:p.number, name:p.name, games:cnt, rate: totalGames? cnt/totalGames : 0};
+  }).sort((a,b)=> b.rate-a.rate || b.games-a.games);
+
+  // Leaderboards follow the same season/生涯 scoping as 球員生涯查詢 —
+  // league games only (盃賽／季後賽 excluded, imported historical rows
+  // included where applicable) — so "season" means the same thing
+  // everywhere in the app.
+  const batting = seasonBattingFor(seasonFilter, allGames);
+  // Minimum-PA qualification (like a batting title): players whose plate
+  // appearances are below 60% of total games (attendance's totalGames,
+  // which counts every game fielded incl. 盃賽／季後賽) are excluded from
+  // all leaderboards below, so a player with only a couple of PA can't
+  // top the AVG/OPS list on a tiny sample.
+  const qualifyMinPA = totalGames * 0.6;
+  const qualified = batting.filter(r=>r.PA >= qualifyMinPA);
+  const withAB = qualified.filter(r=>r.AB>0);
+  // 勝投 is a pitching count stat, not a batting rate/count stat, so it
+  // isn't put through the PA-based qualifyMinPA threshold above — any
+  // pitcher who has actually appeared (G>0) for this season/生涯 scope
+  // is eligible.
+  const pitchingQualified = seasonPitchingFor(seasonFilter, allGames).filter(r=>r.G>0);
+  const rankTable = (list, valueFn, label) => `
+    <div style="flex:1;min-width:150px;">
+      <div class="k" style="font-size:13px;color:var(--ink-dim);margin-bottom:4px;">${label}</div>
+      <table class="stats"><tbody>
+        ${list.slice(0,5).map((r,i)=>`<tr><td class="name">${i+1}. #${esc(r.number)} ${esc(r.name)}</td><td class="tabular">${valueFn(r)}</td></tr>`).join("") || '<tr><td style="color:var(--ink-dim);">尚無資料</td></tr>'}
+      </tbody></table>
+    </div>`;
+
+  $app.innerHTML = `
+    <div class="topbar"><div class="topbar-inner">
+      <button class="icon-btn" onclick="backHome()">‹ 返回</button>
+      <div class="brand" style="justify-content:center;"><span class="brand-mark" style="font-size:18px;">出席與排行榜</span></div>
+      <span style="width:56px;"></span>
+    </div></div>
+
+    <div class="attendance-body">
+    <div class="card">
+      <div class="field" style="margin-bottom:0;max-width:220px;">
+        <label>球季</label>
+        <select onchange="selectAttendanceSeason(this.value)">
+          <option ${seasonFilter==='生涯'?'selected':''}>生涯</option>
+          ${seasonOptions.map(s=>`<option ${seasonFilter===s?'selected':''}>${esc(s)}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>排行榜</h2>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        ${rankTable([...withAB].sort((a,b)=>b.AVG-a.AVG), r=>fmt3(r.AVG), "打擊率")}
+        ${rankTable([...withAB].sort((a,b)=>b.OBP-a.OBP), r=>fmt3(r.OBP), "上壘率")}
+        ${rankTable([...withAB].sort((a,b)=>b.OPS-a.OPS), r=>fmt3(r.OPS), "OPS")}
+        ${rankTable([...withAB].sort((a,b)=>(b.OPSPlus||0)-(a.OPSPlus||0)), r=>(r.OPSPlus||0).toFixed(1), "OPS+")}
+        ${rankTable([...qualified].sort((a,b)=>b.H-a.H), r=>r.H, "安打")}
+        ${rankTable([...qualified].sort((a,b)=>b.RBI-a.RBI), r=>r.RBI, "打點")}
+        ${rankTable([...pitchingQualified].sort((a,b)=>(b.W||0)-(a.W||0)), r=>r.W||0, "勝投")}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>出席率</h2>
+      <div class="stat-table-wrap">
+        <table class="stats">
+          <thead><tr><th>球員</th><th>出席場數</th><th>出席率</th></tr></thead>
+          <tbody>
+            ${attendRows.map(r=>`<tr><td class="name">#${esc(r.number)} ${esc(r.name)}</td><td class="tabular">${r.games}/${totalGames}</td><td class="tabular">${(r.rate*100).toFixed(0)}%</td></tr>`).join("") || '<tr><td colspan="3" style="color:var(--ink-dim);">尚無資料</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    </div>
+  `;
+}
+
+/* ---------- Field diagram (batted-ball landing spot) ---------- */
+function fzPolar(cx,cy,r,angDeg){
+  const a = angDeg*Math.PI/180;
+  return [cx + r*Math.sin(a), cy - r*Math.cos(a)];
+}
+function fzWedgePath(cx,cy,r1,r2,a1,a2){
+  const [ix1,iy1]=fzPolar(cx,cy,r1,a1);
+  const [ix2,iy2]=fzPolar(cx,cy,r1,a2);
+  const [ox1,oy1]=fzPolar(cx,cy,r2,a1);
+  const [ox2,oy2]=fzPolar(cx,cy,r2,a2);
+  return `M ${ix1.toFixed(1)} ${iy1.toFixed(1)} L ${ox1.toFixed(1)} ${oy1.toFixed(1)} `+
+    `A ${r2} ${r2} 0 0 1 ${ox2.toFixed(1)} ${oy2.toFixed(1)} L ${ix2.toFixed(1)} ${iy2.toFixed(1)} `+
+    `A ${r1} ${r1} 0 0 0 ${ix1.toFixed(1)} ${iy1.toFixed(1)} Z`;
+}
+function fieldDiagramHTML(selected){
+  const cx=150, cy=200;
+  const wedges = FIELD_ZONES.map(z=>{
+    const r1 = z.row==="in" ? 20 : 100;
+    const r2 = z.row==="in" ? 100 : 185;
+    const d = fzWedgePath(cx,cy,r1,r2,z.a1,z.a2);
+    const [lx,ly] = fzPolar(cx,cy,(r1+r2)/2,(z.a1+z.a2)/2);
+    const sel = selected===z.name;
+    return `<path d="${d}" class="fz-wedge ${z.row} ${sel?'sel':''}" onclick="setZone('${z.name}')"></path>
+      <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" class="fz-label ${sel?'sel':''}" text-anchor="middle" dominant-baseline="middle">${z.name}</text>`;
+  }).join("");
+  const [fx1,fy1] = fzPolar(cx,cy,185,-45);
+  const [fx2,fy2] = fzPolar(cx,cy,185,45);
+  return `<svg viewBox="0 0 300 205" class="field-svg">
+    ${wedges}
+    <line x1="${cx}" y1="${cy}" x2="${fx1.toFixed(1)}" y2="${fy1.toFixed(1)}" class="fz-foul"/>
+    <line x1="${cx}" y1="${cy}" x2="${fx2.toFixed(1)}" y2="${fy2.toFixed(1)}" class="fz-foul"/>
+    <path d="M ${fx1.toFixed(1)} ${fy1.toFixed(1)} A 185 185 0 0 1 ${fx2.toFixed(1)} ${fy2.toFixed(1)}" class="fz-fence"/>
+    <circle cx="${cx}" cy="${cy}" r="4" class="fz-home"/>
+  </svg>`;
+}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  // oppLogOnly entries are aggregated historical opponent-batting data
+  // imported from the season spreadsheet (not a real single game we
+  // played) — they feed 對手分析 stats but shouldn't clutter this list.
+  const list = (AppState.games||[]).filter(g=>!g.oppLogOnly);
+  let rows = "";
+  if (!list.length){
+    rows = `<div class="empty-state"><div class="em">🥎</div>還沒有任何比賽紀錄<br>點下方「開始新比賽」建立第一場</div>`;
+  } else {
+    rows = list.map(g=>{
+      const us = g.batFirst ? (g.linescore.top||[]).reduce((a,b)=>a+(b||0),0) : (g.linescore.bottom||[]).reduce((a,b)=>a+(b||0),0);
+      const opp = g.batFirst ? (g.linescore.bottom||[]).reduce((a,b)=>a+(b||0),0) : (g.linescore.top||[]).reduce((a,b)=>a+(b||0),0);
+      const live = g.status!=="final";
+      return `<div class="game-item" onclick="openGame('${g.id}')">
+        <div class="gi-vs">
+          <div class="gi-opp">${esc(g.ourTeamName)} <span style="color:var(--ink-dim);font-weight:400;">vs</span> ${esc(g.opponent)}</div>
+          <div class="gi-meta">${esc(g.date)} · ${g.batFirst?"先攻":"先守"} ${live?`· 第${g.inning}局`:""} · ${gameSeasonTagHTML(g)}</div>
+        </div>
+        <div class="gi-score tabular">${us}<span style="color:var(--ink-dim);font-weight:400;"> : </span>${opp}</div>
+        <span class="status-pill ${live?"live":"final"}">${live?"進行中":"已完成"}</span>
+      </div>`;
+    }).join("");
+  }
+  $app.innerHTML = `
+    <div class="topbar"><div class="topbar-inner">
+      <div class="brand"><span class="brand-mark">🥎 振宇五金</span><span class="brand-sub">壘球記分站</span></div>
+      <button class="icon-btn" onclick="openRosterEditor()">名單</button>
+    </div></div>
+    <div style="margin-top:14px;">
+      <button class="btn primary block" onclick="goSetup()">＋ 開始新比賽</button>
+    </div>
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="btn" style="flex:1;" onclick="goStats()">📊 數據分析</button>
+      <button class="btn" style="flex:1;" onclick="goAttendance()">🏅 出席／排行榜</button>
+    </div>
+    <div class="card">
+      <h2>比賽紀錄</h2>
+      <div class="hint">點選任一場比賽可繼續記錄或查看戰績</div>
+      ${rows}
+    </div>
+  `;
+}
+
+async function openGame(id){
+  const g = await Store.loadGame(id);
+  if (!g) return;
+  AppState.game = g;
+  await Store.setActiveGameId(id);
+  AppState.view = g.status==="setup" ? "lineup" : "game";
+  render();
+}
+
+// Delete a game — no longer offered as a one-tap button on the home list
+// (too easy to hit by accident); it's now only reachable after opening the
+// game itself (in-progress games: via the 戰績 modal's 🗑 button, see
+// renderBoxModal; finished games: via the button on the final-summary
+// screen, see deleteFinishedGame/renderFinalSummary). A finished game is
+// admin-gated (via games_final's write rule), an in-progress/erroneous one
+// is not. If the game being deleted is the one currently open on screen,
+// also clears it and returns to the home screen.
+async function deleteGameFromList(id, status){
+  if (!(await appConfirm("確定要刪除這場比賽紀錄嗎？此動作無法復原。"))) return;
+  const wasFinal = status==="final";
+  const res = await Store.deleteGame(id, wasFinal);
+  if (res && res.ok===false){
+    appAlert(wasFinal ? "只有管理員能刪除已完賽的紀錄。" : "刪除失敗，請稍後再試。");
+    return;
+  }
+  const activeId = await Store.getActiveGameId();
+  if (activeId===id) await Store.setActiveGameId(null);
+  if (AppState.game && AppState.game.id===id){
+    AppState.game = null;
+    AppState.view = "home";
+    AppState.ui.showBox = false;
+  }
+  AppState.games = await Store.listGames();
+  render();
+}
+
+function goSetup(){
+  AppState.game = newGame({});
+  AppState.view = "setup";
+  render();
+}
+
+/* ---------- SETUP ---------- */
+function renderSetup(){
+  const g = AppState.game;
+  $app.innerHTML = `
+    <div class="topbar"><div class="topbar-inner">
+      <button class="icon-btn" onclick="backHome()">‹ 返回</button>
+      <div class="brand" style="justify-content:center;"><span class="brand-mark" style="font-size:18px;">新比賽設定</span></div>
+      <span style="width:56px;"></span>
+    </div></div>
+    <div class="card">
+      <div class="field">
+        <label>對手隊名</label>
+        <input type="text" id="f-opp" placeholder="例：奕郝" value="${esc(g.opponent==='對手'?'':g.opponent)}">
+      </div>
+      <div class="field">
+        <label>本隊隊名</label>
+        <input type="text" id="f-us" value="${esc(g.ourTeamName)}">
+      </div>
+      <div class="field">
+        <label>日期</label>
+        <input type="date" id="f-date" value="${esc(g.date)}">
+      </div>
+      <div class="field">
+        <label>攻守順序</label>
+        <div class="seg">
+          <button id="seg-bat" class="${g.batFirst?'active':''}" onclick="setBatFirst(true)">先攻</button>
+          <button id="seg-field" class="${!g.batFirst?'active':''}" onclick="setBatFirst(false)">先守</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>賽事類別</label>
+        <div class="seg">
+          <button class="${g.competitionType==='聯賽'?'active':''}" onclick="setCompetitionType('聯賽')">聯賽</button>
+          <button class="${g.competitionType==='盃賽'?'active':''}" onclick="setCompetitionType('盃賽')">盃賽</button>
+          <button class="${g.competitionType==='季後賽'?'active':''}" onclick="setCompetitionType('季後賽')">季後賽</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>球季（選填，供生涯數據分季查詢用；盃賽／季後賽不計入球季數據）</label>
+        <input type="text" id="f-season" list="season-list" value="${esc(g.season)}" placeholder="例：${esc(SEASON_DEFAULT)}">
+        <datalist id="season-list">
+          ${KNOWN_SEASONS.map(s=>`<option value="${esc(s)}">`).join("")}
+        </datalist>
+      </div>
+      <button class="btn primary block" onclick="confirmSetup()">下一步：編排打線 →</button>
+    </div>
+  `;
+}
+function setBatFirst(v){ AppState.game.batFirst=v; render(); }
+function setCompetitionType(v){ AppState.game.competitionType=v; render(); }
+function backHome(){ AppState.game=null; AppState.view="home"; render(); }
+function confirmSetup(){
+  const g = AppState.game;
+  g.opponent = document.getElementById("f-opp").value.trim() || "對手";
+  g.ourTeamName = document.getElementById("f-us").value.trim() || "振宇五金";
+  g.date = document.getElementById("f-date").value || todayStr();
+  g.season = document.getElementById("f-season").value.trim() || SEASON_DEFAULT;
+  if (!g.lineup.length){
+    for (let i=1;i<=10;i++) g.lineup.push({id:uid(),order:i,number:"",name:"",position:""});
+  }
+  if (!g.oppRoster.length){
+    g.oppBattingSlots = g.oppBattingSlots || 10;
+    for (let i=0;i<g.oppBattingSlots;i++) g.oppRoster.push({number:"", name:""});
+  }
+  AppState.view="lineup";
+  render();
+}
+
+/* ---------- LINEUP BUILDER ---------- */
+function renderLineupBuilder(){
+  const g = AppState.game;
+  const usedNums = new Set([...g.lineup.map(r=>r.number), ...g.bench.map(b=>b.number)].filter(Boolean));
+  // A position already assigned to another row is left out of every
+  // other row's dropdown entirely, so two players can never end up with
+  // the same position from this screen — no need for an after-the-fact
+  // alert. (This row's OWN current position stays in its own list so it
+  // shows as selected.)
+  const usedPositions = new Set(g.lineup.map(r=>r.position).filter(Boolean));
+  const rows = g.lineup.map((row,i)=>{
+    const name = row.number ? (rosterLookup(row.number) || "?") : "";
+    const posOptions = POSITIONS.filter(p => p===row.position || !usedPositions.has(p));
+    return `<div class="lineup-row">
+      <div class="order-num tabular">${row.order}</div>
+      <input class="num-input" type="text" inputmode="numeric" maxlength="3" value="${esc(row.number)}"
+        placeholder="背號" onchange="setLineupNumber(${i},this.value)">
+      <div class="lb-name ${name?'':'empty'}">${esc(name||'—')}</div>
+      <select class="pos-select" onchange="setLineupPos(${i},this.value)">
+        <option value="">守位</option>
+        ${posOptions.map(p=>`<option value="${p}" ${row.position===p?'selected':''}>${p}</option>`).join("")}
+      </select>
+      <button class="row-x" onclick="removeLineupRow(${i})">×</button>
+    </div>`;
+  }).join("");
+
+  const benchChips = g.bench.map((b,i)=>`<span class="bench-chip">#${esc(b.number)} ${esc(b.name)}<button onclick="removeBench(${i})">×</button></span>`).join("") || `<span class="roster-hint">尚未加入替補球員</span>`;
+
+  const oppSlots = g.oppBattingSlots || 10;
+  const oppRosterRows = g.oppRoster.map((b,i)=>`<div class="lineup-row">
+      <div class="order-num tabular">${i+1}</div>
+      <input class="num-input" type="text" inputmode="numeric" maxlength="3" value="${esc(b.number)}"
+        placeholder="背號" onchange="setOppRosterNumber(${i},this.value)">
+      <input type="text" value="${esc(b.name)}" placeholder="姓名／綽號（選填）"
+        style="flex:1;min-width:0;font-size:16px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);"
+        onchange="setOppRosterName(${i},this.value)">
+    </div>`).join("");
+
+  $app.innerHTML = `
+    <div class="topbar"><div class="topbar-inner">
+      <button class="icon-btn" onclick="AppState.view='setup';render();">‹ 返回</button>
+      <div class="brand" style="justify-content:center;"><span class="brand-mark" style="font-size:18px;">編排打線</span></div>
+      <span style="width:56px;"></span>
+    </div></div>
+
+    <div class="card">
+      <h2>先發打線</h2>
+      <div class="hint">輸入背號會自動帶出姓名；可調整守位。</div>
+      ${rows}
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn" onclick="addLineupRow()">＋ 新增棒次</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>替補名單</h2>
+      <div class="hint">輸入背號加入板凳球員，供代打/代跑/守備替換使用。</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" inputmode="numeric" id="bench-num" placeholder="背號" style="width:90px;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);">
+        <button class="btn" onclick="addBench()">加入</button>
+      </div>
+      <div style="margin-top:10px;">${benchChips}</div>
+    </div>
+
+    <div class="card">
+      <h2>對手名單（選填）</h2>
+      <div class="hint">先填好各棒次的對手背號／姓名，守備記錄時就能直接點選，不用每次手動輸入；背號可以留白，之後守備記錄時再手動輸入也可以。</div>
+      <div class="field" style="max-width:220px;">
+        <label>對方總棒次</label>
+        <div class="seg">
+          <button class="${oppSlots===10?'active':''}" onclick="setOppBattingSlots(10)">10棒</button>
+          <button class="${oppSlots===11?'active':''}" onclick="setOppBattingSlots(11)">11棒</button>
+        </div>
+      </div>
+      ${oppRosterRows}
+    </div>
+
+    <div class="action-bar"><div class="action-bar-inner">
+      <button class="btn block primary" onclick="startGame()">開始比賽 ⚾</button>
+    </div></div>
+  `;
+}
+function setLineupNumber(i,val){ AppState.game.lineup[i].number = val.trim(); render(); }
+function setLineupPos(i,val){
+  // Each row's dropdown already excludes positions taken by other rows
+  // (see renderLineupBuilder's posOptions), so there's nothing to
+  // validate here — just record the choice.
+  AppState.game.lineup[i].position = val;
+  render();
+}
+function addLineupRow(){
+  const g = AppState.game;
+  g.lineup.push({id:uid(), order:g.lineup.length+1, number:"", name:"", position:""});
+  render();
+}
+function removeLineupRow(i){
+  const g = AppState.game;
+  g.lineup.splice(i,1);
+  g.lineup.forEach((r,idx)=>r.order=idx+1);
+  render();
+}
+function addBench(){
+  const g = AppState.game;
+  const el = document.getElementById("bench-num");
+  const num = el.value.trim();
+  if (!num) return;
+  const name = rosterLookup(num);
+  if (!name){ appAlert("名單中找不到背號 "+num+"，請先於「名單」新增球員。"); return; }
+  g.bench.push({number:num, name});
+  render();
+}
+function removeBench(i){ AppState.game.bench.splice(i,1); render(); }
+function setOppRosterNumber(i,val){ AppState.game.oppRoster[i].number = val.trim(); render(); }
+function setOppRosterName(i,val){ AppState.game.oppRoster[i].name = val.trim(); render(); }
+// Resize the fixed opponent batting-order slot list (10 or 11 slots).
+// Growing pads with blank rows; shrinking drops the trailing slots — if
+// any of those being dropped actually had data in them, confirm first
+// so a team doesn't lose a filled-in number/name by accident.
+async function setOppBattingSlots(n){
+  const g = AppState.game;
+  const cur = g.oppRoster.length;
+  if (n < cur){
+    const dropped = g.oppRoster.slice(n);
+    const hasData = dropped.some(b=>b.number||b.name);
+    if (hasData && !(await appConfirm(`縮減為 ${n} 棒會清除第 ${n+1}～${cur} 棒已填的資料，確定要縮減嗎？`))) return;
+    g.oppRoster = g.oppRoster.slice(0, n);
+  } else {
+    while (g.oppRoster.length < n) g.oppRoster.push({number:"", name:""});
+  }
+  g.oppBattingSlots = n;
+  render();
+}
+
+async function startGame(){
+  const g = AppState.game;
+  const filled = g.lineup.filter(r=>r.number);
+  if (filled.length < 1){ appAlert("請至少填入一位打者背號"); return; }
+  g.lineup = g.lineup.filter(r=>r.number).map((r,idx)=>({...r, order:idx+1, name:rosterLookup(r.number)||("#"+r.number)}));
+  g.status = "live";
+  AppState.view = "game";
+  syncOppBatter(g);
+  await persistGame();
+  await Store.setActiveGameId(g.id);
+  render();
+}
+
+/* ---------- GAME (main scoring screen) ---------- */
+function renderFinalSummary(){
+  const g = AppState.game;
+  const us = ourTotal(g), opp = oppTotal(g);
+  const resultText = us>opp ? "🏆 獲勝" : (us<opp ? "落敗" : "平手");
+  $app.innerHTML = `
+    <div class="topbar"><div class="topbar-inner">
+      <button class="icon-btn" onclick="backHome()">‹</button>
+      <div class="brand" style="justify-content:center;"><span class="brand-mark" style="font-size:16px;">${esc(g.ourTeamName)} vs ${esc(g.opponent)}</span></div>
+      <button class="icon-btn" onclick="AppState.ui.showBox=true;render();">戰績</button>
+    </div></div>
+    <div class="scoreboard" style="text-align:center;padding:20px 14px;">
+      <div class="sb-half" style="font-size:24px;">${resultText}</div>
+      <div class="tabular" style="font-family:var(--font-display);font-size:42px;font-weight:700;margin-top:2px;">${us} : ${opp}</div>
+      <div class="hint">比賽已結束・${esc(g.date)}・${gameSeasonTagHTML(g)}</div>
+      ${g.finalWinPitcher ? `<div class="roster-hint" style="margin-top:10px;">勝投：#${esc(g.finalWinPitcher.number)} ${esc(g.finalWinPitcher.name)}</div>` : ``}
+      ${g.finalMvp ? `<div class="roster-hint">MVP：#${esc(g.finalMvp.number)} ${esc(g.finalMvp.name)}</div>` : ``}
+    </div>
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn" style="flex:1;" onclick="openEndGame()">修改勝投／MVP</button>
+      <button class="btn primary" style="flex:1;" onclick="AppState.ui.showBox=true;render();">查看戰績</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn ghost" style="flex:1;" onclick="openEditGame()">✏️ 編輯紀錄</button>
+      <button class="btn ghost" style="flex:1;" onclick="reopenGame()">🔓 重新開放編輯</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn danger block" onclick="deleteFinishedGame()">🗑 刪除這場紀錄</button>
+    </div>
+    <div class="hint" style="text-align:center;margin-top:8px;">編輯／重新開放／刪除已完賽紀錄僅限管理員身份</div>
+    ${AppState.ui.showBox ? renderBoxModal() : ""}
+    ${AppState.ui.showEndGame ? renderEndGameModal() : ""}
+    ${AppState.ui.showEditGame ? renderEditGameModal() : ""}
+  `;
+}
+
+// While we're on defense, show the current opposing batter's historical
+// zone tendencies (if any is on record) as a positioning reference — keyed
+// by team+jersey number, same composite-key rule as the rest of the app's
+// opponent analysis, since jersey numbers repeat across opponent teams.
+// Renders nothing when there's no batter set yet or no data on file for
+// them, so it doesn't clutter the fast-paced recording screen.
+function oppDefenseZoneCardHTML(g){
+  if (!g.oppNumber) return "";
+  const key = g.opponent + "||" + g.oppNumber;
+  const analysis = computeZoneAnalysis(gamesForZoneRef(), "opp", g.opponent, key);
+  if (!analysis.totalPlays) return "";
+  const m = (AppState.ui.zoneMetric && AppState.ui.zoneMetric.def) || "freq";
+  return `<div class="card zc-card">
+    <h2 class="zc-label">⚾ #${esc(g.oppNumber)}${g.oppNote?(' '+esc(g.oppNote)):''} 歷史落點分析</h2>
+    <div class="zc-options">${zoneMetricToggleHTML('def')}</div>
+    <div class="zc-diagram">${fieldDiagramCountsHTML(analysis.zoneStats, m)}</div>
+    <div class="hint zc-label zc-hint-bottom">依過往對戰紀錄（共 ${analysis.gamesCount} 場、${analysis.totalPlays} 個打席）統計，僅供防守站位參考。顏色越紅代表該項數值越高，越藍代表越低；灰色代表該落點尚無資料。</div>
+  </div>`;
+}
+
+function renderGame(){
+  const g = AppState.game;
+  if (g.status === "final") return renderFinalSummary();
+  const weAreUp = isOurHalf(g);
+  const halfLabel = g.inning + "局" + (g.half==="top"?"上":"下");
+  const inningsToShow = Math.max(7, g.linescore.top.length, g.linescore.bottom.length, g.inning);
+
+  // linescore header + rows
+  let head = `<th></th>`;
+  for (let i=1;i<=inningsToShow;i++) head += `<th>${i}</th>`;
+  head += `<th>合計</th>`;
+  function rowCells(arr){
+    let c="";
+    for (let i=0;i<inningsToShow;i++) c += `<td class="tabular">${arr[i]!=null?arr[i]:""}</td>`;
+    return c;
+  }
+  const topIsUs = g.batFirst;
+  const line = `
+    <table class="linescore">
+      <thead><tr>${head}</tr></thead>
+      <tbody>
+        <tr class="${(g.half==='top')?'batting':''}"><td class="team">${esc(topIsUs?g.ourTeamName:g.opponent)}</td>${rowCells(g.linescore.top)}<td class="tot">${g.linescore.top.reduce((a,b)=>a+(b||0),0)}</td></tr>
+        <tr class="${(g.half==='bottom')?'batting':''}"><td class="team">${esc(topIsUs?g.opponent:g.ourTeamName)}</td>${rowCells(g.linescore.bottom)}<td class="tot">${g.linescore.bottom.reduce((a,b)=>a+(b||0),0)}</td></tr>
+      </tbody>
+    </table>`;
+
+  const outsDots = [0,1,2].map(i=>`<span class="out-dot ${i<g.outs?'on':''}"></span>`).join("");
+
+  // batter card
+  let batterCard = "";
+  if (weAreUp){
+    const b = g.lineup[g.battingIdx % g.lineup.length];
+    batterCard = `<div class="batter-card"><span class="batter-num">#${esc(b.number)}</span><span class="batter-name">${esc(b.name)}</span>
+      <div class="batter-meta">第${b.order}棒 · ${b.position||"—"}</div></div>`;
+  } else {
+    batterCard = `<div class="batter-card"><span class="batter-num def">👤</span><span class="batter-name">${g.oppNumber?('#'+esc(g.oppNumber)+' '+esc(g.oppNote||'')):'尚未輸入背號'}</span>
+      <div class="batter-meta">對方打者</div></div>`;
+  }
+
+  const halfDone = g.outs>=3;
+
+  // Landscape 3-column layout splits the recording UI into a middle
+  // "pick the result" panel and a right "location/reference" panel so a
+  // rotated phone can show both without scrolling (see .game-body CSS).
+  // Portrait just stacks gb-mid then gb-zone, same net content as before.
+  let actionMid = "", actionZone = "";
+  if (halfDone){
+    actionMid = `<div class="half-banner">
+        <div>⚾ 三出局！</div>
+        <button class="btn" onclick="endHalfInning()">切換到${weAreUp?'守備':'進攻'}紀錄 →</button>
+      </div>`;
+  } else if (AppState.ui.pendingResult){
+    actionMid = renderConfirmBoxMain();
+    actionZone = renderConfirmBoxZone();
+  } else if (weAreUp){
+    actionMid = renderResultGrid('us');
+    actionZone = `<div class="card zone-hint-card"><div class="hint" style="margin:0;">選擇打擊結果後，可在這裡記錄落點。</div></div>`;
+  } else {
+    actionMid = `
+      <div class="card">
+        <div style="display:flex;gap:8px;">
+          <div class="field" style="flex:1;margin-bottom:0;">
+            <label>對方背號</label>
+            <div class="static-val">${g.oppNumber?('#'+esc(g.oppNumber)):'未填'}</div>
+          </div>
+          <div class="field" style="flex:2;margin-bottom:0;">
+            <label>備註／綽號（選填）</label>
+            <input type="text" value="${esc(g.oppNote)}" onchange="AppState.game.oppNote=this.value;persistGame();render();">
+          </div>
+        </div>
+      </div>
+      ${renderResultGrid('opp')}`;
+    actionZone = oppDefenseZoneCardHTML(g);
+  }
+
+  const pitcher = currentPitcher(g);
+  const historyHTML = recentBatterHistoryHTML(g, weAreUp);
+
+  $app.innerHTML = `
+    <div class="topbar"><div class="topbar-inner">
+      <button class="icon-btn" onclick="backHome()">‹</button>
+      <div class="brand" style="justify-content:center;flex-direction:column;align-items:center;gap:0;">
+        <span class="brand-mark" style="font-size:16px;">${esc(g.ourTeamName)} vs ${esc(g.opponent)}</span>
+        <span class="roster-hint">${gameSeasonTagHTML(g)}</span>
+      </div>
+      <button class="icon-btn" onclick="AppState.ui.showBox=true;render();">戰績</button>
+    </div></div>
+
+    <div class="game-body">
+      <div class="gb-col gb-left">
+        <div class="scoreboard">
+          <div class="sb-head">
+            <div class="sb-status">
+              <span class="sb-half">${halfLabel}</span>
+              <span class="sb-inplay ${weAreUp?'off':'def'}">${weAreUp?'我方進攻':'我方守備'}</span>
+            </div>
+            <div class="outs-row">出局 ${outsDots}</div>
+          </div>
+          <div class="linescore-wrap">${line}</div>
+          ${batterCard}
+          ${!weAreUp ? `<div style="text-align:center;margin-top:6px;">
+              <span class="roster-hint">目前投手：${pitcher?('#'+esc(pitcher.number)+' '+esc(pitcher.name)):'未指定'} </span>
+              <a class="link-reset" onclick="AppState.ui.showSub=true;render();">設定</a>
+            </div>` : ``}
+        </div>
+        ${historyHTML}
+      </div>
+      <div class="gb-col gb-mid">
+        ${actionMid}
+      </div>
+      <div class="gb-col gb-zone">
+        ${actionZone}
+      </div>
+    </div>
+
+    <div class="action-bar"><div class="action-bar-inner three">
+      <button class="btn ghost" onclick="undoLastPlay()">↺ 復原</button>
+      <button class="btn ghost" onclick="AppState.ui.showSub=true;render();">🔁 換人</button>
+      <button class="btn ghost" onclick="openEndGame()">🏁 結束比賽</button>
+    </div></div>
+
+    ${AppState.ui.showSub ? renderSubModal() : ""}
+    ${AppState.ui.showBox ? renderBoxModal() : ""}
+    ${AppState.ui.showEndGame ? renderEndGameModal() : ""}
+    ${AppState.ui.showEditGame ? renderEditGameModal() : ""}
+  `;
+}
+
+function pickOppBatter(idx){
+  const g = AppState.game;
+  const b = g.oppRoster[idx];
+  if (!b) return;
+  g.oppBattingIdx = idx;
+  g.oppNumber = b.number;
+  g.oppNote = b.name;
+  persistGame(); render();
+}
+function renderResultGrid(side){
+  return `<div class="card">
+    <div class="result-grid">
+      ${RESULT_ORDER.map(code=>{
+        const meta = RESULTS[code];
+        const cls = meta.cat==="hit"?"hit":(meta.cat==="out"||meta.cat==="dp"||meta.cat==="sf"?"out":"reach");
+        return `<button class="rbtn ${cls}" onclick="pickResult('${code}','${side}')">${code}<small>${meta.label}</small></button>`;
+      }).join("")}
+    </div>
+  </div>`;
+}
+
+function pickResult(code, side){
+  AppState.ui.pendingResult = {code, side};
+  AppState.ui.pendingOuts = defaultOuts(code);
+  AppState.ui.pendingRuns = 0;      // opp side only (simple count)
+  AppState.ui.pendingScorers = [];  // us side only (array of lineup slot ids)
+  AppState.ui.pendingRbi = 0;
+  AppState.ui.pendingErrorBy = null;
+  AppState.ui.pendingZone = null;
+  AppState.ui.pendingType = null;
+  render();
+}
+
+// Split from the original single renderConfirmBox() so the landscape
+// 3-column layout can put the result/stepper/scorer fields in the middle
+// column and the location diagram in the right column. Portrait mode
+// just stacks both cards in the same order they used to appear as one.
+function renderConfirmBoxMain(){
+  const g = AppState.game;
+  const p = AppState.ui;
+  const code = p.pendingResult.code;
+  const meta = RESULTS[code];
+  const side = p.pendingResult.side;
+
+  const errorPicker = (side==="opp" && code==="E") ? `
+    <div style="margin-top:8px;">
+      <div class="k" style="font-size:13px;color:var(--ink-dim);margin-bottom:6px;">失誤球員</div>
+      <div class="chip-picker">
+        ${g.lineup.filter(r=>r.position).map(r=>`<span class="chip ${p.pendingErrorBy===r.id?'sel':''}" onclick="setErrorBy('${r.id}')">${r.position} #${esc(r.number)} ${esc(r.name)}</span>`).join("") || '<span class="roster-hint">尚未設定守位</span>'}
+      </div>
+    </div>` : "";
+
+  const scorerSection = (side==="us") ? `
+    <div style="margin-top:8px;">
+      <div class="k" style="font-size:13px;color:var(--ink-dim);margin-bottom:6px;">得分球員（可複選，本次得分 ${p.pendingScorers.length} 分）</div>
+      <div class="chip-picker">
+        ${scorerCandidates(g).map(r=>`<span class="chip ${p.pendingScorers.includes(r.id)?'sel':''}" onclick="toggleScorer('${r.id}')">#${esc(r.number)} ${esc(r.name)}（第${r.order}棒）</span>`).join("")}
+      </div>
+    </div>` : "";
+
+  return `<div class="card">
+    <div class="confirm-title">${code} · ${meta.label}</div>
+    ${side==='opp' ? `<div class="kv-row"><span class="k">得分（本次）</span>
+      <div class="stepper"><button onclick="stepRuns(-1)">−</button><span class="val tabular">${p.pendingRuns}</span><button onclick="stepRuns(1)">＋</button></div>
+    </div>` : ``}
+    ${side==='us' ? `<div class="kv-row"><span class="k">打點 RBI</span>
+      <div class="stepper"><button onclick="stepRbi(-1)">−</button><span class="val tabular">${p.pendingRbi}</span><button onclick="stepRbi(1)">＋</button></div>
+    </div>` : ``}
+    <div class="kv-row"><span class="k">出局數（本次）</span>
+      <div class="stepper"><button onclick="stepOuts(-1)">−</button><span class="val tabular">${p.pendingOuts}</span><button onclick="stepOuts(1)">＋</button></div>
+    </div>
+    ${scorerSection}
+    ${errorPicker}
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn ghost" style="flex:1;" onclick="cancelPending()">取消</button>
+      <button class="btn primary" style="flex:2;" onclick="confirmPending()">確認記錄</button>
+    </div>
+  </div>`;
+}
+
+function renderConfirmBoxZone(){
+  const p = AppState.ui;
+  const code = p.pendingResult.code;
+  const showZone = !["K","BB"].includes(code);
+  if (!showZone){
+    return `<div class="card zone-hint-card"><div class="hint" style="margin:0;">${esc(code)} 不需要記錄落點。</div></div>`;
+  }
+  return `<div class="card zc-card">
+    <div class="k zc-label" style="font-size:13px;color:var(--ink-dim);margin-bottom:4px;">打擊落點（選填，點選球場位置）</div>
+    <div class="zc-diagram">${fieldDiagramHTML(p.pendingZone)}</div>
+    <div class="chip-picker zc-options" style="margin-top:8px;justify-content:center;">
+      ${BATTED_TYPES.map(t=>`<span class="chip ${p.pendingType===t?'sel':''}" onclick="setType('${t}')">${t}</span>`).join("")}
+    </div>
+  </div>`;
+}
+
+// Compact "先前打擊成績" reference panel: the current batter's plate
+// appearances so far *this game*, so the scorer doesn't have to open the
+// full 戰績 modal mid-play. Shown in gb-left (scoreboard column).
+function recentBatterHistoryHTML(g, weAreUp){
+  const side = weAreUp ? "us" : "opp";
+  const batter = weAreUp ? (g.lineup[g.battingIdx % Math.max(1,g.lineup.length)] || {}) : null;
+  const battingNumber = weAreUp ? batter.number : g.oppNumber;
+  const battingName = weAreUp ? batter.name : (g.oppNote || "");
+  const past = String(battingNumber||"").trim()
+    ? (g.plays||[]).filter(p=>p.code && p.side===side && String(p.batterNumber||"")===String(battingNumber))
+    : [];
+  const chips = past.slice(-6).map(p=>{
+    const meta = RESULTS[p.code] || {label:p.code, cat:""};
+    const cls = meta.cat==="hit"?"hit":(meta.cat==="out"||meta.cat==="dp"||meta.cat==="sf"?"out":"reach");
+    const halfCh = p.half==="top"?"上":"下";
+    return `<span class="hist-chip ${cls}" title="${esc(meta.label)}">${p.inning}${halfCh}·${esc(p.code)}</span>`;
+  }).join("");
+  return `<div class="history-panel">
+    <div class="hist-title">先前打擊成績${battingNumber?('　#'+esc(battingNumber)+(battingName?(' '+esc(battingName)):'')):''}</div>
+    <div class="hist-chips">${chips || '<span class="roster-hint">本場尚無打席紀錄</span>'}</div>
+  </div>`;
+}
+
+function stepRuns(d){ AppState.ui.pendingRuns = Math.max(0, AppState.ui.pendingRuns+d); render(); }
+function stepRbi(d){ AppState.ui.pendingRbi = Math.max(0, AppState.ui.pendingRbi+d); render(); }
+function stepOuts(d){ AppState.ui.pendingOuts = Math.max(0, Math.min(3, AppState.ui.pendingOuts+d)); render(); }
+function setErrorBy(id){ AppState.ui.pendingErrorBy = id; render(); }
+function setZone(z){ AppState.ui.pendingZone = (AppState.ui.pendingZone===z?null:z); render(); }
+function setType(t){ AppState.ui.pendingType = (AppState.ui.pendingType===t?null:t); render(); }
+function toggleScorer(id){
+  const arr = AppState.ui.pendingScorers;
+  const i = arr.indexOf(id);
+  if (i>=0) arr.splice(i,1); else arr.push(id);
+  render();
+}
+function cancelPending(){
+  AppState.ui.pendingResult=null; render();
+}
+
+async function confirmPending(){
+  const g = AppState.game;
+  const p = AppState.ui;
+  const side = p.pendingResult.side;
+  const code = p.pendingResult.code;
+
+  let batterNumber="", batterName="";
+  if (side==="us"){
+    const batterSlot = g.lineup[g.battingIdx % g.lineup.length];
+    batterNumber = batterSlot.number; batterName = batterSlot.name;
+  } else {
+    batterNumber = g.oppNumber;
+    batterName = g.oppNote || "";
+  }
+
+  const scorers = side==="us" ? p.pendingScorers.map(id=>{
+    const sl = g.lineup.find(l=>l.id===id);
+    return sl ? {number:sl.number, name:sl.name} : null;
+  }).filter(Boolean) : [];
+  const runsThisPlay = side==="us" ? scorers.length : p.pendingRuns;
+
+  // ensure current inning column exists
+  const half = g.half;
+  const arr = g.linescore[half];
+  while (arr.length < g.inning) arr.push(0);
+  arr[g.inning-1] = (arr[g.inning-1]||0) + runsThisPlay;
+
+  g.outs = Math.min(3, g.outs + p.pendingOuts);
+
+  // Snapshot the actual pitcher (number/name), not just the lineup slot —
+  // a slot's occupant can change via substitution, and stats must stay
+  // attached to whoever actually pitched this particular play.
+  const pitcherNow = side==="opp" ? currentPitcher(g) : null;
+
+  // log the play
+  g.plays.push({
+    id: uid(), half, inning: g.inning, side, code,
+    batterNumber, batterName,
+    rbi: side==="us" ? p.pendingRbi : 0,
+    runs: runsThisPlay,
+    scorers: side==="us" ? scorers : undefined,
+    outs: p.pendingOuts,
+    errorBy: p.pendingErrorBy,
+    zone: p.pendingZone,
+    battedType: p.pendingType,
+    pitcherId: pitcherNow ? pitcherNow.id : null,
+    pitcherNumber: pitcherNow ? pitcherNow.number : null,
+    pitcherName: pitcherNow ? pitcherNow.name : null,
+    ts: Date.now(),
+  });
+
+  if (side==="us"){
+    g.battingIdx = (g.battingIdx+1) % Math.max(1,g.lineup.length);
+  } else if (g.oppRoster && g.oppRoster.length){
+    g.oppBattingIdx = ((g.oppBattingIdx||0)+1) % g.oppRoster.length;
+    syncOppBatter(g);
+  }
+
+  AppState.ui.pendingResult=null;
+  await persistGame();
+  render();
+}
+
+async function endHalfInning(){
+  const g = AppState.game;
+  g.outs = 0;
+  if (g.half==="top"){
+    g.half = "bottom";
+  } else {
+    g.half = "top";
+    g.inning += 1;
+  }
+  if (!isOurHalf(g)) syncOppBatter(g);
+  await persistGame();
+  render();
+}
+
+async function undoLastPlay(){
+  const g = AppState.game;
+  if (!g.plays.length){ return; }
+  if (!(await appConfirm("復原最後一筆紀錄？"))) return;
+  const last = g.plays.pop();
+  // roll back runs from linescore
+  const arr = g.linescore[last.half];
+  if (arr[last.inning-1]!=null) arr[last.inning-1] = Math.max(0, arr[last.inning-1]-last.runs);
+  // roll back outs
+  g.outs = Math.max(0, g.outs - last.outs);
+  // roll back batter index / restore opponent batter fields for convenience
+  if (last.side==="us"){
+    g.battingIdx = (g.battingIdx - 1 + g.lineup.length) % Math.max(1,g.lineup.length);
+  } else {
+    if (g.oppRoster && g.oppRoster.length){
+      g.oppBattingIdx = ((g.oppBattingIdx||0) - 1 + g.oppRoster.length) % g.oppRoster.length;
+      syncOppBatter(g);
+    } else {
+      g.oppNumber = last.batterNumber || "";
+      g.oppNote = last.batterName || "";
+    }
+  }
+  persistGame(); render();
+}
+
+/* ---------- Substitution modal ---------- */
+function renderSubModal(){
+  const g = AppState.game;
+  const pitcherNow = currentPitcher(g);
+  const rows = g.lineup.map((r,i)=>`
+    <div class="lineup-row">
+      <div class="order-num tabular">${r.order}</div>
+      <div class="name-out">#${esc(r.number)} ${esc(r.name)} <span class="roster-hint">(${r.position||'—'})</span></div>
+      <button class="btn" style="padding:6px 10px;font-size:12.5px;" onclick="openSubFor(${i})">替換</button>
+    </div>`).join("");
+
+  let subForm = "";
+  if (AppState.ui.subTargetIdx!=null){
+    const target = g.lineup[AppState.ui.subTargetIdx];
+    const benchOpts = g.bench.map(b=>`<option value="${esc(b.number)}">#${esc(b.number)} ${esc(b.name)}</option>`).join("");
+    const isDef = AppState.ui.subType==='DEF';
+    const defMode = AppState.ui.defMode || 'bench';
+    const modeToggle = isDef ? `
+        <div class="field"><label>方式</label>
+          <div class="seg">
+            <button class="${defMode!=='swap'?'active':''}" onclick="setDefMode('bench')">換板凳球員上場</button>
+            <button class="${defMode==='swap'?'active':''}" onclick="setDefMode('swap')">跟場上球員換守位</button>
+          </div>
+        </div>` : "";
+    const fieldSwapOpts = g.lineup.map((r,idx)=> idx===AppState.ui.subTargetIdx ? "" : `<option value="${idx}">#${esc(r.number)} ${esc(r.name)}（${r.position||'—'}）</option>`).join("");
+    const benchSection = `
+        <div class="field"><label>選擇板凳球員</label>
+          <select id="sub-bench-num">${benchOpts || '<option value="">（無板凳名單）</option>'}</select>
+        </div>
+        <div class="field"><label>守位</label>
+          <select id="sub-pos">${POSITIONS.map(p=>`<option value="${p}" ${target.position===p?'selected':''}>${p}</option>`).join("")}</select>
+        </div>`;
+    const swapSection = `
+        <div class="field"><label>選擇要互換守位的在場球員</label>
+          <select id="sub-field-swap">${fieldSwapOpts || '<option value="">（無其他球員）</option>'}</select>
+        </div>`;
+    subForm = `
+      <div class="confirm-box">
+        <div class="confirm-title">替換：#${esc(target.number)} ${esc(target.name)}</div>
+        <div class="field"><label>替補類型</label>
+          <div class="seg">
+            <button class="${AppState.ui.subType==='PH'?'active':''}" onclick="setSubType('PH')">代打</button>
+            <button class="${AppState.ui.subType==='PR'?'active':''}" onclick="setSubType('PR')">代跑</button>
+            <button class="${AppState.ui.subType==='DEF'?'active':''}" onclick="setSubType('DEF')">守備替換</button>
+          </div>
+        </div>
+        ${modeToggle}
+        ${(isDef && defMode==='swap') ? swapSection : benchSection}
+        <div class="btn-row">
+          <button class="btn ghost" style="flex:1;" onclick="AppState.ui.subTargetIdx=null;render();">取消</button>
+          <button class="btn primary" style="flex:2;" onclick="applySub()">確認替換</button>
+        </div>
+      </div>`;
+  }
+
+  return `<div class="modal-back" onclick="if(event.target===this){AppState.ui.showSub=false;AppState.ui.subTargetIdx=null;render();}">
+    <div class="modal">
+      <button class="close-x" onclick="AppState.ui.showSub=false;AppState.ui.subTargetIdx=null;render();">×</button>
+      <h3>換人</h3>
+      <div class="hint" style="font-size:12.5px;color:var(--ink-dim);margin-bottom:8px;">選擇要替換的棒次，指定代打／代跑／守備替換。</div>
+      ${rows}
+      ${subForm}
+      <div class="card" style="margin-top:14px;">
+        <h2 style="font-size:16px;">目前投手</h2>
+        <div class="hint">投手會自動跟著守位「投」——把守位設為「投」的球員即為投手，成績也會自動記在他名下。</div>
+        <div class="roster-hint">${pitcherNow ? ('目前：#'+esc(pitcherNow.number)+' '+esc(pitcherNow.name)) : '目前尚未指定（尚無人守位為「投」）'}</div>
+      </div>
+    </div>
+  </div>`;
+}
+function openSubFor(i){
+  AppState.ui.subTargetIdx=i; AppState.ui.subType="PH"; AppState.ui.defMode="bench";
+  render();
+  scrollSubFormIntoView();
+}
+function setSubType(t){
+  AppState.ui.subType=t; AppState.ui.defMode="bench";
+  render();
+  scrollSubFormIntoView();
+}
+function setDefMode(m){
+  AppState.ui.defMode=m;
+  render();
+  scrollSubFormIntoView();
+}
+function scrollSubFormIntoView(){
+  requestAnimationFrame(()=>{
+    const el = document.querySelector(".modal .confirm-box");
+    if (el) el.scrollIntoView({behavior:"smooth", block:"start"});
+  });
+}
+
+async function applySub(){
+  const g = AppState.game;
+  const i = AppState.ui.subTargetIdx;
+  const target = g.lineup[i];
+
+  if (AppState.ui.subType==='DEF' && AppState.ui.defMode==='swap'){
+    const swapEl = document.getElementById("sub-field-swap");
+    const j = swapEl ? parseInt(swapEl.value,10) : NaN;
+    if (isNaN(j) || !g.lineup[j] || j===i){ appAlert("請選擇要互換守位的在場球員"); return; }
+    const other = g.lineup[j];
+    const aOldPos = target.position, bOldPos = other.position;
+    g.plays.push({id:uid(), type:"posswap",
+      half:g.half, inning:g.inning,
+      aNumber:target.number, aName:target.name, aOldPos, aNewPos:bOldPos,
+      bNumber:other.number, bName:other.name, bOldPos, bNewPos:aOldPos,
+      ts:Date.now()});
+    target.position = bOldPos;
+    other.position = aOldPos;
+    AppState.ui.subTargetIdx=null;
+    await persistGame();
+    render();
+    return;
+  }
+
+  const numEl = document.getElementById("sub-bench-num");
+  const posEl = document.getElementById("sub-pos");
+  const newNum = numEl.value;
+  if (!newNum){ appAlert("請選擇板凳球員"); return; }
+  const bIdx = g.bench.findIndex(b=>b.number===newNum);
+  const newName = bIdx>=0 ? g.bench[bIdx].name : rosterLookup(newNum);
+  const newPos = posEl.value;
+  if (newPos && g.lineup.some(r=>r.id!==target.id && r.position===newPos)){
+    appAlert("「"+newPos+"」這個守位已經有球員擔任了，請先把該球員的守位改掉。");
+    return;
+  }
+
+  g.plays.push({id:uid(), type:"sub", subType:AppState.ui.subType,
+    half:g.half, inning:g.inning,
+    oldNumber:target.number, oldName:target.name,
+    newNumber:newNum, newName, ts:Date.now()});
+
+  // move replaced starter to bench (so they can theoretically re-enter list visibility), add new player in
+  if (bIdx>=0) g.bench.splice(bIdx,1);
+  target.number = newNum;
+  target.name = newName;
+  target.position = newPos;
+
+  AppState.ui.subTargetIdx=null;
+  await persistGame();
+  render();
+}
+
+/* ---------- Box score ---------- */
+function computeBoxScore(game){
+  const rows = {}; // key = number
+  function ensure(num,name){
+    if (!rows[num]) rows[num] = {number:num,name,PA:0,AB:0,H:0,"1B":0,"2B":0,"3B":0,HR:0,BB:0,SF:0,RBI:0,R:0,K:0,DP:0,E:0};
+    return rows[num];
+  }
+  game.plays.forEach(p=>{
+    if (p.type==="sub" || p.type==="posswap") return;
+    if (p.side==="us"){
+      const r = ensure(p.batterNumber||"?", p.batterName||"?");
+      r.PA++;
+      if (p.code!=="BB" && p.code!=="SF") r.AB++;
+      if (["1B","2B","3B","HR"].includes(p.code)){ r.H++; r[p.code]++; }
+      if (p.code==="BB") r.BB++;
+      if (p.code==="SF") r.SF++;
+      if (p.code==="K") r.K++;
+      if (p.code==="DP") r.DP++;
+      r.RBI += p.rbi||0;
+      if (Array.isArray(p.scorers)){
+        p.scorers.forEach(sc=>{ ensure(sc.number, sc.name).R++; });
+      }
+    }
+    if (p.errorBy){
+      const slot = game.lineup.find(l=>l.id===p.errorBy);
+      if (slot){ const r = ensure(slot.number, slot.name); r.E++; }
+    }
+  });
+  // Admin manual overrides — win over whatever the play log computed.
+  // A partial override (e.g. just {RBI:3}) only replaces that one field;
+  // an override for a number with no plays at all creates a fresh row.
+  const ov = (game.statOverrides && game.statOverrides.batting) || {};
+  Object.keys(ov).forEach(number=>{
+    const o = ov[number];
+    const name = o.name || rosterLookup(number) || (rows[number]||{}).name || ("#"+number);
+    const r = ensure(number, name);
+    Object.assign(r, o);
+    r.number = number;
+  });
+  return Object.values(rows).sort((a,b)=> (game.lineup.findIndex(l=>l.number===a.number)) - (game.lineup.findIndex(l=>l.number===b.number)));
+}
+
+function computePitching(game){
+  const rows = {}; // key = number (not pitcherId, so overrides can target
+                    // a pitcher directly even with no linked plays)
+  function ensure(number,name){
+    if (!rows[number]) rows[number] = {number,name,K:0,BB:0,R:0,outs:0};
+    return rows[number];
+  }
+  game.plays.forEach(p=>{
+    if (p.side!=="opp") return;
+    // Prefer the pitcher snapshot recorded on the play itself (number/name
+    // captured at record time) so stats stay with whoever actually pitched
+    // even after later substitutions change who occupies that lineup slot.
+    // Fall back to the old slot-id lookup for plays recorded before this
+    // snapshot existed.
+    let number = p.pitcherNumber, name = p.pitcherName;
+    if (!number){
+      if (!p.pitcherId) return;
+      const slot = game.lineup.find(l=>l.id===p.pitcherId);
+      if (!slot) return;
+      number = slot.number; name = slot.name;
+    }
+    if (!number) return;
+    const r = ensure(number, name || rosterLookup(number) || ("#"+number));
+    if (p.code==="K") r.K++;
+    if (p.code==="BB") r.BB++;
+    r.R += p.runs||0;
+    r.outs += p.outs||0;
+  });
+  const ov = (game.statOverrides && game.statOverrides.pitching) || {};
+  Object.keys(ov).forEach(number=>{
+    const o = ov[number];
+    const name = o.name || rosterLookup(number) || (rows[number]||{}).name || ("#"+number);
+    const r = ensure(number, name);
+    Object.assign(r, o);
+    r.number = number;
+  });
+  return Object.values(rows);
+}
+
+function renderBoxModal(){
+  const g = AppState.game;
+  const box = computeBoxScore(g);
+  const pitching = computePitching(g);
+  const rows = box.map(r=>`<tr>
+    <td class="name">#${esc(r.number)} ${esc(r.name)}</td>
+    <td class="tabular">${r.PA}</td><td class="tabular">${r.AB}</td><td class="tabular">${r.H}</td>
+    <td class="tabular">${r["1B"]}</td><td class="tabular">${r["2B"]}</td><td class="tabular">${r["3B"]}</td><td class="tabular">${r.HR}</td>
+    <td class="tabular">${r.BB}</td><td class="tabular">${r.SF}</td><td class="tabular">${r.RBI}</td><td class="tabular">${r.R}</td><td class="tabular">${r.K}</td><td class="tabular">${r.DP}</td><td class="tabular">${r.E}</td>
+  </tr>`).join("");
+  const pRows = pitching.map(r=>`<tr>
+    <td class="name">#${esc(r.number)} ${esc(r.name)}</td>
+    <td class="tabular">${(r.outs/3).toFixed(1)}</td><td class="tabular">${r.K}</td><td class="tabular">${r.BB}</td><td class="tabular">${r.R}</td>
+  </tr>`).join("");
+
+  return `<div class="modal-back" onclick="if(event.target===this){AppState.ui.showBox=false;render();}">
+    <div class="modal">
+      <button class="close-x" onclick="AppState.ui.showBox=false;render();">×</button>
+      <h3>戰績統計</h3>
+      <div class="stat-table-wrap">
+        <table class="stats">
+          <thead><tr><th>球員</th><th>打席</th><th>打數</th><th>安打</th><th>1B</th><th>2B</th><th>3B</th><th>HR</th><th>BB</th><th>SF</th><th>打點</th><th>得分</th><th>K</th><th>DP</th><th>失誤</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="15" style="color:var(--ink-dim);">尚無資料</td></tr>'}</tbody>
+        </table>
+      </div>
+      <h3 style="margin-top:16px;">投手</h3>
+      <div class="stat-table-wrap">
+        <table class="stats">
+          <thead><tr><th>投手</th><th>局數</th><th>三振</th><th>保送</th><th>失分</th></tr></thead>
+          <tbody>${pRows || '<tr><td colspan="5" style="color:var(--ink-dim);">尚無資料</td></tr>'}</tbody>
+        </table>
+      </div>
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn" style="flex:1;" onclick="AppState.ui.showBox=false;openEditGame();">✏️ 編輯紀錄</button>
+        <button class="btn danger" style="flex:1;" onclick="AppState.ui.showBox=false;openEndGame();">${g.status==='final'?'修改勝投／MVP':'結束比賽'}</button>
+      </div>
+      ${g.status==='final' ? `<div class="hint" style="text-align:center;margin-top:8px;">${window.SUPABASE_URL ? '編輯或刪除已完賽的紀錄需要輸入管理密碼。' : '編輯已完賽的紀錄僅管理員能儲存成功。'}</div>` : `
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn danger block" onclick="deleteGameFromList('${g.id}','${g.status}')">🗑 刪除這場紀錄</button>
+      </div>`}
+    </div>
+  </div>`;
+}
+
+/* ---------- Admin record editor: per-play edits + stat overrides ---------- */
+function openEditGame(){
+  const g = AppState.game;
+  if (g.status==="final" && !requireAdmin("編輯已完賽的紀錄")) return;
+  ensureOverrides(g);
+  AppState.ui.showEditGame = true;
+  render();
+}
+function closeEditGame(){ AppState.ui.showEditGame=false; render(); }
+
+async function editPlayField(idx, field, value){
+  const g = AppState.game;
+  const p = g.plays[idx];
+  if (!p) return;
+  if (field==="rbi" || field==="runs" || field==="outs"){
+    p[field] = Math.max(0, parseInt(value,10)||0);
+  } else if (field==="code"){
+    p.code = value;
+  } else if (field==="batterNumber"){
+    p.batterNumber = value.trim();
+  } else if (field==="batterName"){
+    p.batterName = value.trim();
+  }
+  // Deliberately NOT calling render() here on success: this is a plain
+  // value edit on an existing <select>/<input> inside a long, scrollable
+  // "編輯紀錄" modal (a finished game can have 25-30+ rows) — the control
+  // the user just touched already shows the new value on its own (that's
+  // how native form controls work), so there is nothing left to redraw.
+  // A full render() would blow away and rebuild the ENTIRE modal's DOM
+  // (every view function replaces $app.innerHTML from scratch), which on
+  // real phones was observed to knock the modal's scroll position back to
+  // the top and/or interrupt the native <select> picker's own closing
+  // animation/focus handling right as it fires. persistGame() still runs
+  // (so the value reaches the store), and on FAILURE appAlert() (called
+  // from inside persistGame()) still renders to show the error modal —
+  // only the success path skips the redraw.
+  await persistGame();
+}
+async function deletePlayAt(idx){
+  if (!(await appConfirm("刪除這筆紀錄？（不會自動調整比分／局數，如有需要請一併確認戰績總表）"))) return;
+  const g = AppState.game;
+  g.plays.splice(idx,1);
+  await persistGame();
+  render();
+}
+
+async function setBattingOverride(number, field, value){
+  const g = AppState.game;
+  const ov = ensureOverrides(g);
+  if (!ov.batting[number]) ov.batting[number] = {};
+  ov.batting[number][field] = (field==="name") ? value : Math.max(0, parseInt(value,10)||0);
+  // See the comment in editPlayField() — this is a plain field edit on an
+  // existing input, no render() needed on success.
+  await persistGame();
+}
+async function resetBattingOverride(number){
+  const g = AppState.game;
+  const ov = ensureOverrides(g);
+  delete ov.batting[number];
+  await persistGame();
+  render();
+}
+function addBattingOverrideRow(){
+  const numEl = document.getElementById("ov-bat-num");
+  const nameEl = document.getElementById("ov-bat-name");
+  const number = numEl.value.trim();
+  if (!number) return;
+  const name = nameEl.value.trim() || rosterLookup(number) || ("#"+number);
+  const g = AppState.game;
+  const ov = ensureOverrides(g);
+  if (!ov.batting[number]) ov.batting[number] = {};
+  ov.batting[number].name = name;
+  persistGame();
+  render();
+}
+
+async function setPitchingOverride(number, field, value){
+  const g = AppState.game;
+  const ov = ensureOverrides(g);
+  if (!ov.pitching[number]) ov.pitching[number] = {};
+  ov.pitching[number][field] = (field==="name") ? value : Math.max(0, parseInt(value,10)||0);
+  // See the comment in editPlayField() — this is a plain field edit on an
+  // existing input, no render() needed on success.
+  await persistGame();
+}
+async function resetPitchingOverride(number){
+  const g = AppState.game;
+  const ov = ensureOverrides(g);
+  delete ov.pitching[number];
+  await persistGame();
+  render();
+}
+function addPitchingOverrideRow(){
+  const numEl = document.getElementById("ov-pit-num");
+  const nameEl = document.getElementById("ov-pit-name");
+  const number = numEl.value.trim();
+  if (!number) return;
+  const name = nameEl.value.trim() || rosterLookup(number) || ("#"+number);
+  const g = AppState.game;
+  const ov = ensureOverrides(g);
+  if (!ov.pitching[number]) ov.pitching[number] = {};
+  ov.pitching[number].name = name;
+  persistGame();
+  render();
+}
+
+async function setGameSeason(v){
+  AppState.game.season = v.trim() || SEASON_DEFAULT;
+  await persistGame(); render();
+}
+async function setGameCompetitionType(v){
+  AppState.game.competitionType = v;
+  await persistGame(); render();
+}
+
+function renderEditGameModal(){
+  const g = AppState.game;
+  ensureOverrides(g);
+
+  const playRows = g.plays.map((p,idx)=>{
+    if (p.type==="sub"){
+      return `<div class="lineup-row">
+        <div class="name-out">🔁 換人：#${esc(p.oldNumber)} ${esc(p.oldName||"")} → #${esc(p.newNumber)} ${esc(p.newName||"")}（${esc(p.subType||"")}）</div>
+        <button class="row-x" onclick="deletePlayAt(${idx})">×</button>
+      </div>`;
+    }
+    if (p.type==="posswap"){
+      return `<div class="lineup-row">
+        <div class="name-out">🔁 守位互換：#${esc(p.aNumber)} ${esc(p.aName||"")}（${esc(p.aOldPos)}→${esc(p.aNewPos)}） ⇄ #${esc(p.bNumber)} ${esc(p.bName||"")}（${esc(p.bOldPos)}→${esc(p.bNewPos)}）</div>
+        <button class="row-x" onclick="deletePlayAt(${idx})">×</button>
+      </div>`;
+    }
+    const inputStyle="font-size:16px;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);";
+    return `<div class="confirm-box" style="margin-top:8px;padding:10px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <span class="roster-hint" style="flex:none;">${p.inning}局${p.half==='top'?'上':'下'}・${p.side==='us'?'我方':'對方'}</span>
+        <select style="${inputStyle}" onchange="editPlayField(${idx},'code',this.value)">
+          ${RESULT_ORDER.map(c=>`<option value="${c}" ${p.code===c?'selected':''}>${c}</option>`).join("")}
+        </select>
+        <input type="text" style="${inputStyle}width:62px;" value="${esc(p.batterNumber)}" placeholder="背號" onchange="editPlayField(${idx},'batterNumber',this.value)">
+        <input type="text" style="${inputStyle}width:92px;" value="${esc(p.batterName)}" placeholder="姓名" onchange="editPlayField(${idx},'batterName',this.value)">
+        <button class="row-x" style="margin-left:auto;" onclick="deletePlayAt(${idx})">×</button>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:6px;font-size:12px;color:var(--ink-dim);align-items:center;flex-wrap:wrap;">
+        ${p.side==='us' ? `<label>打點 <input type="number" min="0" style="width:50px;font-size:16px;" value="${p.rbi||0}" onchange="editPlayField(${idx},'rbi',this.value)"></label>` : ``}
+        <label>得分 <input type="number" min="0" style="width:50px;font-size:16px;" value="${p.runs||0}" onchange="editPlayField(${idx},'runs',this.value)"></label>
+        <label>出局 <input type="number" min="0" max="3" style="width:50px;font-size:16px;" value="${p.outs||0}" onchange="editPlayField(${idx},'outs',this.value)"></label>
+      </div>
+    </div>`;
+  }).join("") || `<div class="roster-hint">尚無打席紀錄</div>`;
+
+  const battingFields = ["PA","AB","H","1B","2B","3B","HR","BB","SF","RBI","R","K","DP","E"];
+  const battingOvKeys = Object.keys(g.statOverrides.batting);
+  const battingOvRows = battingOvKeys.map(number=>{
+    const o = g.statOverrides.batting[number];
+    return `<div class="confirm-box" style="margin-top:8px;padding:10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <b style="font-size:13px;">#${esc(number)} ${esc(o.name||rosterLookup(number)||"")}</b>
+        <button class="btn ghost" style="margin-left:auto;width:auto;padding:4px 10px;font-size:11.5px;" onclick="resetBattingOverride('${number}')">重設</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+        ${battingFields.map(f=>`<label style="font-size:10.5px;color:var(--ink-dim);text-align:center;">${f}<br><input type="number" min="0" style="width:52px;font-size:16px;" value="${o[f]!=null?o[f]:''}" placeholder="—" onchange="setBattingOverride('${number}','${f}',this.value)"></label>`).join("")}
+      </div>
+    </div>`;
+  }).join("") || `<div class="roster-hint">尚無手動覆寫</div>`;
+
+  const pitchingOvKeys = Object.keys(g.statOverrides.pitching);
+  const pitchingOvRows = pitchingOvKeys.map(number=>{
+    const o = g.statOverrides.pitching[number];
+    const pf = (label,field)=>`<label style="font-size:10.5px;color:var(--ink-dim);text-align:center;">${label}<br><input type="number" min="0" style="width:58px;font-size:16px;" value="${o[field]!=null?o[field]:''}" placeholder="—" onchange="setPitchingOverride('${number}','${field}',this.value)"></label>`;
+    return `<div class="confirm-box" style="margin-top:8px;padding:10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <b style="font-size:13px;">#${esc(number)} ${esc(o.name||rosterLookup(number)||"")}</b>
+        <button class="btn ghost" style="margin-left:auto;width:auto;padding:4px 10px;font-size:11.5px;" onclick="resetPitchingOverride('${number}')">重設</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+        ${pf("三振","K")}${pf("保送","BB")}${pf("失分","R")}${pf("出局數","outs")}
+      </div>
+    </div>`;
+  }).join("") || `<div class="roster-hint">尚無手動覆寫</div>`;
+
+  const inputStyle2="font-size:16px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);";
+
+  return `<div class="modal-back" onclick="if(event.target===this){closeEditGame();}">
+    <div class="modal">
+      <button class="close-x" onclick="closeEditGame();">×</button>
+      <h3>編輯紀錄</h3>
+      <div class="hint" style="margin-bottom:8px;">可直接修改或刪除每一筆打席／守備紀錄；不確定發生了哪一筆時，也可以在下方直接覆寫最終統計數字（如打點、三振），覆寫的欄位會取代自動統計的結果，其餘欄位仍照紀錄計算。${g.status==='final' ? (window.SUPABASE_URL ? '修改已完賽的比賽需要輸入管理密碼。' : '修改已完賽的比賽僅管理員能儲存成功。') : ''}</div>
+
+      <h3 style="font-size:16px;">賽季／賽事類別</h3>
+      <div class="hint" style="margin-bottom:8px;">建立比賽時填錯球季或賽事類別（聯賽／盃賽／季後賽）時可在這裡修正；只有「聯賽」的比賽會計入球季／生涯數據。</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <div class="field" style="flex:1;min-width:160px;margin-bottom:0;">
+          <label>賽事類別</label>
+          <div class="seg">
+            <button class="${(!g.competitionType||g.competitionType==='聯賽')?'active':''}" onclick="setGameCompetitionType('聯賽')">聯賽</button>
+            <button class="${g.competitionType==='盃賽'?'active':''}" onclick="setGameCompetitionType('盃賽')">盃賽</button>
+            <button class="${g.competitionType==='季後賽'?'active':''}" onclick="setGameCompetitionType('季後賽')">季後賽</button>
+          </div>
+        </div>
+        <div class="field" style="flex:1;min-width:160px;margin-bottom:0;">
+          <label>球季</label>
+          <input type="text" list="season-list-edit" value="${esc(gameSeason(g))}" onchange="setGameSeason(this.value)">
+          <datalist id="season-list-edit">
+            ${KNOWN_SEASONS.map(s=>`<option value="${esc(s)}">`).join("")}
+          </datalist>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px;margin-top:10px;">打席／守備紀錄</h3>
+      <div style="max-height:280px;overflow-y:auto;">${playRows}</div>
+
+      <h3 style="font-size:16px;margin-top:16px;">打擊數據覆寫</h3>
+      ${battingOvRows}
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <input type="text" id="ov-bat-num" placeholder="背號" style="${inputStyle2}width:70px;">
+        <input type="text" id="ov-bat-name" placeholder="姓名（選填）" style="${inputStyle2}flex:1;">
+        <button class="btn" onclick="addBattingOverrideRow()">新增</button>
+      </div>
+
+      <h3 style="font-size:16px;margin-top:16px;">投手數據覆寫</h3>
+      ${pitchingOvRows}
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <input type="text" id="ov-pit-num" placeholder="背號" style="${inputStyle2}width:70px;">
+        <input type="text" id="ov-pit-name" placeholder="姓名（選填）" style="${inputStyle2}flex:1;">
+        <button class="btn" onclick="addPitchingOverrideRow()">新增</button>
+      </div>
+
+      <button class="btn primary block" style="margin-top:16px;" onclick="closeEditGame();">完成</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- End game: winning pitcher / MVP ---------- */
+// Version 24: widened after a user report that a pitcher who was already
+// substituted out by the time the game ended could not be selected as
+// the winning pitcher. The list used to be built ONLY from
+// computePitching()'s rows (derived from plays snapshot-tagged with a
+// pitcherNumber) plus whoever currently stands at "投" — reasonable in
+// theory, but fragile in practice: a pitcher who faced batters only via
+// plays recorded before this app tracked per-play pitcher snapshots, or
+// whose only defensive plays were later edited/deleted, or who pitched in
+// a sparsely-logged/retroactively-entered game (see g_hist01/g_hist02,
+// which have no "投" position and no defensive plays at all, yet one of
+// them already has a finalWinPitcher that could never have been chosen
+// through this exact list) — any of these would silently vanish from the
+// list with no way to pick them back. Rather than trying to perfectly
+// reconstruct "who held the mound when" from the substitution log (which
+// doesn't always carry enough detail, especially for older entries), we
+// widen this to a strict superset: every player who has been part of
+// this game in ANY capacity — current lineup (any position), bench, or
+// anyone who has batted for us — is offered as a candidate, in addition
+// to the original computePitching()/current-投 sources. The scorer
+// always knows who actually pitched even when the log doesn't fully
+// capture it, so this trades a slightly longer chip list for never again
+// silently hiding the person who should be selectable.
+function pitchingCandidates(game){
+  const list = computePitching(game).map(r=>({number:r.number,name:r.name}));
+  const seen = new Set(list.map(r=>r.number));
+  function add(number,name){
+    if (number && !seen.has(number)){ list.push({number,name}); seen.add(number); }
+  }
+  game.lineup.forEach(r=>{ if (r.position==="投") add(r.number, r.name); });
+  game.lineup.forEach(r=>add(r.number, r.name));
+  (game.bench||[]).forEach(r=>add(r.number, r.name));
+  game.plays.forEach(p=>{ if (p.side==="us" && p.batterNumber) add(p.batterNumber, p.batterName); });
+  return list;
+}
+function allOurPlayers(game){
+  const map = {};
+  game.lineup.forEach(r=>{ if (r.number) map[r.number]=r.name; });
+  game.plays.forEach(p=>{ if (p.side==="us" && p.batterNumber) map[p.batterNumber]=p.batterName; });
+  return Object.entries(map).map(([number,name])=>({number,name}));
+}
+function openEndGame(){
+  const g = AppState.game;
+  AppState.ui.endWinPitcher = g.finalWinPitcher || null;
+  AppState.ui.endMvp = g.finalMvp || null;
+  AppState.ui.showEndGame = true;
+  render();
+}
+function closeEndGame(){ AppState.ui.showEndGame=false; render(); }
+function selectWinPitcher(number,name){
+  const cur = AppState.ui.endWinPitcher;
+  AppState.ui.endWinPitcher = (cur && cur.number===number) ? null : {number,name};
+  render();
+}
+function selectMvp(number,name){
+  const cur = AppState.ui.endMvp;
+  AppState.ui.endMvp = (cur && cur.number===number) ? null : {number,name};
+  render();
+}
+function renderEndGameModal(){
+  const g = AppState.game;
+  const us = ourTotal(g), opp = oppTotal(g);
+  const weWon = us>opp, tie = us===opp;
+  const resultText = weWon ? "獲勝" : (tie ? "平手" : "落敗");
+  const pitchOpts = pitchingCandidates(g);
+  const mvpOpts = allOurPlayers(g);
+  return `<div class="modal-back" onclick="if(event.target===this){closeEndGame();}">
+    <div class="modal">
+      <button class="close-x" onclick="closeEndGame();">×</button>
+      <h3>結束比賽</h3>
+      <div class="hint" style="margin-bottom:10px;">最終比分 ${esc(g.ourTeamName)} ${us} : ${opp} ${esc(g.opponent)} · ${resultText}</div>
+      ${weWon ? `
+      <div class="card" style="margin-top:0;">
+        <h2 style="font-size:16px;">勝投（選填）</h2>
+        <div class="chip-picker" style="margin-top:8px;">
+          ${pitchOpts.length ? pitchOpts.map(r=>`<span class="chip ${AppState.ui.endWinPitcher&&AppState.ui.endWinPitcher.number===r.number?'sel':''}" onclick="selectWinPitcher('${r.number}','${esc(r.name)}')">#${esc(r.number)} ${esc(r.name)}</span>`).join("") : '<span class="roster-hint">尚無投手紀錄</span>'}
+        </div>
+      </div>` : `<div class="hint">平手或落敗不需要選勝投。</div>`}
+      <div class="card">
+        <h2 style="font-size:16px;">MVP（選填）</h2>
+        <div class="chip-picker" style="margin-top:8px;">
+          ${mvpOpts.map(r=>`<span class="chip ${AppState.ui.endMvp&&AppState.ui.endMvp.number===r.number?'sel':''}" onclick="selectMvp('${r.number}','${esc(r.name)}')">#${esc(r.number)} ${esc(r.name)}</span>`).join("")}
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn ghost" style="flex:1;" onclick="closeEndGame();">取消</button>
+        <button class="btn primary" style="flex:2;" onclick="confirmEndGame();">確認結束比賽</button>
+      </div>
+    </div>
+  </div>`;
+}
+async function confirmEndGame(){
+  const g = AppState.game;
+  const wasFinal = g.status==="final";
+  if (wasFinal && !requireAdmin("修改已完賽的勝投／MVP")) return;
+  g.status = "final";
+  g.finalWinPitcher = AppState.ui.endWinPitcher || null;
+  g.finalMvp = AppState.ui.endMvp || null;
+  g.updatedAt = Date.now();
+
+  let res;
+  if (wasFinal){
+    res = await Store.saveGame(g); // already archived; just an update
+  } else {
+    res = await Store.moveGame(g, "games", "games_final");
+  }
+  if (res && res.ok===false){
+    if (!wasFinal) g.status = "live"; // revert so the game keeps playing normally
+    appAlert("儲存失敗，請檢查網路連線後再試一次。");
+    render();
+    return;
+  }
+  if (!wasFinal) await Store.setActiveGameId(null);
+  AppState.ui.showEndGame=false;
+  AppState.ui.showBox=false;
+  AppState.games = await Store.listGames();
+  render();
+}
+
+async function reopenGame(){
+  const g = AppState.game;
+  if (!requireAdmin("重新開放已完賽的紀錄")) return;
+  g.status = "live";
+  g.updatedAt = Date.now();
+  const res = await Store.moveGame(g, "games_final", "games");
+  if (res && res.ok===false){
+    g.status = "final";
+    appAlert("儲存失敗，請檢查網路連線後再試一次。");
+    render();
+    return;
+  }
+  await Store.setActiveGameId(g.id);
+  AppState.games = await Store.listGames();
+  // Drop straight into the record editor so "reopen for editing" actually
+  // lands somewhere editable, instead of the plain live-scoring screen.
+  ensureOverrides(g);
+  AppState.ui.showEditGame = true;
+  render();
+}
+
+async function deleteFinishedGame(){
+  const g = AppState.game;
+  if (!requireAdmin("刪除已完賽的紀錄")) return;
+  if (!(await appConfirm("確定要刪除「"+g.ourTeamName+" vs "+g.opponent+"」這場比賽紀錄嗎？此動作無法復原。"))) return;
+  const res = await Store.deleteGame(g.id, true);
+  if (res && res.ok===false){
+    appAlert("刪除失敗，請檢查網路連線後再試一次。");
+    return;
+  }
+  await Store.setActiveGameId(null);
+  AppState.game = null;
+  AppState.view = "home";
+  AppState.games = await Store.listGames();
+  render();
+}
+
+/* ---------- Roster editor (simple) ---------- */
+function openRosterEditor(){
+  const list = AppState.roster.map(p=>`<div class="lineup-row">
+    <div class="num-input" style="text-align:center;font-weight:700;">#${esc(p.number)}</div>
+    <div class="name-out">${esc(p.name)}</div>
+  </div>`).join("");
+  const back = document.createElement("div");
+  back.className="modal-back";
+  back.onclick = (e)=>{ if (e.target===back) back.remove(); };
+  back.innerHTML = `<div class="modal">
+    <button class="close-x" onclick="this.closest('.modal-back').remove()">×</button>
+    <h3>球隊名單</h3>
+    <div class="hint" style="font-size:12.5px;color:var(--ink-dim);margin-bottom:8px;">共 ${AppState.roster.length} 名球員（背號／姓名）。可於下方新增。</div>
+    ${list}
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <input type="text" id="new-num" placeholder="背號" style="width:86px;font-size:16px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);">
+      <input type="text" id="new-name" placeholder="姓名" style="flex:1;font-size:16px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);">
+      <button class="btn primary" onclick="addRosterPlayer()">新增</button>
+    </div>
+  </div>`;
+  document.body.appendChild(back);
+}
+async function addRosterPlayer(){
+  const num = document.getElementById("new-num").value.trim();
+  const name = document.getElementById("new-name").value.trim();
+  if (!num || !name) return;
+  AppState.roster.push({number:num, name});
+  await Store.saveRoster(AppState.roster);
+  document.querySelectorAll(".modal-back").forEach(m=>m.remove());
+  openRosterEditor();
+}
+
+/* ---------------------------------------------------------------------
+   Boot
+--------------------------------------------------------------------- */
+async function boot(){
+  AppState.roster = await Store.getRoster();
+  AppState.games = await Store.listGames();
+  const activeId = await Store.getActiveGameId();
+  if (activeId){
+    const g = await Store.loadGame(activeId);
+    if (g && g.status!=="final"){
+      AppState.game = g;
+      AppState.view = g.status==="setup" ? "lineup" : "game";
+      render();
+      return;
+    }
+  }
+  AppState.view = "home";
+  render();
+}
+
+// hot-reload aware boot so open viewers don't lose live game state on republish
+if (window.claude && window.claude.hot){
+  window.claude.hot.snapshot ? null : null;
+  const start = ()=>boot();
+  window.claude.hot.ready ? window.claude.hot.ready(start) : start();
+} else {
+  boot();
+}
+</script>
+</body>
+</html>
