@@ -2285,12 +2285,44 @@ function renderAttendanceView(){
   // other season, where every game really is a document here).
   const totalGames = totalGamesForScope(seasonFilter, games, allGames);
   const attendance = {};
-  games.forEach(g=>{
+  // Who this App shows as "present" for one game document (lineup／備補／
+  // any recorded plate appearance).
+  function presentInGame(g){
     const present = new Set();
     (g.lineup||[]).forEach(r=>{ if (r.number) present.add(r.number); });
     (g.bench||[]).forEach(b=>{ if (b.number) present.add(b.number); });
     (g.plays||[]).forEach(p=>{ if (p.side==="us" && p.batterNumber) present.add(p.batterNumber); });
-    present.forEach(num=>{ attendance[num]=(attendance[num]||0)+1; });
+    return present;
+  }
+  // ⚠️ Version 47 更新：聯賽比賽常常一天排兩場（雙重賽），但球員換人上場/
+  // 記錄疏漏，常常只有其中一場的先發打線／備補名單／打席記到某位球員，
+  // 另一場漏記。使用者要求「出席場數不要以有沒有上場（判斷單場的記錄）
+  // 為準，只要當天兩場其中一場有出賽紀錄，就兩場都算出席」——同一天的
+  // 兩場只要有出席任一場，就把那天所有場次都算進出席數，不是只算實際
+  // 被記到名單/打席的那一場。只對「聯賽」比賽、且日期是真正的
+  // yyyy-mm-dd（`f-date` 欄位存的格式）才做這個「同天合併」；試算表匯入
+  // 的歷史比賽（`g_hist01`/`g_hist02` 之類）日期只是球季名稱的佔位字串
+  // （例如「2026 賽季」），不是真正日期，好幾場完全不相關的比賽可能共用
+  //同一個佔位字串，硬要用日期分組會把不相關的比賽誤判成同一天，所以那
+  // 些完全不受影響，維持原本「單場各自認定出席」的算法；盃賽／季後賽同
+  // 理不分組（目前沒聽說盃賽也一天排兩場，之後真的有的話再擴大範圍）。
+  const REAL_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const sameDayGroups = {};
+  const ungroupedGames = [];
+  games.forEach(g=>{
+    if (isLeagueGame(g) && REAL_DATE_RE.test(g.date||"")){
+      (sameDayGroups[g.date] = sameDayGroups[g.date]||[]).push(g);
+    } else {
+      ungroupedGames.push(g);
+    }
+  });
+  Object.values(sameDayGroups).forEach(dayGames=>{
+    const presentThatDay = new Set();
+    dayGames.forEach(g=>{ presentInGame(g).forEach(num=>presentThatDay.add(num)); });
+    presentThatDay.forEach(num=>{ attendance[num]=(attendance[num]||0)+dayGames.length; });
+  });
+  ungroupedGames.forEach(g=>{
+    presentInGame(g).forEach(num=>{ attendance[num]=(attendance[num]||0)+1; });
   });
   // Layer in imported historical attendance (see importedAttendance)
   // on top of whatever this App has actually recorded — for "生涯" every
