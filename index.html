@@ -2422,7 +2422,25 @@ function renderAttendanceView(){
       ungroupedGames.push(g);
     }
   });
-  Object.values(sameDayGroups).forEach(dayGames=>{
+  // ⚠️ Version 49 更新：使用者確認 g_hist01（vs 奕郝）／g_hist02（vs 零壹
+  // 通訊）這兩場試算表匯入的歷史比賽，其實是同一天真正打的雙重賽——但它們
+  // 的 date 都只是球季佔位字串「2026 賽季」（見上方 Version 47 註解），套
+  // 不到「真正 yyyy-mm-dd 日期才分組」的規則。這兩筆是固定、不會再變動的
+  // 歷史資料（試算表匯入的單場比賽紀錄本來就只有這兩筆，見 Version 40），
+  // 不需要放寬日期比對規則去處理「未來還有其他這種資料」的情況，所以直接
+  // 用固定的比賽 ID 名單手動標記為同一組雙重賽，其餘仍套用日期比對規則。
+  const MANUAL_DOUBLEHEADER_GROUPS = [
+    ["g_hist01", "g_hist02"],
+  ];
+  const manualGroups = [];
+  MANUAL_DOUBLEHEADER_GROUPS.forEach(ids=>{
+    const found = ids.map(id=>ungroupedGames.find(g=>g.id===id)).filter(Boolean);
+    if (found.length>1){
+      manualGroups.push(found);
+      found.forEach(g=>{ const idx=ungroupedGames.indexOf(g); if (idx>=0) ungroupedGames.splice(idx,1); });
+    }
+  });
+  Object.values(sameDayGroups).concat(manualGroups).forEach(dayGames=>{
     const presentThatDay = new Set();
     dayGames.forEach(g=>{ presentInGame(g).forEach(num=>presentThatDay.add(num)); });
     presentThatDay.forEach(num=>{ attendance[num]=(attendance[num]||0)+dayGames.length; });
