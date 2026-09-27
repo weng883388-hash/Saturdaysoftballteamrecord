@@ -2320,11 +2320,14 @@ function renderAttendanceView(){
   // everywhere in the app.
   const batting = seasonBattingFor(seasonFilter, allGames);
   // Minimum-PA qualification (like a batting title): players whose plate
-  // appearances are below 60% of total games (attendance's totalGames,
-  // which counts every game fielded incl. 盃賽／季後賽) are excluded from
-  // all leaderboards below, so a player with only a couple of PA can't
-  // top the AVG/OPS list on a tiny sample.
-  const qualifyMinPA = totalGames * 0.6;
+  // appearances are below totalGames (attendance's totalGames, i.e. the
+  // number of games already played in this season/生涯 scope, counting
+  // every game fielded incl. 盃賽／季後賽) are excluded from all
+  // leaderboards below, so a player with only a couple of PA can't top
+  // the AVG/OPS list on a tiny sample. ⚠️ Version 46 更新：門檻從「總場數
+  // 的 60%」改成「總場數（100%）」——使用者要求上榜條件改為「打席數 ≥
+  // 已賽場次」，不再打折扣。
+  const qualifyMinPA = totalGames;
   const qualified = batting.filter(r=>r.PA >= qualifyMinPA);
   const withAB = qualified.filter(r=>r.AB>0);
   // 勝投 is a pitching count stat, not a batting rate/count stat, so it
