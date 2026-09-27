@@ -1404,12 +1404,17 @@ const BATTING_COUNT_FIELDS = ["PA","AB","H","1B","2B","3B","HR","BB","SF","RBI",
 
 // Shared rate-stat pass: takes a list of rows that already have the raw
 // counting fields (PA/AB/H/…) filled in and adds AVG/OBP/SLG/OPS/ISO plus
-// a team-relative OPS+ computed from the SAME list's own combined line
-// (100 = exactly average across whatever this particular list covers —
-// one season, a merged career total, etc). Used by computeSeasonBatting
-// and by mergeBattingLists so every batting table in the app derives
-// rates the same way, whatever the source of the counting stats.
-function deriveBattingRates(list){
+// an OPS+ computed against a baseline line. By default that baseline is
+// just the SAME list's own combined totals (100 = exactly average across
+// whatever this particular list covers). An optional `oppTotals` (raw
+// AB/H/1B/2B/3B/HR/BB/SF pooled from recorded opponent at-bats — see
+// computeOpponentTotals) is folded into the baseline pool alongside the
+// list's own totals, so OPS+ is standardized against league-wide batting
+// (our players + recorded opponents) rather than only our own team's
+// output; omit it (or pass nothing) for the old team-only baseline. Used
+// by computeSeasonBatting and by mergeBattingLists so every batting table
+// in the app derives rates the same way, whatever the source of counts.
+function deriveBattingRates(list, oppTotals){
   list.forEach(r=>{
     r.AVG = r.AB>0 ? r.H/r.AB : 0;
     r.OBP = (r.AB+r.BB+r.SF)>0 ? (r.H+r.BB)/(r.AB+r.BB+r.SF) : 0;
@@ -1417,14 +1422,15 @@ function deriveBattingRates(list){
     r.OPS = r.OBP+r.SLG;
     r.ISO = r.SLG - r.AVG;
   });
-  const totAB = list.reduce((a,r)=>a+r.AB,0);
-  const totH = list.reduce((a,r)=>a+r.H,0);
-  const totBB = list.reduce((a,r)=>a+r.BB,0);
-  const totSF = list.reduce((a,r)=>a+r.SF,0);
-  const tot1B = list.reduce((a,r)=>a+r["1B"],0);
-  const tot2B = list.reduce((a,r)=>a+r["2B"],0);
-  const tot3B = list.reduce((a,r)=>a+r["3B"],0);
-  const totHR = list.reduce((a,r)=>a+r.HR,0);
+  const ot = oppTotals || {};
+  const totAB = list.reduce((a,r)=>a+r.AB,0) + (ot.AB||0);
+  const totH = list.reduce((a,r)=>a+r.H,0) + (ot.H||0);
+  const totBB = list.reduce((a,r)=>a+r.BB,0) + (ot.BB||0);
+  const totSF = list.reduce((a,r)=>a+r.SF,0) + (ot.SF||0);
+  const tot1B = list.reduce((a,r)=>a+r["1B"],0) + (ot["1B"]||0);
+  const tot2B = list.reduce((a,r)=>a+r["2B"],0) + (ot["2B"]||0);
+  const tot3B = list.reduce((a,r)=>a+r["3B"],0) + (ot["3B"]||0);
+  const totHR = list.reduce((a,r)=>a+r.HR,0) + (ot.HR||0);
   const teamOBP = (totAB+totBB+totSF)>0 ? (totH+totBB)/(totAB+totBB+totSF) : 0;
   const teamSLG = totAB>0 ? (tot1B+2*tot2B+3*tot3B+4*totHR)/totAB : 0;
   const teamOPS = teamOBP+teamSLG;
@@ -1434,7 +1440,12 @@ function deriveBattingRates(list){
   return list;
 }
 
-function computeSeasonBatting(games){
+// Raw counting-stat pass only (no rate stats / OPS+) — split out of
+// computeSeasonBatting so seasonBattingFor can combine raw rows from
+// multiple sources before deriving rates once, with an opponent-pool
+// baseline folded in. computeSeasonBatting itself keeps its original
+// team-only-baseline behavior for direct callers (e.g. competitionBattingFor).
+function computeSeasonBattingRaw(games){
   // Built on top of computeBoxScore (rather than re-walking plays) so a
   // per-game manual override is automatically reflected in the season
   // totals too, in exactly one place.
@@ -1449,7 +1460,10 @@ function computeSeasonBatting(games){
       BATTING_COUNT_FIELDS.forEach(f=>{ r[f] += gr[f]||0; });
     });
   });
-  return deriveBattingRates(Object.values(rows));
+  return Object.values(rows);
+}
+function computeSeasonBatting(games){
+  return deriveBattingRates(computeSeasonBattingRaw(games));
 }
 
 // Identity key for merging batting rows from different sources (live
@@ -1461,9 +1475,10 @@ function battingKey(r){ return r.number ? ("num:"+r.number) : ("name:"+(r.name||
 
 // Combine any number of raw-counting-stat row lists (e.g. an imported
 // season snapshot plus the live-tracked games for that same season) into
-// one list, summing counts per player and re-deriving rate stats from the
-// combined totals — never by averaging already-derived rates.
-function mergeBattingLists(...lists){
+// one list, summing counts per player — raw counts only, no rate stats.
+// Split out of mergeBattingLists so seasonBattingFor can fold in an
+// opponent-pool baseline before deriving rates once.
+function mergeBattingListsRaw(...lists){
   const rows = {};
   lists.forEach(list=>{
     (list||[]).forEach(r=>{
@@ -1474,7 +1489,10 @@ function mergeBattingLists(...lists){
       if (!row.name && r.name) row.name = r.name;
     });
   });
-  return deriveBattingRates(Object.values(rows));
+  return Object.values(rows);
+}
+function mergeBattingLists(...lists){
+  return deriveBattingRates(mergeBattingListsRaw(...lists));
 }
 
 // Result/zone/type breakdown for one side ("us" or "opp"). For "opp" the
@@ -1560,6 +1578,28 @@ function computeOpponentBatting(games, opponentFilter){
 // teams — pair with the row's team so a shared jersey number never
 // collides between two different opponents.
 function oppRowKey(r){ return (r.team||"")+"||"+(r.number||""); }
+
+// Pooled opponent-side batting totals (no per-player/per-team breakdown)
+// used as the extra baseline input to deriveBattingRates so a player's
+// OPS+ is standardized against league-wide batting (our players' output
+// plus every recorded opponent at-bat), not just our own team's own
+// output. Walks every "opp"-side play across the given games — the same
+// plays computeOpponentBatting reads — including imported historical
+// opponent-log games (oppLogOnly), since those logs' plays are exactly
+// the recorded opponent at-bats this is meant to pool in.
+function computeOpponentTotals(games){
+  const t = {AB:0,H:0,"1B":0,"2B":0,"3B":0,HR:0,BB:0,SF:0};
+  (games||[]).forEach(g=>{
+    (g.plays||[]).forEach(p=>{
+      if (p.side!=="opp") return;
+      if (p.code!=="BB" && p.code!=="SF") t.AB++;
+      if (["1B","2B","3B","HR"].includes(p.code)){ t.H++; t[p.code]++; }
+      if (p.code==="BB") t.BB++;
+      if (p.code==="SF") t.SF++;
+    });
+  });
+  return t;
+}
 
 // Batted-ball type breakdown as rates (GB%/LD%/FB%/FOUL%) rather than raw
 // counts — the percentage of all recorded batted-ball types that were
@@ -1809,16 +1849,31 @@ function seasonOptionsFor(games){
 // season is underway. "生涯" (career) sums every league season together
 // (imported + all live league games, regardless of which season each is
 // tagged with). Non-league (盃賽/季後賽) games are never included here.
+//
+// OPS+ is standardized against a league-wide baseline: our own players'
+// combined line PLUS every recorded opponent at-bat for the same
+// season/career scope (from live games' "opp"-side plays, and from
+// imported opponent-log games such as g_opp01–g_opp08 — those have no
+// `season` field of their own and fall under gameSeason()'s existing
+// "2025-2026聯賽" fallback, same as any other untagged league game). Our
+// own team's counting totals still exclude oppLogOnly games (those are
+// opponent stat logs, not games we actually played), but the opponent
+// pool deliberately includes them, since their plays ARE real recorded
+// opponent at-bats.
 function seasonBattingFor(seasonKey, games){
   const leagueGames = (games||[]).filter(g=>!g.oppLogOnly && isLeagueGame(g));
+  const oppPoolGames = (games||[]).filter(isLeagueGame);
   if (seasonKey==="生涯"){
     const imported = Object.values(SEASON_IMPORT_KEYS).flatMap(k=>AppState.seasonStats[k]||[]);
-    return mergeBattingLists(imported, computeSeasonBatting(leagueGames));
+    const raw = mergeBattingListsRaw(imported, computeSeasonBattingRaw(leagueGames));
+    return deriveBattingRates(raw, computeOpponentTotals(oppPoolGames));
   }
   const importKey = SEASON_IMPORT_KEYS[seasonKey];
   const imported = importKey ? (AppState.seasonStats[importKey]||[]) : [];
-  const liveForSeason = computeSeasonBatting(leagueGames.filter(g=>gameSeason(g)===seasonKey));
-  return mergeBattingLists(imported, liveForSeason);
+  const liveForSeason = computeSeasonBattingRaw(leagueGames.filter(g=>gameSeason(g)===seasonKey));
+  const raw = mergeBattingListsRaw(imported, liveForSeason);
+  const oppForSeason = oppPoolGames.filter(g=>gameSeason(g)===seasonKey);
+  return deriveBattingRates(raw, computeOpponentTotals(oppForSeason));
 }
 
 // Batting totals for non-league games (盃賽/季後賽), optionally narrowed
