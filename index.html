@@ -537,6 +537,70 @@ const SEASON_IMPORT_KEYS = { "2025":"season_2025", "2025-2026聯賽":"season_202
 // around as data comes and goes; anything else found on a game (a
 // custom/typo'd label) is appended after these, alphabetically.
 const KNOWN_SEASONS = ["2025", "2025-2026聯賽", "2026聯賽賽季"];
+// Version 48 新增：賽程表功能。本季（2026聯賽賽季）目前排定會遇到的對手，
+// 供「新比賽設定」畫面的對手欄位當下拉選單用（見 renderSetup／OPP_OTHER）；
+// 選單本身仍保留「其他（自行輸入）」，遇到球隊試算表尚未列出的臨時對手
+// （例如盃賽的對手、或球隊之後才加入本季賽程的新隊伍）不會被卡住。這份
+// 名單只是選單的預設順序方便點選，賽程表本身（見 DEFAULT_SCHEDULE／
+// AppState.schedule）才是真正的資料來源；新增一場賽程時輸入的新對手名稱
+// 之後也會自然出現在對手成績查詢等既有的球隊/背號分析裡，不需要另外把
+// 它加進這份清單。
+const OPPONENT_TEAMS = ["逢甲都市狼","帛昇TOP","大里農會","台中慶記","奕郝","零壹通訊","鱷勢力","十八養場"];
+// Version 48 新增：賽程表的初始資料，來自使用者提供的 Google 試算表
+// 「振宇五金MIF」分頁「2026聯賽 杯賽 賽程表」（2026-06-13～2027-01-03，
+// 2026聯賽賽季），轉成本 App 可編輯的一列一筆格式（每場比賽一列，同一天
+// 兩場雙重賽拆成兩列，共用同一個日期；輪休／盃賽備註等沒有對手的列
+// opponent 留空，只用 note 顯示）。這只是 Store.getSchedule() 第一次讀取、
+// 資料庫裡還沒有 team/schedule 文件時的「種子資料」（比照 getRoster() 的
+// DEFAULT_ROSTER 寫法）——寫入一次之後，之後的異動一律透過賽程表頁面的
+// 新增/編輯/刪除（saveSchedule()）覆蓋，不會再被這份常數覆寫。
+// batFirst：true＝振宇五金先攻、false＝先守、null＝不確定或這一列沒有比賽
+// （輪休／備註列）。原始試算表裡「1/3 季後賽」那一列的年份寫成跟球季開打
+// 同一年（2026），但實際上是季後賽開始，應該落在下一年 1 月，這裡已經手動
+// 校正成 2027-01-03，讓賽程表排序時仍排在 2026 年賽程之後。
+const DEFAULT_SCHEDULE = [
+  {id:"sch_seed_001",season:"2026聯賽賽季",date:"2026-06-13",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:""},
+  {id:"sch_seed_002",season:"2026聯賽賽季",date:"2026-06-13",time:"1500",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:"延賽"},
+  {id:"sch_seed_003",season:"2026聯賽賽季",date:"2026-06-20",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_004",season:"2026聯賽賽季",date:"2026-06-27",time:"1100",venue:"東湖",opponent:"大里農會",batFirst:true,note:""},
+  {id:"sch_seed_005",season:"2026聯賽賽季",date:"2026-06-27",time:"1300",venue:"東湖",opponent:"台中慶記",batFirst:false,note:"延賽"},
+  {id:"sch_seed_006",season:"2026聯賽賽季",date:"2026-07-04",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_007",season:"2026聯賽賽季",date:"2026-07-11",time:"1200",venue:"東湖",opponent:"奕郝",batFirst:true,note:""},
+  {id:"sch_seed_008",season:"2026聯賽賽季",date:"2026-07-11",time:"1300",venue:"東湖",opponent:"零壹通訊",batFirst:false,note:"延賽"},
+  {id:"sch_seed_009",season:"2026聯賽賽季",date:"2026-07-18",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_010",season:"2026聯賽賽季",date:"2026-07-25",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_011",season:"2026聯賽賽季",date:"2026-08-01",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_012",season:"2026聯賽賽季",date:"2026-08-08",time:"1100",venue:"東湖",opponent:"鱷勢力",batFirst:true,note:""},
+  {id:"sch_seed_013",season:"2026聯賽賽季",date:"2026-08-08",time:"1200",venue:"東湖",opponent:"十八養場",batFirst:false,note:""},
+  {id:"sch_seed_014",season:"2026聯賽賽季",date:"2026-08-08",time:"",venue:"",opponent:"",batFirst:null,note:"2026/8/9 (外埔 振宇杯)"},
+  {id:"sch_seed_015",season:"2026聯賽賽季",date:"2026-08-15",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_016",season:"2026聯賽賽季",date:"2026-08-22",time:"1100",venue:"東湖",opponent:"鱷勢力",batFirst:true,note:""},
+  {id:"sch_seed_017",season:"2026聯賽賽季",date:"2026-08-22",time:"1200",venue:"東湖",opponent:"十八養場",batFirst:false,note:""},
+  {id:"sch_seed_018",season:"2026聯賽賽季",date:"2026-09-05",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_019",season:"2026聯賽賽季",date:"2026-09-12",time:"0900",venue:"東湖",opponent:"奕郝",batFirst:true,note:""},
+  {id:"sch_seed_020",season:"2026聯賽賽季",date:"2026-09-12",time:"1000",venue:"東湖",opponent:"零壹通訊",batFirst:false,note:""},
+  {id:"sch_seed_021",season:"2026聯賽賽季",date:"2026-09-19",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_022",season:"2026聯賽賽季",date:"2026-09-26",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_023",season:"2026聯賽賽季",date:"2026-10-03",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_024",season:"2026聯賽賽季",date:"2026-10-10",time:"1100",venue:"東湖",opponent:"大里農會",batFirst:true,note:""},
+  {id:"sch_seed_025",season:"2026聯賽賽季",date:"2026-10-10",time:"1300",venue:"東湖",opponent:"台中慶記",batFirst:false,note:""},
+  {id:"sch_seed_026",season:"2026聯賽賽季",date:"2026-10-17",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_027",season:"2026聯賽賽季",date:"2026-10-24",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:""},
+  {id:"sch_seed_028",season:"2026聯賽賽季",date:"2026-10-24",time:"1600",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:""},
+  {id:"sch_seed_029",season:"2026聯賽賽季",date:"2026-10-31",time:"0800",venue:"東湖",opponent:"鱷勢力",batFirst:true,note:""},
+  {id:"sch_seed_030",season:"2026聯賽賽季",date:"2026-10-31",time:"0900",venue:"東湖",opponent:"十八養場",batFirst:false,note:""},
+  {id:"sch_seed_031",season:"2026聯賽賽季",date:"2026-11-14",time:"0900",venue:"東湖",opponent:"奕郝",batFirst:true,note:""},
+  {id:"sch_seed_032",season:"2026聯賽賽季",date:"2026-11-14",time:"1000",venue:"東湖",opponent:"零壹通訊",batFirst:false,note:""},
+  {id:"sch_seed_033",season:"2026聯賽賽季",date:"2026-11-28",time:"0800",venue:"東湖",opponent:"大里農會",batFirst:true,note:""},
+  {id:"sch_seed_034",season:"2026聯賽賽季",date:"2026-11-28",time:"1000",venue:"東湖",opponent:"台中慶記",batFirst:false,note:""},
+  {id:"sch_seed_035",season:"2026聯賽賽季",date:"2026-12-05",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_036",season:"2026聯賽賽季",date:"2026-12-12",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:""},
+  {id:"sch_seed_037",season:"2026聯賽賽季",date:"2026-12-12",time:"1600",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:""},
+  {id:"sch_seed_038",season:"2026聯賽賽季",date:"2026-12-19",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
+  {id:"sch_seed_039",season:"2026聯賽賽季",date:"2026-12-26",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:"原6/13延賽"},
+  {id:"sch_seed_040",season:"2026聯賽賽季",date:"2026-12-26",time:"1500",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:""},
+  {id:"sch_seed_041",season:"2026聯賽賽季",date:"2027-01-03",time:"",venue:"",opponent:"",batFirst:null,note:"季後賽開始（尚未排定對戰）"}
+];
 // Historical TEAM-level (win/tie/loss) standings imported for the 球隊戰績
 // card — separate from SEASON_IMPORT_KEYS (which is per-player batting).
 // "2025" comes from a hand-written "A組積分表" group standings sheet — a
@@ -784,6 +848,39 @@ const Store = (function(){
       return {ok:true};
     },
 
+    // Version 48 新增：賽程表（見 DEFAULT_SCHEDULE／renderScheduleView）。跟
+    // team/roster 一樣，第一次讀取、資料庫裡還沒有 team/schedule 文件時，用
+    // DEFAULT_SCHEDULE（試算表匯入的初始賽程）當種子資料寫入一次；之後每次
+    // 讀取都是使用者自己編輯過的版本，不會再被 DEFAULT_SCHEDULE 覆蓋。跟
+    // team/leaguegames 一樣是單一文件、一個扁平陣列（每一列自帶
+    // season，同一份文件涵蓋所有球季，不用每季另外開一份文件）。
+    async getSchedule(){
+      await ready;
+      if (db){
+        try{
+          const snap = await db.doc("team/schedule").get();
+          if (snap.exists) return clone(snap.data().rows || []);
+          await db.doc("team/schedule").set({rows: DEFAULT_SCHEDULE, updatedAt: Date.now()});
+          return clone(DEFAULT_SCHEDULE);
+        }catch(e){ /* fall through to LS */ }
+      }
+      try{
+        const raw = localStorage.getItem("sb_schedule_v1");
+        if (raw) return JSON.parse(raw);
+        localStorage.setItem("sb_schedule_v1", JSON.stringify(DEFAULT_SCHEDULE));
+      }catch(e){}
+      return clone(DEFAULT_SCHEDULE);
+    },
+    async saveSchedule(rows){
+      await ready;
+      if (db){
+        try{ await db.doc("team/schedule").set({rows, updatedAt:Date.now()}); return {ok:true}; }
+        catch(e){ return {ok:false, code:e&&e.code}; }
+      }
+      try{ localStorage.setItem("sb_schedule_v1", JSON.stringify(rows)); }catch(e){}
+      return {ok:true};
+    },
+
     // Finished games live in "games_final", which is write-locked to
     // admins (see the db rules declared on publish) — anyone can still
     // read them for stats, but only an admin can edit or delete one.
@@ -963,6 +1060,11 @@ const AppState = {
   // involving 振宇五金) — see Store.getLeagueGames(). Each row:
   // {id, season, competitionType, date, teamA, teamB, scoreA, scoreB}.
   leagueGames:[],
+  // Version 48 新增：賽程表（見 Store.getSchedule/saveSchedule／DEFAULT_SCHEDULE）。
+  // 每一列一場比賽（同一天雙重賽拆兩列，共用日期），或一列沒有對手、只有
+  // note 的備註列（輪休／盃賽提醒等）：{id, season, date, time, venue,
+  // opponent, batFirst, note}。
+  schedule:[],
   ui:{                  // transient UI state, not persisted
     pendingResult:null, // {code, side:'us'|'opp'}
     pendingScorers:[],
@@ -977,6 +1079,9 @@ const AppState = {
     showEndGame:false,
     showEditGame:false,
     showLeagueGamesModal:false,
+    showScheduleModal:false,
+    scheduleModalEditId:null,
+    scheduleSeasonFilter:SEASON_DEFAULT,
     confirmMsg:null,
     alertMsg:null,
     endWinPitcher:null,
@@ -1214,6 +1319,7 @@ function render(){
   else if (s.view==="game") renderGame();
   else if (s.view==="stats") renderStatsView();
   else if (s.view==="attendance") renderAttendanceView();
+  else if (s.view==="schedule") renderScheduleView();
   // Global confirm modal, appended after whichever view just rendered, so
   // every confirm() call site works no matter which screen is showing.
   if (s.ui && s.ui.confirmMsg){
@@ -2421,6 +2527,203 @@ function renderAttendanceView(){
   `;
 }
 
+/* ---------- SCHEDULE (賽程表 — Version 48 新增) ---------- */
+async function goSchedule(){
+  AppState.schedule = await Store.getSchedule();
+  AppState.games = await Store.listGames();
+  AppState.view = "schedule";
+  render();
+}
+function selectScheduleSeason(v){ AppState.ui.scheduleSeasonFilter = v; render(); }
+// 賽程表的球季下拉選單：固定已知球季在前，賽程表裡實際出現、但不在固定清單
+// 裡的球季名稱（例如未來新增的球季）附加在後，另外開頭放「全部」可以整份
+// 賽程一起看（不分季）。
+function scheduleSeasonOptionsFor(){
+  const found = new Set((AppState.schedule||[]).map(s=>s.season).filter(Boolean));
+  const extra = Array.from(found).filter(s=>!KNOWN_SEASONS.includes(s)).sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+  return [...KNOWN_SEASONS, ...extra];
+}
+// 一筆賽程（有對手的那種，備註列沒有對手不適用）是否已經有對應的比賽紀錄
+// （同日期＋同對手），用來顯示「已完成／進行中／未開始」狀態，並決定要不要
+// 顯示「開始這場」按鈕（已經開過的就不用再顯示）。
+function scheduleEntryStatus(entry, games){
+  const match = (games||[]).find(g=>!g.oppLogOnly && g.date===entry.date && g.opponent===entry.opponent);
+  if (!match) return {label:"未開始", cls:"final", matched:false};
+  return match.status==="final" ? {label:"已完成", cls:"final", matched:true} : {label:"進行中", cls:"live", matched:true};
+}
+function fmtScheduleTime(t){
+  if (!t || t.length!==4) return "";
+  return t.slice(0,2)+":"+t.slice(2);
+}
+function renderScheduleView(){
+  const seasonFilter = AppState.ui.scheduleSeasonFilter || SEASON_DEFAULT;
+  const seasonOptions = scheduleSeasonOptionsFor();
+  const all = AppState.schedule || [];
+  const list = all.filter(s=> seasonFilter==="全部" || s.season===seasonFilter)
+    .slice()
+    .sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.time||"").localeCompare(b.time||""));
+  const rows = list.map(s=>{
+    const noteOnly = !s.opponent;
+    const editBtns = `
+      <button class="row-x" onclick="openScheduleModal('${s.id}')" title="編輯">✎</button>
+      <button class="row-x" onclick="deleteScheduleEntry('${s.id}')" title="刪除">✕</button>`;
+    if (noteOnly){
+      return `<div class="game-item" style="cursor:default;opacity:.7;">
+        <div class="gi-vs">
+          <div class="gi-opp">${esc(s.date)}${s.time?` ${esc(fmtScheduleTime(s.time))}`:""}</div>
+          <div class="gi-meta">${esc(s.note || "備註")}</div>
+        </div>
+        ${editBtns}
+      </div>`;
+    }
+    const st = scheduleEntryStatus(s, AppState.games);
+    return `<div class="game-item" style="cursor:default;">
+      <div class="gi-vs">
+        <div class="gi-opp">${esc(s.date)}${s.time?` ${esc(fmtScheduleTime(s.time))}`:""} · ${esc(s.venue||"")} · 振宇五金 <span style="color:var(--ink-dim);font-weight:400;">vs</span> ${esc(s.opponent)}</div>
+        <div class="gi-meta">${s.batFirst===true?"先攻":s.batFirst===false?"先守":"攻守未定"}${s.note?` · ${esc(s.note)}`:""}</div>
+      </div>
+      <span class="status-pill ${st.cls}">${st.label}</span>
+      ${st.matched ? "" : `<button class="btn primary" style="padding:6px 10px;font-size:12px;flex:none;" onclick="goSetupFromSchedule('${s.id}')">開始這場</button>`}
+      ${editBtns}
+    </div>`;
+  }).join("");
+  $app.innerHTML = `
+    <div class="topbar"><div class="topbar-inner">
+      <button class="icon-btn" onclick="backHome()">‹ 返回</button>
+      <div class="brand" style="justify-content:center;"><span class="brand-mark" style="font-size:18px;">賽程表</span></div>
+      <span style="width:56px;"></span>
+    </div></div>
+    <div class="card">
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        <div class="field" style="margin-bottom:0;max-width:220px;flex:1;">
+          <label>球季</label>
+          <select onchange="selectScheduleSeason(this.value)">
+            <option ${seasonFilter==='全部'?'selected':''}>全部</option>
+            ${seasonOptions.map(s=>`<option ${seasonFilter===s?'selected':''}>${esc(s)}</option>`).join("")}
+          </select>
+        </div>
+        <button class="btn primary" onclick="openScheduleModal()">＋ 新增賽程</button>
+      </div>
+    </div>
+    <div class="card">
+      ${rows || '<div class="empty-state"><div class="em">📅</div>這個球季還沒有賽程資料</div>'}
+    </div>
+    ${AppState.ui.showScheduleModal ? renderScheduleModal() : ""}
+  `;
+}
+
+// 賽程新增/編輯視窗：跟 renderLeagueGamesModal() 一樣的彈窗風格，但一次只編
+// 輯一筆。對手一樣是下拉選單（見 opponentOptionsFor），選「其他」才顯示自
+// 行輸入欄；攻守順序因為這裡沒有像 AppState.game 那樣現成的物件可以直接
+// 掛在表單的 value 上，暫存在 AppState.ui.scheduleModalDraftBatFirst，跟
+// renderSetup 的 setBatFirst() 同一種做法（切換時 render() 整個彈窗會重繪，
+// 但只有這個欄位需要跨次點擊記住狀態）。
+function openScheduleModal(editId){
+  AppState.ui.scheduleModalEditId = editId || null;
+  const editing = editId ? (AppState.schedule||[]).find(s=>s.id===editId) : null;
+  AppState.ui.scheduleModalDraftBatFirst = editing ? editing.batFirst : null;
+  AppState.ui.showScheduleModal = true;
+  render();
+}
+function closeScheduleModal(){
+  AppState.ui.showScheduleModal = false;
+  AppState.ui.scheduleModalEditId = null;
+  render();
+}
+function setScheduleBatFirst(v){ AppState.ui.scheduleModalDraftBatFirst = v; render(); }
+function onScheduleOppSelectChange(v){
+  const custom = document.getElementById("sch-opp-custom");
+  if (!custom) return;
+  if (v==="__other__"){ custom.style.display=""; custom.focus(); }
+  else { custom.style.display="none"; }
+}
+function renderScheduleModal(){
+  const editId = AppState.ui.scheduleModalEditId;
+  const editing = editId ? (AppState.schedule||[]).find(s=>s.id===editId) : null;
+  const seasonFilter = AppState.ui.scheduleSeasonFilter || SEASON_DEFAULT;
+  const e = editing || {season: seasonFilter==='全部'?SEASON_DEFAULT:seasonFilter, date: todayStr(), time:"", venue:"東湖", opponent:"", note:""};
+  const oppOptions = opponentOptionsFor();
+  const isOtherOpp = !!e.opponent && !oppOptions.includes(e.opponent);
+  const batFirst = AppState.ui.scheduleModalDraftBatFirst;
+  return `<div class="modal-back" onclick="if(event.target===this){closeScheduleModal();}">
+    <div class="modal">
+      <button class="close-x" onclick="closeScheduleModal();">×</button>
+      <h3>${editing?"編輯賽程":"新增賽程"}</h3>
+      <div class="field">
+        <label>球季</label>
+        <input type="text" id="sch-season" list="season-list-sch" value="${esc(e.season)}">
+        <datalist id="season-list-sch">${KNOWN_SEASONS.map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+      </div>
+      <div class="field">
+        <label>日期</label>
+        <input type="date" id="sch-date" value="${esc(e.date)}">
+      </div>
+      <div class="field">
+        <label>時間（選填，格式 HHMM，例：1400）</label>
+        <input type="text" id="sch-time" inputmode="numeric" placeholder="例：1400" value="${esc(e.time||'')}">
+      </div>
+      <div class="field">
+        <label>場地</label>
+        <input type="text" id="sch-venue" value="${esc(e.venue||'')}">
+      </div>
+      <div class="field">
+        <label>對手（留空＝只是備註列，如輪休／盃賽提醒）</label>
+        <select id="sch-opp-select" onchange="onScheduleOppSelectChange(this.value)">
+          <option value="" ${!e.opponent?'selected':''}>（無，只是備註列）</option>
+          ${oppOptions.map(o=>`<option value="${esc(o)}" ${e.opponent===o?'selected':''}>${esc(o)}</option>`).join("")}
+          <option value="__other__" ${isOtherOpp?'selected':''}>其他（自行輸入）</option>
+        </select>
+        <input type="text" id="sch-opp-custom" placeholder="輸入對手隊名" value="${esc(isOtherOpp?e.opponent:'')}" style="margin-top:6px;${isOtherOpp?'':'display:none;'}">
+      </div>
+      <div class="field">
+        <label>攻守順序</label>
+        <div class="seg">
+          <button class="${batFirst===true?'active':''}" onclick="setScheduleBatFirst(true)">先攻</button>
+          <button class="${batFirst===false?'active':''}" onclick="setScheduleBatFirst(false)">先守</button>
+          <button class="${batFirst==null?'active':''}" onclick="setScheduleBatFirst(null)">未定</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>備註</label>
+        <input type="text" id="sch-note" value="${esc(e.note||'')}" placeholder="例：輪休／延賽／盃賽提醒">
+      </div>
+      <button class="btn primary block" onclick="saveScheduleEntry()">儲存</button>
+      ${editing ? `<button class="btn block" style="margin-top:8px;color:var(--danger);" onclick="deleteScheduleEntry('${editing.id}')">刪除此筆</button>` : ``}
+    </div>
+  </div>`;
+}
+async function saveScheduleEntry(){
+  if (!requireAdmin("編輯賽程")) return;
+  const $ = id=>document.getElementById(id);
+  const season = $("sch-season").value.trim() || SEASON_DEFAULT;
+  const date = $("sch-date").value || todayStr();
+  const time = $("sch-time").value.trim();
+  const venue = $("sch-venue").value.trim();
+  const oppSel = $("sch-opp-select").value;
+  const oppCustom = $("sch-opp-custom").value.trim();
+  const opponent = oppSel==="__other__" ? oppCustom : oppSel;
+  const batFirst = AppState.ui.scheduleModalDraftBatFirst;
+  const note = $("sch-note").value.trim();
+  const editId = AppState.ui.scheduleModalEditId;
+  const row = { id: editId || ("sch_"+uid()), season, date, time, venue, opponent, batFirst, note };
+  AppState.schedule = AppState.schedule || [];
+  const idx = editId ? AppState.schedule.findIndex(s=>s.id===editId) : -1;
+  if (idx>=0) AppState.schedule[idx] = row; else AppState.schedule.push(row);
+  await Store.saveSchedule(AppState.schedule);
+  AppState.ui.showScheduleModal = false;
+  AppState.ui.scheduleModalEditId = null;
+  render();
+}
+async function deleteScheduleEntry(id){
+  if (!requireAdmin("刪除賽程")) return;
+  if (!(await appConfirm("刪除這筆賽程？"))) return;
+  AppState.schedule = (AppState.schedule||[]).filter(s=>s.id!==id);
+  await Store.saveSchedule(AppState.schedule);
+  AppState.ui.showScheduleModal = false;
+  AppState.ui.scheduleModalEditId = null;
+  render();
+}
+
 /* ---------- Field diagram (batted-ball landing spot) ---------- */
 function fzPolar(cx,cy,r,angDeg){
   const a = angDeg*Math.PI/180;
@@ -2493,6 +2796,9 @@ function renderHome(){
       <button class="btn" style="flex:1;" onclick="goStats()">📊 數據分析</button>
       <button class="btn" style="flex:1;" onclick="goAttendance()">🏅 出席／排行榜</button>
     </div>
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="btn" style="flex:1;" onclick="goSchedule()">📅 賽程表</button>
+    </div>
     <div class="card">
       <h2>比賽紀錄</h2>
       <div class="hint">點選任一場比賽可繼續記錄或查看戰績</div>
@@ -2537,15 +2843,46 @@ async function deleteGameFromList(id, status){
   render();
 }
 
-function goSetup(){
-  AppState.game = newGame({});
+// Version 48 新增：開始新比賽時，對手隊名改用下拉選單（見使用者需求「讓我在
+// 開始新比賽時直接以選單選對手球隊」），選項＝本季固定 8 支對手隊（見
+// OPPONENT_TEAMS）聯集賽程表(AppState.schedule)裡實際出現過的其他對手名稱
+// （避免未來加了新對手隊但沒回來改這裡的常數）。清單固定順序在前、額外名稱
+// （依筆畫/字母排序）附加在後，跟 seasonOptionsFor() 的做法一致。
+function opponentOptionsFor(){
+  const found = new Set((AppState.schedule||[]).map(s=>s.opponent).filter(Boolean));
+  const extra = Array.from(found).filter(o=>!OPPONENT_TEAMS.includes(o)).sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+  return [...OPPONENT_TEAMS, ...extra];
+}
+// DOM-only toggle（不呼叫 render()，才不會把使用者已經填好的其他欄位重置）：
+// 選單選到「其他」才顯示自行輸入的文字欄位。
+function onOppSelectChange(v){
+  const custom = document.getElementById("f-opp-custom");
+  if (!custom) return;
+  if (v==="__other__"){ custom.style.display=""; custom.focus(); }
+  else { custom.style.display="none"; }
+}
+async function goSetup(prefill){
+  // 賽程表下拉選單要用到 AppState.schedule，這裡先讀好（見 goSetupFromSchedule
+  // 的「開始這場」快速開局，也會先帶好 opponent/batFirst/date 再呼叫這裡）。
+  AppState.schedule = await Store.getSchedule();
+  AppState.game = newGame(prefill||{});
   AppState.view = "setup";
   render();
+}
+// 從「賽程表」頁面點「開始這場」：帶入該筆賽程的對手／攻守／日期直接開新比賽。
+// 備註列（沒有對手，如輪休／盃賽提醒）沒有對手可帶，點了沒作用。
+async function goSetupFromSchedule(entryId){
+  const entry = (AppState.schedule||[]).find(s=>s.id===entryId);
+  if (!entry || !entry.opponent) return;
+  await goSetup({ opponent: entry.opponent, batFirst: entry.batFirst===true, date: entry.date });
 }
 
 /* ---------- SETUP ---------- */
 function renderSetup(){
   const g = AppState.game;
+  const rawOpp = g.opponent==='對手' ? '' : g.opponent;
+  const oppOptions = opponentOptionsFor();
+  const isOtherOpp = !!rawOpp && !oppOptions.includes(rawOpp);
   $app.innerHTML = `
     <div class="topbar"><div class="topbar-inner">
       <button class="icon-btn" onclick="backHome()">‹ 返回</button>
@@ -2555,7 +2892,12 @@ function renderSetup(){
     <div class="card">
       <div class="field">
         <label>對手隊名</label>
-        <input type="text" id="f-opp" placeholder="例：奕郝" value="${esc(g.opponent==='對手'?'':g.opponent)}">
+        <select id="f-opp-select" onchange="onOppSelectChange(this.value)">
+          <option value="" ${!rawOpp?'selected':''}>請選擇對手</option>
+          ${oppOptions.map(o=>`<option value="${esc(o)}" ${rawOpp===o?'selected':''}>${esc(o)}</option>`).join("")}
+          <option value="__other__" ${isOtherOpp?'selected':''}>其他（自行輸入）</option>
+        </select>
+        <input type="text" id="f-opp-custom" placeholder="輸入對手隊名" value="${esc(isOtherOpp?rawOpp:'')}" style="margin-top:6px;${isOtherOpp?'':'display:none;'}">
       </div>
       <div class="field">
         <label>本隊隊名</label>
@@ -2596,7 +2938,9 @@ function setCompetitionType(v){ AppState.game.competitionType=v; render(); }
 function backHome(){ AppState.game=null; AppState.view="home"; render(); }
 function confirmSetup(){
   const g = AppState.game;
-  g.opponent = document.getElementById("f-opp").value.trim() || "對手";
+  const oppSel = document.getElementById("f-opp-select").value;
+  const oppCustom = document.getElementById("f-opp-custom").value.trim();
+  g.opponent = (oppSel==="__other__" ? oppCustom : oppSel).trim() || "對手";
   g.ourTeamName = document.getElementById("f-us").value.trim() || "振宇五金";
   g.date = document.getElementById("f-date").value || todayStr();
   g.season = document.getElementById("f-season").value.trim() || SEASON_DEFAULT;
