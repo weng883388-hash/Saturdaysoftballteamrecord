@@ -73,6 +73,13 @@
 
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
+  /* Matches body's own padding-bottom below (reserved so the fixed
+     .action-bar never covers the last bit of page content) — telling the
+     browser's native scrollIntoView about the same reserved space so
+     scrollStepCardIntoView() (Version 53) can bring a step's nav buttons
+     fully above the action bar with one scrollIntoView call, instead of
+     having to compute the action bar's height in JS by hand. */
+  html{scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom));}
   body{
     background:var(--bg);
     color:var(--ink);
@@ -97,11 +104,11 @@
   }
   .topbar-inner{max-width:560px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px;}
   .brand{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;}
-  .brand-mark{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--accent);white-space:nowrap;}
-  .brand-sub{font-size:11px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .brand-mark{font-family:var(--font-display);font-size:25.5px;font-weight:700;color:var(--accent);white-space:nowrap;}
+  .brand-sub{font-size:12.5px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .icon-btn{
     border:1px solid var(--line);background:var(--surface);color:var(--ink);
-    border-radius:10px;padding:7px 10px;font-size:13px;font-weight:500;
+    border-radius:10px;padding:8px 11px;font-size:15px;font-weight:500;
     display:flex;align-items:center;gap:5px;cursor:pointer;
   }
   .icon-btn:active{background:var(--surface-2);}
@@ -114,25 +121,25 @@
   .sb-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 4px;flex-wrap:wrap;gap:4px;}
   .sb-status{display:flex;align-items:center;gap:8px;white-space:nowrap;}
   .sb-half{
-    font-family:var(--font-display);font-size:20px;font-weight:600;
+    font-family:var(--font-display);font-size:23px;font-weight:600;
     color:var(--ink);white-space:nowrap;
   }
-  .sb-inplay{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:700;letter-spacing:.03em;white-space:nowrap;}
+  .sb-inplay{font-size:12.5px;padding:3px 8px;border-radius:999px;font-weight:700;letter-spacing:.03em;white-space:nowrap;}
   .sb-inplay.off{background:var(--accent-soft);color:var(--accent);}
   .sb-inplay.def{background:var(--clay-soft);color:var(--clay);}
-  .outs-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-dim);white-space:nowrap;}
+  .outs-row{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink-dim);white-space:nowrap;}
   .out-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--danger);}
   .out-dot.on{background:var(--danger);}
 
-  .linescore{width:100%;border-collapse:collapse;font-size:12px;}
+  .linescore{width:100%;border-collapse:collapse;font-size:14px;}
   .linescore th,.linescore td{
     padding:5px 3px;text-align:center;border-bottom:1px solid var(--line);
     min-width:20px;
   }
-  .linescore th{color:var(--ink-dim);font-weight:500;font-size:10.5px;}
+  .linescore th{color:var(--ink-dim);font-weight:500;font-size:12px;}
   .linescore td.team{text-align:left;font-weight:700;padding-left:10px;white-space:nowrap;}
   .linescore tr.batting td.team{color:var(--accent);}
-  .linescore td.tot{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink);}
+  .linescore td.tot{font-family:var(--font-display);font-size:18.5px;font-weight:700;color:var(--ink);}
   .linescore-wrap{overflow-x:auto;padding:0 6px 10px;}
 
   /* ============ Batter card ============ */
@@ -141,42 +148,42 @@
   }
   .batter-num{
     display:inline-flex;align-items:center;justify-content:center;
-    width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink);
-    font-family:var(--font-display);font-size:18px;font-weight:700;margin-right:8px;vertical-align:middle;
+    width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+    font-family:var(--font-display);font-size:20.5px;font-weight:700;margin-right:8px;vertical-align:middle;
   }
   .batter-num.def{background:var(--clay);}
-  .batter-name{font-size:16px;font-weight:700;vertical-align:middle;}
-  .batter-meta{font-size:11.5px;color:var(--ink-dim);margin-top:2px;}
+  .batter-name{font-size:18.5px;font-weight:700;vertical-align:middle;}
+  .batter-meta{font-size:13px;color:var(--ink-dim);margin-top:2px;}
 
   /* ============ Sections / cards ============ */
   .card{
     background:var(--surface);border:1px solid var(--line);border-radius:16px;
     padding:14px;margin-top:12px;box-shadow:var(--shadow);
   }
-  .card h2{font-size:20px;margin-bottom:2px;}
-  .card .hint{font-size:12px;color:var(--ink-dim);margin-bottom:10px;}
+  .card h2{font-size:23px;margin-bottom:2px;}
+  .card .hint{font-size:14px;color:var(--ink-dim);margin-bottom:10px;}
   .field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
-  .field label{font-size:12.5px;font-weight:700;color:var(--ink-dim);}
+  .field label{font-size:14.5px;font-weight:700;color:var(--ink-dim);}
   .field input[type=text],.field input[type=number],.field input[type=date],.field select{
-    font-family:inherit;font-size:16px;padding:10px 12px;border-radius:10px;
+    font-family:inherit;font-size:18.5px;padding:10px 12px;border-radius:10px;
     border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;
   }
   /* Read-only stand-in for an input — used where a value is derived
      automatically (e.g. current opponent batting-order number) rather
      than freely typed, so it shouldn't invite editing. */
   .field .static-val{
-    font-family:inherit;font-size:16px;padding:10px 12px;border-radius:10px;
+    font-family:inherit;font-size:18.5px;padding:10px 12px;border-radius:10px;
     border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
     width:100%;box-sizing:border-box;font-weight:700;text-align:center;
   }
   .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
-  .seg button{flex:1;padding:10px;border:none;background:var(--surface);color:var(--ink);font-size:14px;font-weight:700;cursor:pointer;}
+  .seg button{flex:1;padding:10px;border:none;background:var(--surface);color:var(--ink);font-size:16px;font-weight:700;cursor:pointer;}
   .seg button.active{background:var(--accent);color:var(--accent-ink);}
 
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:6px;
-    padding:11px 16px;border-radius:11px;border:1px solid var(--line);
-    background:var(--surface);color:var(--ink);font-size:14.5px;font-weight:700;cursor:pointer;
+    padding:13px 17px;border-radius:11px;border:1px solid var(--line);
+    background:var(--surface);color:var(--ink);font-size:16.5px;font-weight:700;cursor:pointer;
   }
   .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
   .btn.ghost{background:transparent;}
@@ -189,34 +196,38 @@
   /* lineup rows */
   .lineup-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);}
   .lineup-row:last-child{border-bottom:none;}
-  .order-num{width:22px;text-align:center;font-family:var(--font-display);font-size:17px;color:var(--ink-dim);flex:none;}
-  .num-input{width:70px;flex:none;text-align:center;font-weight:700;font-size:16px;}
-  .name-out{flex:1;min-width:0;font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .order-num{width:22px;text-align:center;font-family:var(--font-display);font-size:19.5px;color:var(--ink-dim);flex:none;}
+  .num-input{width:70px;flex:none;text-align:center;font-weight:700;font-size:18.5px;}
+  .name-out{flex:1;min-width:0;font-size:16.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .name-out.empty{color:var(--ink-dim);font-weight:400;}
   /* Lineup-builder-only name display: fixed to roughly fit 3 Chinese
      characters (this row already shows the jersey number, so the name
      doesn't need to claim the rest of the row's width like name-out
      does elsewhere, e.g. the substitution modal's longer "#88 王小明 (投)"
      rows, which still use .name-out and must NOT be narrowed). */
-  .lb-name{flex:0 0 50px;width:50px;font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-name{flex:0 0 50px;width:50px;font-size:16.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .lb-name.empty{color:var(--ink-dim);font-weight:400;}
-  .pos-select{width:78px;flex:none;font-size:16px;padding:8px 2px;}
-  .row-x{flex:none;width:28px;height:28px;border:none;background:none;color:var(--ink-dim);font-size:18px;cursor:pointer;}
+  .row-x{flex:none;width:31px;height:31px;border:none;background:none;color:var(--ink-dim);font-size:20.5px;cursor:pointer;}
+  /* lineup builder: row + its one-tap position chips, see renderLineupBuilder (Version 53) */
+  .lineup-row-group{padding:8px 0;border-bottom:1px solid var(--line);}
+  .lineup-row-group:last-child{border-bottom:none;}
+  .lineup-row-group .lineup-row{padding:0 0 6px;border-bottom:none;}
+  .lineup-pos-chips{display:flex;flex-wrap:wrap;gap:5px;padding-left:30px;}
   .bench-chip{
-    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-    background:var(--surface-2);font-size:13px;font-weight:600;margin:3px 4px 3px 0;
+    display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;
+    background:var(--surface-2);font-size:15px;font-weight:600;margin:3px 4px 3px 0;
   }
-  .bench-chip button{border:none;background:none;color:var(--ink-dim);cursor:pointer;font-size:14px;padding:0;}
-  .roster-hint{font-size:11.5px;color:var(--ink-dim);}
+  .bench-chip button{border:none;background:none;color:var(--ink-dim);cursor:pointer;font-size:16px;padding:0;}
+  .roster-hint{font-size:13px;color:var(--ink-dim);}
 
   /* result grid */
   .result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
   .rbtn{
-    padding:14px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
-    font-family:var(--font-display);font-size:19px;font-weight:700;color:var(--ink);cursor:pointer;
+    padding:16px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
+    font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--ink);cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:1px;
   }
-  .rbtn small{font-family:var(--font-body);font-size:10px;font-weight:500;color:var(--ink-dim);}
+  .rbtn small{font-family:var(--font-body);font-size:11.5px;font-weight:500;color:var(--ink-dim);}
   .rbtn.hit{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
   .rbtn.hit small{color:var(--accent);opacity:.8;}
   .rbtn.out{background:var(--danger-soft);border-color:var(--danger);color:var(--danger);}
@@ -227,14 +238,14 @@
 
   /* play confirm panel */
   .confirm-box{border:1px dashed var(--line);border-radius:12px;padding:12px;margin-top:12px;background:var(--surface-2);}
-  .confirm-title{font-weight:700;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .confirm-title{font-weight:700;font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
   .stepper{display:flex;align-items:center;gap:10px;}
-  .stepper button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:16px;font-weight:700;cursor:pointer;}
-  .stepper .val{min-width:22px;text-align:center;font-family:var(--font-display);font-size:18px;font-weight:700;}
+  .stepper button{width:33px;height:33px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:18.5px;font-weight:700;cursor:pointer;}
+  .stepper .val{min-width:22px;text-align:center;font-family:var(--font-display);font-size:20.5px;font-weight:700;}
   .kv-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;}
-  .kv-row .k{font-size:13px;color:var(--ink-dim);}
+  .kv-row .k{font-size:15px;color:var(--ink-dim);}
   .chip-picker{display:flex;flex-wrap:wrap;gap:6px;}
-  .chip{padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:600;cursor:pointer;}
+  .chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:14.5px;font-weight:600;cursor:pointer;}
   .chip.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
 
   .field-svg{width:100%;max-width:320px;display:block;margin:0 auto;}
@@ -243,7 +254,7 @@
   .fz-wedge.out{fill:var(--accent-soft);}
   .fz-wedge.in{fill:var(--clay-soft);}
   .fz-wedge.sel{fill:var(--clay);}
-  .fz-label{font-family:var(--font-body);font-size:11px;font-weight:700;fill:var(--ink-dim);pointer-events:none;}
+  .fz-label{font-family:var(--font-body);font-size:12.5px;font-weight:700;fill:var(--ink-dim);pointer-events:none;}
   .fz-label.sel{fill:#fff;}
   .fz-foul{stroke:var(--ink-dim);stroke-width:1;opacity:.45;}
   .fz-fence{fill:none;stroke:var(--ink-dim);stroke-width:1.5;opacity:.55;}
@@ -258,14 +269,14 @@
 
   /* box score table */
   .stat-table-wrap{overflow-x:auto;}
-  table.stats{border-collapse:collapse;width:100%;font-size:12.5px;}
-  table.stats th,table.stats td{padding:6px 7px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;}
-  table.stats th{color:var(--ink-dim);font-weight:600;font-size:11px;}
+  table.stats{border-collapse:collapse;width:100%;font-size:14.5px;}
+  table.stats th,table.stats td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;}
+  table.stats th{color:var(--ink-dim);font-weight:600;font-size:12.5px;}
   table.stats td.name{text-align:left;font-weight:700;}
   table.stats.sortable thead th{cursor:pointer;user-select:none;}
   table.stats.sortable thead th:hover{color:var(--accent);}
-  table.stats.sortable thead th.sort-asc::after{content:" ▲";font-size:8px;}
-  table.stats.sortable thead th.sort-desc::after{content:" ▼";font-size:8px;}
+  table.stats.sortable thead th.sort-asc::after{content:" ▲";font-size:9px;}
+  table.stats.sortable thead th.sort-desc::after{content:" ▼";font-size:9px;}
 
   /* game list */
   .game-item{
@@ -273,10 +284,10 @@
     border-radius:12px;margin-bottom:8px;cursor:pointer;background:var(--surface);
   }
   .game-item .gi-vs{flex:1;min-width:0;}
-  .gi-opp{font-weight:700;font-size:15px;}
-  .gi-meta{font-size:11.5px;color:var(--ink-dim);margin-top:1px;}
-  .gi-score{font-family:var(--font-display);font-size:22px;font-weight:700;}
-  .status-pill{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700;}
+  .gi-opp{font-weight:700;font-size:17px;}
+  .gi-meta{font-size:13px;color:var(--ink-dim);margin-top:1px;}
+  .gi-score{font-family:var(--font-display);font-size:25.5px;font-weight:700;}
+  .status-pill{font-size:11.5px;padding:2px 7px;border-radius:999px;font-weight:700;}
   .status-pill.live{background:var(--danger-soft);color:var(--danger);}
   .status-pill.final{background:var(--surface-2);color:var(--ink-dim);}
 
@@ -286,8 +297,8 @@
     background:var(--surface);width:100%;max-width:560px;border-radius:18px 18px 0 0;
     padding:16px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow);
   }
-  .modal h3{font-size:19px;margin-bottom:10px;}
-  .close-x{float:right;border:none;background:var(--surface-2);color:var(--ink);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;}
+  .modal h3{font-size:22px;margin-bottom:10px;}
+  .close-x{float:right;border:none;background:var(--surface-2);color:var(--ink);width:33px;height:33px;border-radius:50%;font-size:18.5px;cursor:pointer;}
 
   /* bottom action bar */
   .action-bar{
@@ -298,12 +309,12 @@
   }
   .action-bar-inner{max-width:560px;margin:0 auto;display:flex;gap:8px;}
   .action-bar-inner .btn{flex:1;}
-  .action-bar-inner.three .btn{font-size:12.5px;padding:11px 4px;}
+  .action-bar-inner.three .btn{font-size:14.5px;padding:11px 4px;}
 
   .empty-state{text-align:center;padding:40px 16px;color:var(--ink-dim);}
-  .empty-state .em{font-size:34px;margin-bottom:8px;}
+  .empty-state .em{font-size:39px;margin-bottom:8px;}
 
-  a.link-reset{font-size:11.5px;color:var(--ink-dim);text-decoration:underline;cursor:pointer;}
+  a.link-reset{font-size:13px;color:var(--ink-dim);text-decoration:underline;cursor:pointer;}
 
   @media (max-width:380px){
     .result-grid{grid-template-columns:repeat(3,1fr);}
@@ -312,10 +323,10 @@
 
   /* ============ 先前打擊成績 (recent-history) panel ============ */
   .history-panel{margin-top:10px;}
-  .hist-title{font-size:11.5px;font-weight:700;color:var(--ink-dim);margin-bottom:6px;}
+  .hist-title{font-size:13px;font-weight:700;color:var(--ink-dim);margin-bottom:6px;}
   .hist-chips{display:flex;flex-wrap:wrap;gap:5px;}
   .hist-chip{
-    font-family:var(--font-display);font-size:12.5px;font-weight:700;
+    font-family:var(--font-display);font-size:14.5px;font-weight:700;
     padding:3px 9px;border-radius:999px;border:1px solid var(--line);
     background:var(--surface-2);color:var(--ink-dim);
   }
@@ -1078,6 +1089,7 @@ const AppState = {
     showBox:false,
     showEndGame:false,
     showEditGame:false,
+    showOppRoster:false, // Version 54: adjust 對方總棒次／名單 mid-game (not just at lineup setup)
     showLeagueGamesModal:false,
     showScheduleModal:false,
     scheduleModalEditId:null,
@@ -1142,6 +1154,14 @@ function newGame({opponent, batFirst, ourTeamName, date}){
     batFirst: !!batFirst,          // true: our team bats in the "top" half
     status:"setup",                // setup | live | final
     lineup: [],                    // {id, order, number, name, position}
+    // Snapshot of the lineup's number/name/order taken the moment the game
+    // actually starts (see startGame()) — who originally started in each
+    // batting-order slot, for the re-entry rule (see applySub()). Empty
+    // until startGame() runs; stays empty for a game that never reaches
+    // "live" through the normal flow (e.g. older already-live games
+    // created before this existed), which just means re-entry isn't
+    // offered for that game — not an error.
+    startingLineup: [],
     bench: [],                     // {number, name}
     oppRoster: [],                 // {number, name} — optional, no position, in batting order
     oppBattingSlots: 10,            // total opponent batting-order slots (10 or 11); governs oppRoster's fixed length
@@ -1191,6 +1211,17 @@ function gameSeasonTagHTML(g){
 
 function isOurHalf(game){
   return (game.half==="top") === game.batFirst;
+}
+// Mirrors the `@media (orientation:landscape) and (min-width:640px)`
+// breakpoint that switches the live-recording screen into the 3-column
+// layout (see the CSS comment on .game-body, Version 29). The landscape
+// layout already shows the result/zone cards side by side with no
+// scrolling, so the step-by-step flow below (Version 53) is only needed
+// in the narrower/portrait layout — this lets renderGame() ask "am I in
+// the wide layout right now?" in JS to match what the CSS is already
+// doing, without duplicating the breakpoint as a second source of truth.
+function isWideLayout(){
+  return !!(window.matchMedia && window.matchMedia("(orientation:landscape) and (min-width:640px)").matches);
 }
 function ourRow(game){ return game.batFirst ? game.linescore.top : game.linescore.bottom; }
 function oppRow(game){ return game.batFirst ? game.linescore.bottom : game.linescore.top; }
@@ -3038,33 +3069,32 @@ function renderLineupBuilder(){
   // alert. (This row's OWN current position stays in its own list so it
   // shows as selected.)
   const usedPositions = new Set(g.lineup.map(r=>r.position).filter(Boolean));
+  // Version 53: 守位 used to be a native <select> — on a phone that's an
+  // open-the-picker / scroll-to-find / tap-to-confirm sequence for EVERY
+  // one of the 9-11 rows, which is exactly the "一直按選單" friction the
+  // user asked to cut down on. Swapped for the same one-tap chip pattern
+  // already used elsewhere (得分球員／失誤球員／球種), right under the
+  // row: tap a position to set it, tap the same one again to clear it
+  // (mirrors setZone/setType's toggle behavior), no picker overlay at all.
   const rows = g.lineup.map((row,i)=>{
     const name = row.number ? (rosterLookup(row.number) || "?") : "";
     const posOptions = POSITIONS.filter(p => p===row.position || !usedPositions.has(p));
-    return `<div class="lineup-row">
-      <div class="order-num tabular">${row.order}</div>
-      <input class="num-input" type="text" inputmode="numeric" maxlength="3" value="${esc(row.number)}"
-        placeholder="背號" onchange="setLineupNumber(${i},this.value)">
-      <div class="lb-name ${name?'':'empty'}">${esc(name||'—')}</div>
-      <select class="pos-select" onchange="setLineupPos(${i},this.value)">
-        <option value="">守位</option>
-        ${posOptions.map(p=>`<option value="${p}" ${row.position===p?'selected':''}>${p}</option>`).join("")}
-      </select>
-      <button class="row-x" onclick="removeLineupRow(${i})">×</button>
+    return `<div class="lineup-row-group">
+      <div class="lineup-row">
+        <div class="order-num tabular">${row.order}</div>
+        <input class="num-input" type="text" inputmode="numeric" maxlength="3" value="${esc(row.number)}"
+          placeholder="背號" onchange="setLineupNumber(${i},this.value)">
+        <div class="lb-name ${name?'':'empty'}">${esc(name||'—')}</div>
+        <span class="roster-hint" style="flex:1;text-align:right;">${row.position?('守位：'+esc(row.position)):'尚未選守位'}</span>
+        <button class="row-x" onclick="removeLineupRow(${i})">×</button>
+      </div>
+      <div class="chip-picker lineup-pos-chips">
+        ${posOptions.map(p=>`<span class="chip ${row.position===p?'sel':''}" onclick="setLineupPos(${i},'${row.position===p?'':p}')">${p}</span>`).join("")}
+      </div>
     </div>`;
   }).join("");
 
   const benchChips = g.bench.map((b,i)=>`<span class="bench-chip">#${esc(b.number)} ${esc(b.name)}<button onclick="removeBench(${i})">×</button></span>`).join("") || `<span class="roster-hint">尚未加入替補球員</span>`;
-
-  const oppSlots = g.oppBattingSlots || 10;
-  const oppRosterRows = g.oppRoster.map((b,i)=>`<div class="lineup-row">
-      <div class="order-num tabular">${i+1}</div>
-      <input class="num-input" type="text" inputmode="numeric" maxlength="3" value="${esc(b.number)}"
-        placeholder="背號" onchange="setOppRosterNumber(${i},this.value)">
-      <input type="text" value="${esc(b.name)}" placeholder="姓名／綽號（選填）"
-        style="flex:1;min-width:0;font-size:16px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);"
-        onchange="setOppRosterName(${i},this.value)">
-    </div>`).join("");
 
   $app.innerHTML = `
     <div class="topbar"><div class="topbar-inner">
@@ -3094,15 +3124,8 @@ function renderLineupBuilder(){
 
     <div class="card">
       <h2>對手名單（選填）</h2>
-      <div class="hint">先填好各棒次的對手背號／姓名，守備記錄時就能直接點選，不用每次手動輸入；背號可以留白，之後守備記錄時再手動輸入也可以。</div>
-      <div class="field" style="max-width:220px;">
-        <label>對方總棒次</label>
-        <div class="seg">
-          <button class="${oppSlots===10?'active':''}" onclick="setOppBattingSlots(10)">10棒</button>
-          <button class="${oppSlots===11?'active':''}" onclick="setOppBattingSlots(11)">11棒</button>
-        </div>
-      </div>
-      ${oppRosterRows}
+      <div class="hint">先填好各棒次的對手背號／姓名，守備記錄時就能直接點選，不用每次手動輸入；背號可以留白，之後守備記錄時再手動輸入也可以。比賽開始後，記錄畫面裡也能隨時回來調整棒次數與名單（見下方「調整對方棒次／名單」）。</div>
+      ${oppRosterFieldsHTML(g)}
     </div>
 
     <div class="action-bar"><div class="action-bar-inner">
@@ -3140,12 +3163,28 @@ function addBench(){
   render();
 }
 function removeBench(i){ AppState.game.bench.splice(i,1); render(); }
-function setOppRosterNumber(i,val){ AppState.game.oppRoster[i].number = val.trim(); render(); }
-function setOppRosterName(i,val){ AppState.game.oppRoster[i].name = val.trim(); render(); }
+// Version 54: these three setters are shared between the pre-game 編排打線
+// screen (game not saved yet, nothing to persist) and the new live-game
+// 對手棒次設定 modal (game already saved — edits must persist immediately,
+// same as any other in-game correction). AppState.view==="game" is what
+// tells them which situation they're in.
+function setOppRosterNumber(i,val){
+  AppState.game.oppRoster[i].number = val.trim();
+  if (AppState.view==="game") persistGame();
+  render();
+}
+function setOppRosterName(i,val){
+  AppState.game.oppRoster[i].name = val.trim();
+  if (AppState.view==="game") persistGame();
+  render();
+}
 // Resize the fixed opponent batting-order slot list (10 or 11 slots).
 // Growing pads with blank rows; shrinking drops the trailing slots — if
 // any of those being dropped actually had data in them, confirm first
-// so a team doesn't lose a filled-in number/name by accident.
+// so a team doesn't lose a filled-in number/name by accident. Safe to
+// call mid-game too (Version 54): every read of oppRoster/oppBattingIdx
+// elsewhere already indexes with "% oppRoster.length", so a shrink never
+// leaves a stale out-of-range index behind.
 async function setOppBattingSlots(n){
   const g = AppState.game;
   const cur = g.oppRoster.length;
@@ -3158,7 +3197,45 @@ async function setOppBattingSlots(n){
     while (g.oppRoster.length < n) g.oppRoster.push({number:"", name:""});
   }
   g.oppBattingSlots = n;
+  if (AppState.view==="game") await persistGame();
   render();
+}
+// Shared markup for the 對方總棒次／名單 editor — used by both the
+// pre-game 編排打線 screen and the live-game 對手棒次設定 modal (Version 54)
+// so a team that doesn't have the opposing lineup finalized at first pitch
+// can come back and fill it in, or switch 10↔11 棒, once they know it.
+function oppRosterFieldsHTML(g){
+  const oppSlots = g.oppBattingSlots || 10;
+  const oppRosterRows = g.oppRoster.map((b,i)=>`<div class="lineup-row">
+      <div class="order-num tabular">${i+1}</div>
+      <input class="num-input" type="text" inputmode="numeric" maxlength="3" value="${esc(b.number)}"
+        placeholder="背號" onchange="setOppRosterNumber(${i},this.value)">
+      <input type="text" value="${esc(b.name)}" placeholder="姓名／綽號（選填）"
+        style="flex:1;min-width:0;font-size:16px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);"
+        onchange="setOppRosterName(${i},this.value)">
+    </div>`).join("");
+  return `<div class="field" style="max-width:220px;">
+      <label>對方總棒次</label>
+      <div class="seg">
+        <button class="${oppSlots===10?'active':''}" onclick="setOppBattingSlots(10)">10棒</button>
+        <button class="${oppSlots===11?'active':''}" onclick="setOppBattingSlots(11)">11棒</button>
+      </div>
+    </div>
+    ${oppRosterRows}`;
+}
+// Version 54: lets the scorer open the same 對手名單 editor mid-game, for
+// teams whose opposing lineup isn't finalized when the game starts.
+function renderOppRosterModal(){
+  const g = AppState.game;
+  return `<div class="modal-back" onclick="if(event.target===this){AppState.ui.showOppRoster=false;render();}">
+    <div class="modal">
+      <button class="close-x" onclick="AppState.ui.showOppRoster=false;render();">×</button>
+      <h3>對方棒次／名單設定</h3>
+      <div class="hint" style="margin-top:-4px;">對方棒次人數還沒確定也可以先用預設繼續記錄；之後補齊名單或切換 10／11 棒都不會影響已經記好的紀錄。</div>
+      ${oppRosterFieldsHTML(g)}
+      <button class="btn primary block" style="margin-top:14px;" onclick="AppState.ui.showOppRoster=false;render();">完成</button>
+    </div>
+  </div>`;
 }
 
 async function startGame(){
@@ -3166,6 +3243,12 @@ async function startGame(){
   const filled = g.lineup.filter(r=>r.number);
   if (filled.length < 1){ appAlert("請至少填入一位打者背號"); return; }
   g.lineup = g.lineup.filter(r=>r.number).map((r,idx)=>({...r, order:idx+1, name:rosterLookup(r.number)||("#"+r.number)}));
+  // Version 51 新增：再上場規則（見 applySub／startingOccupantOf）要知道「這個
+  // 棒次原本的先發是誰」，snapshot 一次先發打線（number/name/order），之後
+  // 不會再變動——即使這個棒次被換過好幾輪人，仍然只拿這份原始名單判斷「誰
+  // 是這一棒的先發」。只在真正開賽（status 變成 live）這一刻拍照，編排打線
+  // 階段來回調整不會留下痕跡。
+  g.startingLineup = g.lineup.map(r=>({number:r.number, name:r.name, order:r.order}));
   g.status = "live";
   AppState.view = "game";
   syncOppBatter(g);
@@ -3282,8 +3365,22 @@ function renderGame(){
         <button class="btn" onclick="endHalfInning()">切換到${weAreUp?'守備':'進攻'}紀錄 →</button>
       </div>`;
   } else if (AppState.ui.pendingResult){
-    actionMid = renderConfirmBoxMain();
-    actionZone = renderConfirmBoxZone();
+    // Landscape (3-column) already shows both cards side by side with no
+    // scrolling needed (Version 29), so it keeps showing them together.
+    // Portrait only has room for one full card at a time without forcing
+    // a long up/down scroll through both, so it steps through them
+    // instead: 打擊方向／球種 first, then 打點／出局數 (Version 53) —
+    // matching the order the user asked for. K/BB have no zone step at
+    // all (nothing to record there), so they go straight to the one card.
+    if (isWideLayout()){
+      actionMid = renderConfirmBoxMain();
+      actionZone = renderConfirmBoxZone();
+    } else {
+      const hasZoneStep = !["K","BB"].includes(AppState.ui.pendingResult.code);
+      const onZoneStep = hasZoneStep && AppState.ui.pendingStep !== "main";
+      actionMid = onZoneStep ? renderConfirmBoxZone() : renderConfirmBoxMain();
+      actionZone = "";
+    }
   } else if (weAreUp){
     actionMid = renderResultGrid('us');
     actionZone = `<div class="card zone-hint-card"><div class="hint" style="margin:0;">選擇打擊結果後，可在這裡記錄落點。</div></div>`;
@@ -3300,7 +3397,7 @@ function renderGame(){
             <input type="text" value="${esc(g.oppNote)}" onchange="AppState.game.oppNote=this.value;persistGame();render();">
           </div>
         </div>
-        <div class="hint" style="margin:0;">開賽前沒填到的背號可以直接在這裡補上；代打上場時也可以直接改成新打者的背號，右側的歷史落點分析會立刻換成該背號的資料。</div>
+        <div class="hint" style="margin:0;">開賽前沒填到的背號可以直接在這裡補上；代打上場時也可以直接改成新打者的背號，右側的歷史落點分析會立刻換成該背號的資料。<a class="link-reset" onclick="AppState.ui.showOppRoster=true;render();">調整對方棒次／名單</a></div>
       </div>
       ${renderResultGrid('opp')}`;
     actionZone = oppDefenseZoneCardHTML(g);
@@ -3316,6 +3413,7 @@ function renderGame(){
         <span class="brand-mark" style="font-size:16px;">${esc(g.ourTeamName)} vs ${esc(g.opponent)}</span>
         <span class="roster-hint">${gameSeasonTagHTML(g)}</span>
       </div>
+      <button class="icon-btn" onclick="openEditGame()" title="跳到之前的打席修改">✏️</button>
       <button class="icon-btn" onclick="AppState.ui.showBox=true;render();">戰績</button>
     </div></div>
 
@@ -3356,6 +3454,7 @@ function renderGame(){
     ${AppState.ui.showBox ? renderBoxModal() : ""}
     ${AppState.ui.showEndGame ? renderEndGameModal() : ""}
     ${AppState.ui.showEditGame ? renderEditGameModal() : ""}
+    ${AppState.ui.showOppRoster ? renderOppRosterModal() : ""}
   `;
 }
 
@@ -3406,7 +3505,43 @@ function pickResult(code, side){
   AppState.ui.pendingErrorBy = null;
   AppState.ui.pendingZone = null;
   AppState.ui.pendingType = null;
+  AppState.ui.pendingStep = "zone"; // portrait step flow start point (Version 53); ignored in wide layout
   render();
+  scrollStepCardIntoView();
+}
+// Portrait step-flow navigation only (see isWideLayout()) — moves between
+// the 打擊方向／球種 card and the 打點／出局數 card without losing any
+// already-entered values (they all live on AppState.ui.pending* regardless
+// of which card is currently showing).
+function goPendingStep(step){
+  AppState.ui.pendingStep = step;
+  render();
+  scrollStepCardIntoView();
+}
+// The whole point of stepping through one card at a time (instead of two
+// long cards stacked) is to cut down on scrolling — but the result grid
+// (step ①) already sits lower on the page (below the scoreboard/batter/
+// history panel), so simply re-rendering a new step card can still leave
+// its own nav buttons below the fold, especially on a short phone screen.
+// Scroll the result/step column so its bottom (where 下一步／確認記錄 is)
+// clears the fixed bottom action bar, right after each step change. No-op
+// in the wide/landscape layout — its columns are short enough, and have
+// their own independent scroll, that this isn't needed there (see
+// isWideLayout()).
+function scrollStepCardIntoView(){
+  if (isWideLayout()) return;
+  requestAnimationFrame(()=>{
+    // Target the LAST element in the step card (its nav button row, or —
+    // for the half-done banner / K·BB's zone-less single-step card — the
+    // card itself) rather than the whole .gb-mid column: "nearest" then
+    // only scrolls the little bit actually needed to clear the fixed
+    // action bar (honoring html's scroll-padding-bottom above), instead
+    // of unconditionally re-anchoring the column's bottom edge every time.
+    const col = document.querySelector(".gb-mid");
+    if (!col) return;
+    const target = col.querySelector(".btn-row") || col.lastElementChild;
+    if (target) target.scrollIntoView({behavior:"instant", block:"nearest"});
+  });
 }
 
 // Split from the original single renderConfirmBox() so the landscape
@@ -3419,6 +3554,11 @@ function renderConfirmBoxMain(){
   const code = p.pendingResult.code;
   const meta = RESULTS[code];
   const side = p.pendingResult.side;
+  // Portrait step flow (Version 53): this card is step ②(／③) — a 上一步
+  // button replaces 取消 whenever there was a zone/type card before it to
+  // go back to (K/BB have none, so it stays 取消／確認記錄 same as before).
+  const stepMode = !isWideLayout();
+  const hasZoneStep = !["K","BB"].includes(code);
 
   const errorPicker = (side==="opp" && code==="E") ? `
     <div style="margin-top:8px;">
@@ -3436,7 +3576,12 @@ function renderConfirmBoxMain(){
       </div>
     </div>` : "";
 
+  const backOrCancel = (stepMode && hasZoneStep)
+    ? `<button class="btn ghost" style="flex:1;" onclick="goPendingStep('zone')">‹ 上一步</button>`
+    : `<button class="btn ghost" style="flex:1;" onclick="cancelPending()">取消</button>`;
+
   return `<div class="card">
+    ${(stepMode && hasZoneStep) ? `<div class="roster-hint" style="margin-bottom:6px;">步驟 ③：打點／出局數</div>` : ``}
     <div class="confirm-title">${code} · ${meta.label}</div>
     ${side==='opp' ? `<div class="kv-row"><span class="k">得分（本次）</span>
       <div class="stepper"><button onclick="stepRuns(-1)">−</button><span class="val tabular">${p.pendingRuns}</span><button onclick="stepRuns(1)">＋</button></div>
@@ -3450,7 +3595,7 @@ function renderConfirmBoxMain(){
     ${scorerSection}
     ${errorPicker}
     <div class="btn-row" style="margin-top:12px;">
-      <button class="btn ghost" style="flex:1;" onclick="cancelPending()">取消</button>
+      ${backOrCancel}
       <button class="btn primary" style="flex:2;" onclick="confirmPending()">確認記錄</button>
     </div>
   </div>`;
@@ -3463,12 +3608,26 @@ function renderConfirmBoxZone(){
   if (!showZone){
     return `<div class="card zone-hint-card"><div class="hint" style="margin:0;">${esc(code)} 不需要記錄落點。</div></div>`;
   }
+  // Portrait step flow (Version 53): this is step ②, a self-contained
+  // card with its own 下一步 button so the scorer isn't forced to scroll
+  // past it to reach 打點／出局數 below — see renderGame()'s branch on
+  // isWideLayout(). In the wide/landscape layout this card is shown
+  // side-by-side with the main card instead, so no nav buttons are needed
+  // here (confirming/cancelling happens from the main card either way).
+  const stepMode = !isWideLayout();
+  const nav = stepMode ? `
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn ghost" style="flex:1;" onclick="cancelPending()">取消</button>
+      <button class="btn primary" style="flex:2;" onclick="goPendingStep('main')">下一步：打點／出局 →</button>
+    </div>` : ``;
   return `<div class="card zc-card">
+    ${stepMode ? `<div class="roster-hint" style="margin-bottom:6px;">步驟 ②：打擊方向與球種（選填，可直接按下一步略過）</div>` : ``}
     <div class="k zc-label" style="font-size:13px;color:var(--ink-dim);margin-bottom:4px;">打擊落點（選填，點選球場位置）</div>
     <div class="zc-diagram">${fieldDiagramHTML(p.pendingZone)}</div>
     <div class="chip-picker zc-options" style="margin-top:8px;justify-content:center;">
       ${BATTED_TYPES.map(t=>`<span class="chip ${p.pendingType===t?'sel':''}" onclick="setType('${t}')">${t}</span>`).join("")}
     </div>
+    ${nav}
   </div>`;
 }
 
@@ -3614,9 +3773,58 @@ async function undoLastPlay(){
 }
 
 /* ---------- Substitution modal ---------- */
+// ---------- Re-entry rule (Version 51) ----------
+// The original starter of lineup slot `slotIdx`, from the one-time
+// snapshot taken when the game actually started (see startGame()).
+// Returns null for a game with no startingLineup recorded (older
+// already-live games from before this existed) — re-entry just isn't
+// offered for those, which is the safe default.
+function startingOccupantOf(g, slotIdx){
+  return (g.startingLineup && g.startingLineup[slotIdx]) || null;
+}
+// How many times this jersey number has already used its one re-entry in
+// THIS game — derived from the play log itself (sub plays flagged
+// reentry:true) rather than a separate counter, so it can never drift
+// out of sync with what actually happened.
+function reentryUsedCount(g, number){
+  return (g.plays||[]).filter(p=>p.type==="sub" && p.reentry && p.newNumber===number).length;
+}
+// Whether slot `slotIdx`'s original starter can re-enter RIGHT NOW: they
+// started that exact slot, they're not currently occupying ANY lineup
+// slot, and they haven't used their one re-entry yet. Re-entry is
+// slot-specific by construction — this is only ever offered against the
+// ONE slot that player originally started, never any other slot.
+function reentryCandidateFor(g, slotIdx){
+  const start = startingOccupantOf(g, slotIdx);
+  if (!start || !start.number) return null;
+  if (g.lineup.some(r=>r.number===start.number)) return null;
+  if (reentryUsedCount(g, start.number) > 0) return null;
+  return start;
+}
+
+// ---------- Pinch-runner eligibility (Version 51) ----------
+// This app doesn't simulate actual base-runner state (who's really on
+// 1st/2nd/3rd) — results are logged with a manually-entered run/out count,
+// not a base-by-base sim. So "could this lineup slot still be on base
+// right now" can only be inferred from the batting order: only the up to
+// 5 slots batting immediately BEFORE the current batter could possibly
+// still be on base (anyone earlier has long since scored or been put
+// out). Returns the set of eligible lineup indices, relative to the
+// CURRENT g.battingIdx, wrapping cyclically.
+function prEligibleSlotIdx(g){
+  const n = g.lineup.length;
+  const set = new Set();
+  if (n < 2) return set;
+  const cap = Math.min(5, n-1);
+  for (let k=1;k<=cap;k++) set.add(((g.battingIdx - k) % n + n) % n);
+  return set;
+}
+
 function renderSubModal(){
   const g = AppState.game;
   const pitcherNow = currentPitcher(g);
+  const weAreUp = isOurHalf(g);
+  const prEligible = prEligibleSlotIdx(g);
   const rows = g.lineup.map((r,i)=>`
     <div class="lineup-row">
       <div class="order-num tabular">${r.order}</div>
@@ -3626,10 +3834,24 @@ function renderSubModal(){
 
   let subForm = "";
   if (AppState.ui.subTargetIdx!=null){
-    const target = g.lineup[AppState.ui.subTargetIdx];
-    const benchOpts = g.bench.map(b=>`<option value="${esc(b.number)}">#${esc(b.number)} ${esc(b.name)}</option>`).join("");
-    const isDef = AppState.ui.subType==='DEF';
+    const i = AppState.ui.subTargetIdx;
+    const target = g.lineup[i];
+    const isDef = !weAreUp || AppState.ui.subType==='DEF';
     const defMode = AppState.ui.defMode || 'bench';
+    const reentry = reentryCandidateFor(g, i);
+    const reentryOpt = reentry ? `<option value="${esc(reentry.number)}">🔁 再上場：#${esc(reentry.number)} ${esc(reentry.name)}（原本這一棒的先發，限一次）</option>` : "";
+    const benchOpts = reentryOpt + g.bench.map(b=>`<option value="${esc(b.number)}">#${esc(b.number)} ${esc(b.name)}</option>`).join("");
+    const fieldSwapOpts = g.lineup.map((r,idx)=> idx===i ? "" : `<option value="${idx}">#${esc(r.number)} ${esc(r.name)}（${r.position||'—'}）</option>`).join("");
+
+    const typeToggle = weAreUp ? `
+        <div class="field"><label>替補類型</label>
+          <div class="seg">
+            <button class="${AppState.ui.subType==='PH'?'active':''}" onclick="setSubType('PH')">代打</button>
+            ${prEligible.has(i)
+              ? `<button class="${AppState.ui.subType==='PR'?'active':''}" onclick="setSubType('PR')">代跑</button>`
+              : `<button disabled style="opacity:.4;cursor:not-allowed;" title="這一棒不在目前打者前五棒內，不會還在壘上">代跑</button>`}
+          </div>
+        </div>` : `<div class="hint" style="margin-bottom:8px;">我方守備中，這裡只能做守備替換；代打／代跑要等換到我方進攻時再操作。</div>`;
     const modeToggle = isDef ? `
         <div class="field"><label>方式</label>
           <div class="seg">
@@ -3637,30 +3859,32 @@ function renderSubModal(){
             <button class="${defMode==='swap'?'active':''}" onclick="setDefMode('swap')">跟場上球員換守位</button>
           </div>
         </div>` : "";
-    const fieldSwapOpts = g.lineup.map((r,idx)=> idx===AppState.ui.subTargetIdx ? "" : `<option value="${idx}">#${esc(r.number)} ${esc(r.name)}（${r.position||'—'}）</option>`).join("");
-    const benchSection = `
+    const benchSectionWithPos = `
         <div class="field"><label>選擇板凳球員</label>
           <select id="sub-bench-num">${benchOpts || '<option value="">（無板凳名單）</option>'}</select>
         </div>
         <div class="field"><label>守位</label>
           <select id="sub-pos">${POSITIONS.map(p=>`<option value="${p}" ${target.position===p?'selected':''}>${p}</option>`).join("")}</select>
         </div>`;
+    // 代打／代跑不問守位——上場的人直接沿用這一棒目前的守位，不需要多問
+    // 一次（Version 51 簡化：之前這裡不管哪種替補類型都會多問守位，但代
+    // 打／代跑本來就是沿用原本的守位，多問反而容易讓人誤以為可以在這裡
+    // 順便改守位）。
+    const benchSectionPlain = `
+        <div class="field"><label>選擇板凳球員</label>
+          <select id="sub-bench-num">${benchOpts || '<option value="">（無板凳名單）</option>'}</select>
+        </div>`;
     const swapSection = `
         <div class="field"><label>選擇要互換守位的在場球員</label>
           <select id="sub-field-swap">${fieldSwapOpts || '<option value="">（無其他球員）</option>'}</select>
         </div>`;
+
     subForm = `
       <div class="confirm-box">
         <div class="confirm-title">替換：#${esc(target.number)} ${esc(target.name)}</div>
-        <div class="field"><label>替補類型</label>
-          <div class="seg">
-            <button class="${AppState.ui.subType==='PH'?'active':''}" onclick="setSubType('PH')">代打</button>
-            <button class="${AppState.ui.subType==='PR'?'active':''}" onclick="setSubType('PR')">代跑</button>
-            <button class="${AppState.ui.subType==='DEF'?'active':''}" onclick="setSubType('DEF')">守備替換</button>
-          </div>
-        </div>
+        ${typeToggle}
         ${modeToggle}
-        ${(isDef && defMode==='swap') ? swapSection : benchSection}
+        ${(isDef && defMode==='swap') ? swapSection : (isDef ? benchSectionWithPos : benchSectionPlain)}
         <div class="btn-row">
           <button class="btn ghost" style="flex:1;" onclick="AppState.ui.subTargetIdx=null;render();">取消</button>
           <button class="btn primary" style="flex:2;" onclick="applySub()">確認替換</button>
@@ -3672,7 +3896,7 @@ function renderSubModal(){
     <div class="modal">
       <button class="close-x" onclick="AppState.ui.showSub=false;AppState.ui.subTargetIdx=null;render();">×</button>
       <h3>換人</h3>
-      <div class="hint" style="font-size:12.5px;color:var(--ink-dim);margin-bottom:8px;">選擇要替換的棒次，指定代打／代跑／守備替換。</div>
+      <div class="hint" style="font-size:12.5px;color:var(--ink-dim);margin-bottom:8px;">選擇要替換的棒次，我方進攻中可指定代打／代跑，守備中可指定守備替換。</div>
       ${rows}
       ${subForm}
       <div class="card" style="margin-top:14px;">
@@ -3684,7 +3908,10 @@ function renderSubModal(){
   </div>`;
 }
 function openSubFor(i){
-  AppState.ui.subTargetIdx=i; AppState.ui.subType="PH"; AppState.ui.defMode="bench";
+  const g = AppState.game;
+  AppState.ui.subTargetIdx=i;
+  AppState.ui.subType = isOurHalf(g) ? "PH" : "DEF";
+  AppState.ui.defMode="bench";
   render();
   scrollSubFormIntoView();
 }
@@ -3709,8 +3936,10 @@ async function applySub(){
   const g = AppState.game;
   const i = AppState.ui.subTargetIdx;
   const target = g.lineup[i];
+  const weAreUp = isOurHalf(g);
+  const isDef = !weAreUp || AppState.ui.subType==='DEF';
 
-  if (AppState.ui.subType==='DEF' && AppState.ui.defMode==='swap'){
+  if (isDef && AppState.ui.defMode==='swap'){
     const swapEl = document.getElementById("sub-field-swap");
     const j = swapEl ? parseInt(swapEl.value,10) : NaN;
     if (isNaN(j) || !g.lineup[j] || j===i){ appAlert("請選擇要互換守位的在場球員"); return; }
@@ -3730,23 +3959,35 @@ async function applySub(){
   }
 
   const numEl = document.getElementById("sub-bench-num");
-  const posEl = document.getElementById("sub-pos");
   const newNum = numEl.value;
   if (!newNum){ appAlert("請選擇板凳球員"); return; }
   const bIdx = g.bench.findIndex(b=>b.number===newNum);
   const newName = bIdx>=0 ? g.bench[bIdx].name : rosterLookup(newNum);
-  const newPos = posEl.value;
-  if (newPos && g.lineup.some(r=>r.id!==target.id && r.position===newPos)){
-    appAlert("「"+newPos+"」這個守位已經有球員擔任了，請先把該球員的守位改掉。");
-    return;
+
+  let newPos = target.position; // 代打／代跑：沿用這一棒原本的守位，不變動
+  if (isDef){
+    const posEl = document.getElementById("sub-pos");
+    newPos = posEl ? posEl.value : target.position;
+    if (newPos && g.lineup.some(r=>r.id!==target.id && r.position===newPos)){
+      appAlert("「"+newPos+"」這個守位已經有球員擔任了，請先把該球員的守位改掉。");
+      return;
+    }
   }
 
-  g.plays.push({id:uid(), type:"sub", subType:AppState.ui.subType,
+  // Version 51 再上場規則：這次選的人剛好是這一棒的原始先發、目前不在場
+  // 上、也還沒用過再上場機會，就標記這筆換人紀錄 reentry:true，之後
+  // reentryUsedCount() 會據此擋掉第二次再上場。
+  const reentry = reentryCandidateFor(g, i);
+  const isReentryPick = !!(reentry && reentry.number === newNum);
+
+  g.plays.push({id:uid(), type:"sub", subType: weAreUp ? AppState.ui.subType : "DEF",
     half:g.half, inning:g.inning,
     oldNumber:target.number, oldName:target.name,
-    newNumber:newNum, newName, ts:Date.now()});
+    newNumber:newNum, newName, reentry:isReentryPick, ts:Date.now()});
 
-  // move replaced starter to bench (so they can theoretically re-enter list visibility), add new player in
+  // 換下場的先發球員不會被加進 g.bench——再上場資格是直接從
+  // g.startingLineup／play 紀錄算出來的（見 reentryCandidateFor），不需要
+  // 另外放進板凳名單才能被偵測到。
   if (bIdx>=0) g.bench.splice(bIdx,1);
   target.number = newNum;
   target.name = newName;
@@ -3892,6 +4133,62 @@ function openEditGame(){
 }
 function closeEditGame(){ AppState.ui.showEditGame=false; render(); }
 
+// ---------- Live-state recompute (Version 51) ----------
+// Rebuilds every derived/mutable field this app tracks about "where the
+// game currently stands" — the inning-by-inning line score, whose turn
+// it is to bat on each side, and how many outs the CURRENT half has so
+// far — directly from the play log. Called after any edit or delete to
+// g.plays (editPlayField/deletePlayAt, and the "跳到之前的打席" quick-jump
+// editor all funnel through those two), so fixing a misrecorded at-bat
+// mid-game can't leave the live scoreboard out of sync with the
+// corrected record.
+//
+// Deliberately does NOT try to re-simulate half-inning transitions (outs
+// reaching 3 → flip half / advance inning): that transition is a manual
+// tap (endHalfInning()) with no play of its own, and in the brief window
+// between "3rd out just recorded" and "scorer taps advance", blindly
+// replaying transitions could silently re-assign which half/inning every
+// LATER play belongs to. Safer and sufficient instead to trust the
+// explicit half/inning tag already stored on each play (the actual
+// historical fact — never reinterpreted) and the app's own current
+// g.inning/g.half (set by that real manual tap — never touched here):
+//   - linescore: rebuilt by re-summing each coded play's `runs` into its
+//     own recorded (half, inning) cell.
+//   - battingIdx / oppBattingIdx: our lineup (and the opponent roster,
+//     when one is on file) bats in one continuous rotation across the
+//     whole game regardless of inning boundaries, so "whose turn is it"
+//     is simply (how many of that side's coded plays happened so far)
+//     mod (that side's batting-order length).
+//   - outs: re-counted from only the plays tagged with the CURRENT
+//     g.inning/g.half — exactly "how many outs this still-open half has
+//     racked up", which is all that's needed to keep scoring it.
+function recomputeLiveState(g){
+  if (!g || !g.plays) return;
+  const coded = g.plays.filter(p=>p.code && !p.type);
+
+  const linescore = {top:[], bottom:[]};
+  coded.forEach(p=>{
+    const arr = linescore[p.half];
+    if (!arr) return;
+    while (arr.length < p.inning) arr.push(0);
+    arr[p.inning-1] = (arr[p.inning-1]||0) + (p.runs||0);
+  });
+  g.linescore = linescore;
+
+  const usCount = coded.filter(p=>p.side==="us").length;
+  if (g.lineup && g.lineup.length) g.battingIdx = usCount % g.lineup.length;
+  if (g.oppRoster && g.oppRoster.length){
+    const oppCount = coded.filter(p=>p.side==="opp").length;
+    g.oppBattingIdx = oppCount % g.oppRoster.length;
+    syncOppBatter(g);
+  }
+
+  const outsNow = coded
+    .filter(p=>p.inning===g.inning && p.half===g.half)
+    .reduce((a,p)=>a+(p.outs||0), 0);
+  g.outs = Math.min(3, outsNow);
+}
+
 async function editPlayField(idx, field, value){
   const g = AppState.game;
   const p = g.plays[idx];
@@ -3905,11 +4202,16 @@ async function editPlayField(idx, field, value){
   } else if (field==="batterName"){
     p.batterName = value.trim();
   }
+  recomputeLiveState(g);
   // Deliberately NOT calling render() here on success: this is a plain
   // value edit on an existing <select>/<input> inside a long, scrollable
   // "編輯紀錄" modal (a finished game can have 25-30+ rows) — the control
   // the user just touched already shows the new value on its own (that's
-  // how native form controls work), so there is nothing left to redraw.
+  // how native form controls work), so there is nothing left to redraw —
+  // recomputeLiveState() above updates the underlying scoreboard/outs/
+  // batter state that this modal doesn't itself display, so it's simply
+  // picked up the next time something DOES call render() (closing this
+  // modal, or any other action on the live screen behind it).
   // A full render() would blow away and rebuild the ENTIRE modal's DOM
   // (every view function replaces $app.innerHTML from scratch), which on
   // real phones was observed to knock the modal's scroll position back to
@@ -3921,9 +4223,10 @@ async function editPlayField(idx, field, value){
   await persistGame();
 }
 async function deletePlayAt(idx){
-  if (!(await appConfirm("刪除這筆紀錄？（不會自動調整比分／局數，如有需要請一併確認戰績總表）"))) return;
+  if (!(await appConfirm("刪除這筆紀錄？目前比分／出局數／輪到的棒次會依刪除後剩下的紀錄自動重新計算。"))) return;
   const g = AppState.game;
   g.plays.splice(idx,1);
+  recomputeLiveState(g);
   await persistGame();
   render();
 }
@@ -3997,25 +4300,53 @@ async function setGameCompetitionType(v){
   await persistGame(); render();
 }
 
+// Version 51 新增：逐局比分的直接覆寫（見 renderEditGameModal 的「逐局比分」
+// 區塊）——跟打席紀錄是分開的兩個欄位，所以這裡不呼叫
+// recomputeLiveState()（那會直接依打席紀錄重算、蓋掉剛手動輸入的值）。
+// 呼叫 render() 是為了讓下面「目前總比分」的提示文字立刻反映新的加總。
+async function editLinescoreCell(half, idx, value){
+  const g = AppState.game;
+  const arr = g.linescore[half];
+  while (arr.length <= idx) arr.push(0);
+  arr[idx] = Math.max(0, parseInt(value,10)||0);
+  await persistGame();
+  render();
+}
+
+// Version 51 新增：「跳到之前的打席」捷徑點擊後，捲動到 renderEditGameModal
+// 裡對應的那一筆並短暫高亮，方便在一長串紀錄裡找到它。
+function jumpToPlayRow(idx){
+  requestAnimationFrame(()=>{
+    const el = document.getElementById("playrow-"+idx);
+    if (!el) return;
+    el.scrollIntoView({behavior:"smooth", block:"center"});
+    const prevTransition = el.style.transition;
+    const prevBg = el.style.backgroundColor;
+    el.style.transition = "background-color 0.3s";
+    el.style.backgroundColor = "var(--gold-soft)";
+    setTimeout(()=>{ el.style.backgroundColor = prevBg; el.style.transition = prevTransition; }, 1400);
+  });
+}
+
 function renderEditGameModal(){
   const g = AppState.game;
   ensureOverrides(g);
 
   const playRows = g.plays.map((p,idx)=>{
     if (p.type==="sub"){
-      return `<div class="lineup-row">
-        <div class="name-out">🔁 換人：#${esc(p.oldNumber)} ${esc(p.oldName||"")} → #${esc(p.newNumber)} ${esc(p.newName||"")}（${esc(p.subType||"")}）</div>
+      return `<div class="lineup-row" id="playrow-${idx}">
+        <div class="name-out">🔁 換人：#${esc(p.oldNumber)} ${esc(p.oldName||"")} → #${esc(p.newNumber)} ${esc(p.newName||"")}（${esc(p.subType||"")}${p.reentry?'・再上場':''}）</div>
         <button class="row-x" onclick="deletePlayAt(${idx})">×</button>
       </div>`;
     }
     if (p.type==="posswap"){
-      return `<div class="lineup-row">
+      return `<div class="lineup-row" id="playrow-${idx}">
         <div class="name-out">🔁 守位互換：#${esc(p.aNumber)} ${esc(p.aName||"")}（${esc(p.aOldPos)}→${esc(p.aNewPos)}） ⇄ #${esc(p.bNumber)} ${esc(p.bName||"")}（${esc(p.bOldPos)}→${esc(p.bNewPos)}）</div>
         <button class="row-x" onclick="deletePlayAt(${idx})">×</button>
       </div>`;
     }
     const inputStyle="font-size:16px;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);";
-    return `<div class="confirm-box" style="margin-top:8px;padding:10px;">
+    return `<div class="confirm-box" id="playrow-${idx}" style="margin-top:8px;padding:10px;">
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <span class="roster-hint" style="flex:none;">${p.inning}局${p.half==='top'?'上':'下'}・${p.side==='us'?'我方':'對方'}</span>
         <select style="${inputStyle}" onchange="editPlayField(${idx},'code',this.value)">
@@ -4032,6 +4363,18 @@ function renderEditGameModal(){
       </div>
     </div>`;
   }).join("") || `<div class="roster-hint">尚無打席紀錄</div>`;
+
+  // Version 51 新增：「跳到之前的打席」捷徑——列出最近幾筆真正的打席紀錄
+  // （不含換人／守位互換），點一下直接捲動到下面清單裡對應的那一筆並短暫
+  // 高亮，不用在長長的清單裡自己找。修改／刪除任何一筆之後，
+  // recomputeLiveState()（見 editPlayField／deletePlayAt）都會自動依剩下
+  // 的紀錄重新計算目前比分、出局數、輪到的棒次，不用自己手動對。
+  const codedEntries = g.plays.map((p,idx)=>({p,idx})).filter(x=>x.p.code && !x.p.type);
+  const jumpChips = codedEntries.slice(-12).reverse().map(({p,idx})=>{
+    const halfCh = p.half==='top'?'上':'下';
+    const who = p.side==='us' ? ('#'+esc(p.batterNumber)) : '對方';
+    return `<button type="button" class="chip" style="font-size:11.5px;padding:4px 9px;" onclick="jumpToPlayRow(${idx})">${p.inning}局${halfCh}・${who}・${esc(p.code)}</button>`;
+  }).join("") || `<span class="roster-hint">尚無可跳轉的打席</span>`;
 
   const battingFields = ["PA","AB","H","1B","2B","3B","HR","BB","SF","RBI","R","K","DP","E"];
   const battingOvKeys = Object.keys(g.statOverrides.batting);
@@ -4065,13 +4408,45 @@ function renderEditGameModal(){
 
   const inputStyle2="font-size:16px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);";
 
+  // Version 51 新增：逐局比分可直接覆寫（見 editLinescoreCell）——跟上面
+  // 打席紀錄是兩條獨立的路徑：這裡改的是最終顯示的比分本身，打席紀錄改的
+  // 是逐場統計的原始資料。兩者通常會一致（比分本來就是由打席紀錄的得分加
+  // 總出來的），但如果之後又修改或刪除某一筆打席，比分會依打席紀錄重新
+  // 計算、蓋掉這裡手動改的數字——這裡比較適合用在「沒有逐場細節、只知道
+  // 最終比分哪裡錄錯了」的情況。
+  const lsInningsShow = Math.max(7, g.linescore.top.length, g.linescore.bottom.length, g.inning) + 2;
+  const topIsUs = g.batFirst;
+  function lsCellInputs(half){
+    let c = "";
+    for (let idx=0; idx<lsInningsShow; idx++){
+      const v = g.linescore[half][idx];
+      c += `<input type="number" min="0" style="width:32px;font-size:13px;padding:3px 1px;text-align:center;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin:1px;flex:none;" value="${v!=null?v:''}" placeholder="0" onchange="editLinescoreCell('${half}',${idx},this.value)">`;
+    }
+    return c;
+  }
+  const linescoreEditHTML = `
+    <div style="overflow-x:auto;">
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+        <span style="width:64px;flex:none;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(topIsUs?g.ourTeamName:g.opponent)}</span>
+        ${lsCellInputs('top')}
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <span style="width:64px;flex:none;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(topIsUs?g.opponent:g.ourTeamName)}</span>
+        ${lsCellInputs('bottom')}
+      </div>
+    </div>
+    <div class="hint" style="margin-top:6px;margin-bottom:0;">目前總比分 ${esc(g.ourTeamName)} ${ourTotal(g)} : ${oppTotal(g)} ${esc(g.opponent)}，會自動依每一局重新加總。</div>`;
+
   return `<div class="modal-back" onclick="if(event.target===this){closeEditGame();}">
     <div class="modal">
       <button class="close-x" onclick="closeEditGame();">×</button>
       <h3>編輯紀錄</h3>
       <div class="hint" style="margin-bottom:8px;">可直接修改或刪除每一筆打席／守備紀錄；不確定發生了哪一筆時，也可以在下方直接覆寫最終統計數字（如打點、三振），覆寫的欄位會取代自動統計的結果，其餘欄位仍照紀錄計算。${g.status==='final' ? (window.SUPABASE_URL ? '修改已完賽的比賽需要輸入管理密碼。' : '修改已完賽的比賽僅管理員能儲存成功。') : ''}</div>
 
-      <h3 style="font-size:16px;">賽季／賽事類別</h3>
+      <h3 style="font-size:16px;">逐局比分</h3>
+      ${linescoreEditHTML}
+
+      <h3 style="font-size:16px;margin-top:16px;">賽季／賽事類別</h3>
       <div class="hint" style="margin-bottom:8px;">建立比賽時填錯球季或賽事類別（聯賽／盃賽／季後賽）時可在這裡修正；只有「聯賽」的比賽會計入球季／生涯數據。</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
         <div class="field" style="flex:1;min-width:160px;margin-bottom:0;">
@@ -4092,6 +4467,8 @@ function renderEditGameModal(){
       </div>
 
       <h3 style="font-size:16px;margin-top:10px;">打席／守備紀錄</h3>
+      <div class="hint" style="margin-bottom:6px;">比賽進行中想修改之前的某一次打席時，可以先點下面的捷徑直接跳到那一筆；捷徑只列出最近幾筆，更早的紀錄請直接往下捲動尋找。</div>
+      <div class="chip-picker" style="margin-bottom:8px;">${jumpChips}</div>
       <div style="max-height:280px;overflow-y:auto;">${playRows}</div>
 
       <h3 style="font-size:16px;margin-top:16px;">打擊數據覆寫</h3>
@@ -4302,6 +4679,21 @@ async function addRosterPlayer(){
   document.querySelectorAll(".modal-back").forEach(m=>m.remove());
   openRosterEditor();
 }
+
+// Re-render on rotation/resize so the portrait step-flow vs. landscape
+// side-by-side choice in renderGame() (see isWideLayout(), Version 53)
+// stays correct if the scorer rotates the phone mid-at-bat — CSS alone
+// handles the column layout instantly, but which card(s) renderGame()
+// put into the DOM in the first place was decided at the last render(),
+// so that decision needs to be re-made when the breakpoint crosses.
+// Debounced since some browsers fire several resize events in a row.
+let _resizeRenderTimer = null;
+window.addEventListener("resize", function(){
+  clearTimeout(_resizeRenderTimer);
+  _resizeRenderTimer = setTimeout(function(){
+    if (AppState.view==="game") render();
+  }, 150);
+});
 
 /* ---------------------------------------------------------------------
    Boot
