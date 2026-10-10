@@ -556,7 +556,7 @@ const KNOWN_SEASONS = ["2025", "2025-2026聯賽", "2026聯賽賽季"];
 // AppState.schedule）才是真正的資料來源；新增一場賽程時輸入的新對手名稱
 // 之後也會自然出現在對手成績查詢等既有的球隊/背號分析裡，不需要另外把
 // 它加進這份清單。
-const OPPONENT_TEAMS = ["逢甲都市狼","帛昇TOP","大里農會","台中慶記","奕郝","零壹通訊","鱷勢力","十八養場"];
+const OPPONENT_TEAMS = ["逢甲都市汁狼","帛昇TOP","大里區農會","台中慶記","奕郝","零壹通訊","鱷勢力","十八養場"];
 // Version 48 新增：賽程表的初始資料，來自使用者提供的 Google 試算表
 // 「振宇五金MIF」分頁「2026聯賽 杯賽 賽程表」（2026-06-13～2027-01-03，
 // 2026聯賽賽季），轉成本 App 可編輯的一列一筆格式（每場比賽一列，同一天
@@ -570,19 +570,19 @@ const OPPONENT_TEAMS = ["逢甲都市狼","帛昇TOP","大里農會","台中慶�
 // 同一年（2026），但實際上是季後賽開始，應該落在下一年 1 月，這裡已經手動
 // 校正成 2027-01-03，讓賽程表排序時仍排在 2026 年賽程之後。
 const DEFAULT_SCHEDULE = [
-  {id:"sch_seed_024",season:"2026聯賽賽季",date:"2026-10-10",time:"1100",venue:"東湖",opponent:"大里農會",batFirst:true,note:""},
+  {id:"sch_seed_024",season:"2026聯賽賽季",date:"2026-10-10",time:"1100",venue:"東湖",opponent:"大里區農會",batFirst:true,note:""},
   {id:"sch_seed_025",season:"2026聯賽賽季",date:"2026-10-10",time:"1300",venue:"東湖",opponent:"台中慶記",batFirst:false,note:""},
-  {id:"sch_seed_027",season:"2026聯賽賽季",date:"2026-10-24",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:""},
+  {id:"sch_seed_027",season:"2026聯賽賽季",date:"2026-10-24",time:"1400",venue:"東湖",opponent:"逢甲都市汁狼",batFirst:true,note:""},
   {id:"sch_seed_028",season:"2026聯賽賽季",date:"2026-10-24",time:"1600",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:""},
   {id:"sch_seed_029",season:"2026聯賽賽季",date:"2026-10-31",time:"0800",venue:"東湖",opponent:"鱷勢力",batFirst:true,note:""},
   {id:"sch_seed_030",season:"2026聯賽賽季",date:"2026-10-31",time:"0900",venue:"東湖",opponent:"十八養場",batFirst:false,note:""},
   {id:"sch_seed_031",season:"2026聯賽賽季",date:"2026-11-14",time:"0900",venue:"東湖",opponent:"奕郝",batFirst:true,note:""},
   {id:"sch_seed_032",season:"2026聯賽賽季",date:"2026-11-14",time:"1000",venue:"東湖",opponent:"零壹通訊",batFirst:false,note:""},
-  {id:"sch_seed_033",season:"2026聯賽賽季",date:"2026-11-28",time:"0800",venue:"東湖",opponent:"大里農會",batFirst:true,note:""},
+  {id:"sch_seed_033",season:"2026聯賽賽季",date:"2026-11-28",time:"0800",venue:"東湖",opponent:"大里區農會",batFirst:true,note:""},
   {id:"sch_seed_034",season:"2026聯賽賽季",date:"2026-11-28",time:"1000",venue:"東湖",opponent:"台中慶記",batFirst:false,note:""},
-  {id:"sch_seed_036",season:"2026聯賽賽季",date:"2026-12-12",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:""},
+  {id:"sch_seed_036",season:"2026聯賽賽季",date:"2026-12-12",time:"1400",venue:"東湖",opponent:"逢甲都市汁狼",batFirst:true,note:""},
   {id:"sch_seed_037",season:"2026聯賽賽季",date:"2026-12-12",time:"1600",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:""},
-  {id:"sch_seed_039",season:"2026聯賽賽季",date:"2026-12-26",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:"原6/13延賽"},
+  {id:"sch_seed_039",season:"2026聯賽賽季",date:"2026-12-26",time:"1400",venue:"東湖",opponent:"逢甲都市汁狼",batFirst:true,note:"原6/13延賽"},
   {id:"sch_seed_040",season:"2026聯賽賽季",date:"2026-12-26",time:"1500",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:""},
   {id:"sch_seed_041",season:"2026聯賽賽季",date:"2027-01-03",time:"",venue:"",opponent:"",batFirst:null,note:"季後賽開始（尚未排定對戰）"}
 ];
@@ -698,7 +698,24 @@ function createSupabaseDb(url, anonKey){
    Storage adapter: Supabase (if configured) → Claude db capability
    (if running inside a Claude Artifact) → else localStorage.
 --------------------------------------------------------------------- */
-const Store = (function(){
+// Version 56: 球隊正式名稱更正（逢甲都市狼→逢甲都市汁狼、大里農會→大里區農會）。
+// 資料庫裡既有的比賽／賽程／其他球隊比分仍存著舊名稱，如果不處理，對手
+// 分析、歷史落點分析（用「隊名||背號」當 key）、賽程狀態比對都會把新舊名稱
+// 當成兩支不同的球隊而對不起來。所以在 Store 讀出資料的這一層統一把舊名稱
+// 換成新名稱（只換整串完全相同的隊名），之後任何一次存檔就會自然寫回新名稱。
+const TEAM_RENAMES = {"逢甲都市狼":"逢甲都市汁狼", "大里農會":"大里區農會"};
+function renameTeam(n){ return (typeof n==="string" && TEAM_RENAMES[n]) ? TEAM_RENAMES[n] : n; }
+function withTeamRenames(store){
+  const fixGame = g => { if (g && g.opponent) g.opponent = renameTeam(g.opponent); return g; };
+  const orig = {listGames:store.listGames, loadGame:store.loadGame, getLeagueGames:store.getLeagueGames, getSchedule:store.getSchedule, getTeamRecord:store.getTeamRecord};
+  store.listGames = async function(){ const r = await orig.listGames.apply(store, arguments); return (r||[]).map(fixGame); };
+  store.loadGame = async function(){ return fixGame(await orig.loadGame.apply(store, arguments)); };
+  store.getLeagueGames = async function(){ const r = await orig.getLeagueGames.apply(store, arguments); return (r||[]).map(x=>{ if (x){ x.teamA=renameTeam(x.teamA); x.teamB=renameTeam(x.teamB);} return x; }); };
+  store.getSchedule = async function(){ const r = await orig.getSchedule.apply(store, arguments); return (r||[]).map(x=>{ if (x) x.opponent=renameTeam(x.opponent); return x; }); };
+  store.getTeamRecord = async function(){ const r = await orig.getTeamRecord.apply(store, arguments); return (r||[]).map(x=>{ if (x && x.team) x.team=renameTeam(x.team); return x; }); };
+  return store;
+}
+const Store = withTeamRenames((function(){
   let db = null;
   let ready = (async () => {
     try{
@@ -999,7 +1016,7 @@ const Store = (function(){
       }catch(e){}
     },
   };
-})();
+})());
 
 /* ---------------------------------------------------------------------
    Admin password gate — ONLY relevant when running via the Supabase
@@ -3323,10 +3340,12 @@ function renderFinalSummary(){
 // Renders nothing when there's no batter set yet or no data on file for
 // them, so it doesn't clutter the fast-paced recording screen.
 function oppDefenseZoneCardHTML(g){
-  if (!g.oppNumber) return "";
+  // Version 56: 對手攻擊時的頁面一定要看得到這張卡——沒有背號或沒有歷史資料
+  // 時也顯示一張說明卡，而不是整張消失讓人以為功能不見了。
+  if (!g.oppNumber) return `<div class="card zone-hint-card"><div class="hint" style="margin:0;">輸入對方背號後，這裡會顯示該打者的歷史落點分析。</div></div>`;
   const key = g.opponent + "||" + g.oppNumber;
   const analysis = computeZoneAnalysis(gamesForZoneRef(), "opp", g.opponent, key);
-  if (!analysis.totalPlays) return "";
+  if (!analysis.totalPlays) return `<div class="card zone-hint-card"><div class="hint" style="margin:0;">#${esc(g.oppNumber)} 目前沒有歷史落點資料（對 ${esc(g.opponent)} 還沒記錄過這個背號的打席）。</div></div>`;
   const m = (AppState.ui.zoneMetric && AppState.ui.zoneMetric.def) || "freq";
   return `<div class="card zc-card">
     <h2 class="zc-label">⚾ #${esc(g.oppNumber)}${g.oppNote?(' '+esc(g.oppNote)):''} 歷史落點分析</h2>
@@ -3402,7 +3421,8 @@ function renderGame(){
       const hasZoneStep = !["K","BB"].includes(AppState.ui.pendingResult.code);
       const onZoneStep = hasZoneStep && AppState.ui.pendingStep !== "main";
       actionMid = onZoneStep ? renderConfirmBoxZone() : renderConfirmBoxMain();
-      actionZone = "";
+      // 對方打擊時，歷史落點分析仍然保留在步驟卡片下方（Version 56）
+      actionZone = AppState.ui.pendingResult.side==="opp" ? oppDefenseZoneCardHTML(g) : "";
     }
   } else if (weAreUp){
     actionMid = renderResultGrid('us');
@@ -3454,7 +3474,7 @@ function renderGame(){
           ${batterCard}
           ${!weAreUp ? `<div style="text-align:center;margin-top:6px;">
               <span class="roster-hint">目前投手：${pitcher?('#'+esc(pitcher.number)+' '+esc(pitcher.name)):'未指定'} </span>
-              <a class="link-reset" onclick="AppState.ui.showSub=true;render();">設定</a>
+              <a class="link-reset" onclick="openSubModal()">設定</a>
             </div>` : ``}
         </div>
         ${historyHTML}
@@ -3469,7 +3489,7 @@ function renderGame(){
 
     <div class="action-bar"><div class="action-bar-inner three">
       <button class="btn ghost" onclick="undoLastPlay()">↺ 復原</button>
-      <button class="btn ghost" onclick="AppState.ui.showSub=true;render();">🔁 換人</button>
+      <button class="btn ghost" onclick="openSubModal()">🔁 換人</button>
       <button class="btn ghost" onclick="openEndGame()">🏁 結束比賽</button>
     </div></div>
 
@@ -3843,8 +3863,81 @@ function prEligibleSlotIdx(g){
   return set;
 }
 
+// Version 56: 我方進攻中的換人改成「直接換」——代打不用先從整排棒次裡找人，
+// 目標固定是目前打者，只要點一下板凳球員再確認；代跑只列出目前打者前
+// 最近 5 棒（prEligibleSlotIdx），不再列出全部球員。守備中的換人維持原本
+// 的整排棒次＋替換流程。
+function openSubModal(){
+  const g = AppState.game;
+  AppState.ui.showSub = true;
+  AppState.ui.subBenchPick = "";
+  if (isOurHalf(g)){
+    AppState.ui.subType = "PH";
+    AppState.ui.subTargetIdx = g.battingIdx % g.lineup.length;
+  } else {
+    AppState.ui.subTargetIdx = null;
+  }
+  render();
+}
+function setUpSubType(t){
+  const g = AppState.game, n = g.lineup.length;
+  AppState.ui.subType = t;
+  AppState.ui.subBenchPick = "";
+  if (t==="PH") AppState.ui.subTargetIdx = g.battingIdx % n;
+  else {
+    const first = [1,2,3,4,5].map(k=>((g.battingIdx-k)%n+n)%n).find(i=>prEligibleSlotIdx(g).has(i));
+    AppState.ui.subTargetIdx = first!=null ? first : null;
+  }
+  render();
+}
+function setSubTarget(i){ AppState.ui.subTargetIdx = i; AppState.ui.subBenchPick = ""; render(); }
+function setSubBench(num){ AppState.ui.subBenchPick = num; render(); }
+function renderUpSubModal(){
+  const g = AppState.game, n = g.lineup.length;
+  const prSlots = [1,2,3,4,5].map(k=>((g.battingIdx-k)%n+n)%n).filter(i=>prEligibleSlotIdx(g).has(i));
+  const type = AppState.ui.subType==="PR" ? "PR" : "PH";
+  const ti = AppState.ui.subTargetIdx;
+  const target = ti!=null ? g.lineup[ti] : null;
+  const pick = AppState.ui.subBenchPick || "";
+  const reentry = target ? reentryCandidateFor(g, ti) : null;
+  const benchList = [
+    ...(reentry ? [{number:reentry.number, name:reentry.name, re:true}] : []),
+    ...g.bench.map(b=>({number:b.number, name:b.name, re:false}))
+  ];
+  const targetPicker = type==="PH"
+    ? (target ? `<div class="hint" style="margin-bottom:6px;">替換目前打者：<b>第${target.order}棒 #${esc(target.number)} ${esc(target.name)}</b></div>` : "")
+    : `<div class="field"><label>誰要被代跑？（目前打者前 5 棒）</label>
+        <div class="chip-picker">${prSlots.map(i=>{const r=g.lineup[i];return `<span class="chip ${ti===i?'sel':''}" onclick="setSubTarget(${i})">第${r.order}棒 #${esc(r.number)} ${esc(r.name)}</span>`;}).join("")}</div>
+      </div>`;
+  const benchPicker = benchList.length
+    ? `<div class="field"><label>換上哪位替補？</label>
+        <div class="chip-picker">${benchList.map(b=>`<span class="chip ${pick===b.number?'sel':''}" onclick="setSubBench('${esc(b.number)}')">${b.re?'🔁 再上場：':''}#${esc(b.number)} ${esc(b.name)}</span>`).join("")}</div>
+      </div>`
+    : `<div class="hint">目前沒有替補球員可換（替補名單在「編排打線」時設定）。</div>`;
+  return `<div class="modal-back" onclick="if(event.target===this){AppState.ui.showSub=false;AppState.ui.subTargetIdx=null;render();}">
+    <div class="modal">
+      <button class="close-x" onclick="AppState.ui.showSub=false;AppState.ui.subTargetIdx=null;render();">×</button>
+      <h3>換人</h3>
+      <div class="seg" style="margin-bottom:12px;">
+        <button class="${type==='PH'?'active':''}" onclick="setUpSubType('PH')">代打</button>
+        ${prSlots.length
+          ? `<button class="${type==='PR'?'active':''}" onclick="setUpSubType('PR')">代跑</button>`
+          : `<button disabled style="opacity:.4;cursor:not-allowed;">代跑</button>`}
+      </div>
+      ${targetPicker}
+      ${benchPicker}
+      <input type="hidden" id="sub-bench-num" value="${esc(pick)}">
+      <div class="btn-row" style="margin-top:6px;">
+        <button class="btn ghost" style="flex:1;" onclick="AppState.ui.showSub=false;AppState.ui.subTargetIdx=null;render();">取消</button>
+        <button class="btn primary" style="flex:2;" onclick="applySub()">確認替換</button>
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderSubModal(){
   const g = AppState.game;
+  if (isOurHalf(g)) return renderUpSubModal();
   const pitcherNow = currentPitcher(g);
   const weAreUp = isOurHalf(g);
   const prEligible = prEligibleSlotIdx(g);
@@ -3981,6 +4074,7 @@ async function applySub(){
     return;
   }
 
+  if (weAreUp && AppState.ui.subType==="PR" && !prEligibleSlotIdx(g).has(i)){ appAlert("請先選擇要被代跑的球員（目前打者前 5 棒）"); return; }
   const numEl = document.getElementById("sub-bench-num");
   const newNum = numEl.value;
   if (!newNum){ appAlert("請選擇板凳球員"); return; }
@@ -4017,6 +4111,8 @@ async function applySub(){
   target.position = newPos;
 
   AppState.ui.subTargetIdx=null;
+  AppState.ui.subBenchPick="";
+  if (weAreUp) AppState.ui.showSub=false; // Version 56: 進攻中換完直接關閉視窗
   await persistGame();
   render();
 }
