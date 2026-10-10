@@ -570,32 +570,8 @@ const OPPONENT_TEAMS = ["逢甲都市狼","帛昇TOP","大里農會","台中慶�
 // 同一年（2026），但實際上是季後賽開始，應該落在下一年 1 月，這裡已經手動
 // 校正成 2027-01-03，讓賽程表排序時仍排在 2026 年賽程之後。
 const DEFAULT_SCHEDULE = [
-  {id:"sch_seed_001",season:"2026聯賽賽季",date:"2026-06-13",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:""},
-  {id:"sch_seed_002",season:"2026聯賽賽季",date:"2026-06-13",time:"1500",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:"延賽"},
-  {id:"sch_seed_003",season:"2026聯賽賽季",date:"2026-06-20",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
-  {id:"sch_seed_004",season:"2026聯賽賽季",date:"2026-06-27",time:"1100",venue:"東湖",opponent:"大里農會",batFirst:true,note:""},
-  {id:"sch_seed_005",season:"2026聯賽賽季",date:"2026-06-27",time:"1300",venue:"東湖",opponent:"台中慶記",batFirst:false,note:"延賽"},
-  {id:"sch_seed_006",season:"2026聯賽賽季",date:"2026-07-04",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
-  {id:"sch_seed_007",season:"2026聯賽賽季",date:"2026-07-11",time:"1200",venue:"東湖",opponent:"奕郝",batFirst:true,note:""},
-  {id:"sch_seed_008",season:"2026聯賽賽季",date:"2026-07-11",time:"1300",venue:"東湖",opponent:"零壹通訊",batFirst:false,note:"延賽"},
-  {id:"sch_seed_009",season:"2026聯賽賽季",date:"2026-07-18",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
-  {id:"sch_seed_010",season:"2026聯賽賽季",date:"2026-07-25",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
-  {id:"sch_seed_011",season:"2026聯賽賽季",date:"2026-08-01",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
-  {id:"sch_seed_012",season:"2026聯賽賽季",date:"2026-08-08",time:"1100",venue:"東湖",opponent:"鱷勢力",batFirst:true,note:""},
-  {id:"sch_seed_013",season:"2026聯賽賽季",date:"2026-08-08",time:"1200",venue:"東湖",opponent:"十八養場",batFirst:false,note:""},
-  {id:"sch_seed_014",season:"2026聯賽賽季",date:"2026-08-08",time:"",venue:"",opponent:"",batFirst:null,note:"2026/8/9 (外埔 振宇杯)"},
-  {id:"sch_seed_015",season:"2026聯賽賽季",date:"2026-08-15",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
-  {id:"sch_seed_016",season:"2026聯賽賽季",date:"2026-08-22",time:"1100",venue:"東湖",opponent:"鱷勢力",batFirst:true,note:""},
-  {id:"sch_seed_017",season:"2026聯賽賽季",date:"2026-08-22",time:"1200",venue:"東湖",opponent:"十八養場",batFirst:false,note:""},
-  {id:"sch_seed_018",season:"2026聯賽賽季",date:"2026-09-05",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
-  {id:"sch_seed_019",season:"2026聯賽賽季",date:"2026-09-12",time:"0900",venue:"東湖",opponent:"奕郝",batFirst:true,note:""},
-  {id:"sch_seed_020",season:"2026聯賽賽季",date:"2026-09-12",time:"1000",venue:"東湖",opponent:"零壹通訊",batFirst:false,note:""},
-  {id:"sch_seed_021",season:"2026聯賽賽季",date:"2026-09-19",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
-  {id:"sch_seed_022",season:"2026聯賽賽季",date:"2026-09-26",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
-  {id:"sch_seed_023",season:"2026聯賽賽季",date:"2026-10-03",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
   {id:"sch_seed_024",season:"2026聯賽賽季",date:"2026-10-10",time:"1100",venue:"東湖",opponent:"大里農會",batFirst:true,note:""},
   {id:"sch_seed_025",season:"2026聯賽賽季",date:"2026-10-10",time:"1300",venue:"東湖",opponent:"台中慶記",batFirst:false,note:""},
-  {id:"sch_seed_026",season:"2026聯賽賽季",date:"2026-10-17",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
   {id:"sch_seed_027",season:"2026聯賽賽季",date:"2026-10-24",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:""},
   {id:"sch_seed_028",season:"2026聯賽賽季",date:"2026-10-24",time:"1600",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:""},
   {id:"sch_seed_029",season:"2026聯賽賽季",date:"2026-10-31",time:"0800",venue:"東湖",opponent:"鱷勢力",batFirst:true,note:""},
@@ -604,10 +580,8 @@ const DEFAULT_SCHEDULE = [
   {id:"sch_seed_032",season:"2026聯賽賽季",date:"2026-11-14",time:"1000",venue:"東湖",opponent:"零壹通訊",batFirst:false,note:""},
   {id:"sch_seed_033",season:"2026聯賽賽季",date:"2026-11-28",time:"0800",venue:"東湖",opponent:"大里農會",batFirst:true,note:""},
   {id:"sch_seed_034",season:"2026聯賽賽季",date:"2026-11-28",time:"1000",venue:"東湖",opponent:"台中慶記",batFirst:false,note:""},
-  {id:"sch_seed_035",season:"2026聯賽賽季",date:"2026-12-05",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
   {id:"sch_seed_036",season:"2026聯賽賽季",date:"2026-12-12",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:""},
   {id:"sch_seed_037",season:"2026聯賽賽季",date:"2026-12-12",time:"1600",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:""},
-  {id:"sch_seed_038",season:"2026聯賽賽季",date:"2026-12-19",time:"",venue:"",opponent:"",batFirst:null,note:"輪休"},
   {id:"sch_seed_039",season:"2026聯賽賽季",date:"2026-12-26",time:"1400",venue:"東湖",opponent:"逢甲都市狼",batFirst:true,note:"原6/13延賽"},
   {id:"sch_seed_040",season:"2026聯賽賽季",date:"2026-12-26",time:"1500",venue:"東湖",opponent:"帛昇TOP",batFirst:false,note:""},
   {id:"sch_seed_041",season:"2026聯賽賽季",date:"2027-01-03",time:"",venue:"",opponent:"",batFirst:null,note:"季後賽開始（尚未排定對戰）"}
@@ -1763,23 +1737,39 @@ function selectTeamRecordCompetition(v){ AppState.ui.teamRecordCompetitionFilter
 // in a dedicated modal (renderLeagueGamesModal) that takes up to
 // LEAGUE_GAME_BATCH_ROWS rows at once, so a weekly catch-up of several
 // other-team results doesn't need one open-close round trip per game.
-const LEAGUE_GAME_BATCH_ROWS = 7;
+const LEAGUE_GAME_BATCH_ROWS = 9;
 function openLeagueGamesModal(){ AppState.ui.showLeagueGamesModal = true; render(); }
 function closeLeagueGamesModal(){ AppState.ui.showLeagueGamesModal = false; render(); }
+// Version 55: 球隊改成下拉選單（本季 8 支對手隊＋「其他」自行輸入），日期整批
+// 只填一次（一天通常打 9 場）。value 為 __other__ 時才讀旁邊的文字欄。
+function lgTeamValue(prefix, i){
+  const sel = document.getElementById(`${prefix}Sel${i}`).value;
+  if (sel==="__other__") return (document.getElementById(`${prefix}Custom${i}`).value||"").trim();
+  return (sel||"").trim();
+}
+function onLgTeamSelChange(prefix, i, v){
+  const c = document.getElementById(`${prefix}Custom${i}`);
+  if (!c) return;
+  if (v==="__other__"){ c.style.display=""; c.focus(); } else { c.style.display="none"; }
+}
 async function saveLeagueGamesBatch(){
   const $ = id => document.getElementById(id);
   const rows = [];
+  const date = $("lgDateAll").value || "";
   for (let i=0; i<LEAGUE_GAME_BATCH_ROWS; i++){
-    const teamA = ($(`lgTeamA${i}`).value||"").trim();
-    const teamB = ($(`lgTeamB${i}`).value||"").trim();
+    const teamA = lgTeamValue("lgTeamA", i);
+    const teamB = lgTeamValue("lgTeamB", i);
     const scoreA = $(`lgScoreA${i}`).value;
     const scoreB = $(`lgScoreB${i}`).value;
-    const date = $(`lgDate${i}`).value || "";
     // A fully blank row just means "not using this slot" — skip it rather
-    // than treating it as an error, since the form always shows all 7.
+    // than treating it as an error, since the form always shows all rows.
     if (!teamA && !teamB && scoreA==="" && scoreB==="") continue;
     if (!teamA || !teamB || scoreA==="" || scoreB===""){
       appAlert(`第 ${i+1} 筆資料不完整，請確認兩隊隊名與比分都已填寫（或整列留白略過這一筆）。`);
+      return;
+    }
+    if (teamA===teamB){
+      appAlert(`第 ${i+1} 筆的兩隊是同一隊，請確認。`);
       return;
     }
     rows.push({ teamA, teamB, scoreA: Number(scoreA)||0, scoreB: Number(scoreB)||0, date });
@@ -1813,13 +1803,19 @@ function renderLeagueGamesModal(){
   const leagueGamesInScope = filterLeagueGames(AppState.leagueGames, teamRecordSeason, teamRecordCompetition);
   const scopeSeason = esc(teamRecordSeason==='生涯' ? SEASON_DEFAULT : teamRecordSeason);
   const scopeCompetition = esc(teamRecordCompetition==='全部' ? '聯賽' : teamRecordCompetition);
+  const teamSel = (prefix, i) => `
+      <select id="${prefix}Sel${i}" onchange="onLgTeamSelChange('${prefix}',${i},this.value)" style="font-size:16px;padding:9px 6px;">
+        <option value="">—</option>
+        ${OPPONENT_TEAMS.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("")}
+        <option value="__other__">其他…</option>
+      </select>
+      <input type="text" id="${prefix}Custom${i}" placeholder="隊名" style="display:none;margin-top:4px;">`;
   const rowInputs = Array.from({length: LEAGUE_GAME_BATCH_ROWS}, (_, i) => `
-    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-bottom:6px;">
-      <div class="field" style="margin-bottom:0;flex:1;min-width:88px;">${i===0?'<label>球隊A</label>':''}<input type="text" id="lgTeamA${i}"></div>
-      <div class="field" style="margin-bottom:0;width:52px;">${i===0?'<label>比分</label>':''}<input type="text" inputmode="numeric" id="lgScoreA${i}"></div>
-      <div class="field" style="margin-bottom:0;width:52px;">${i===0?'<label>比分</label>':''}<input type="text" inputmode="numeric" id="lgScoreB${i}"></div>
-      <div class="field" style="margin-bottom:0;flex:1;min-width:88px;">${i===0?'<label>球隊B</label>':''}<input type="text" id="lgTeamB${i}"></div>
-      <div class="field" style="margin-bottom:0;min-width:110px;">${i===0?'<label>日期（選填）</label>':''}<input type="date" id="lgDate${i}"></div>
+    <div style="display:flex;gap:6px;flex-wrap:nowrap;align-items:flex-start;margin-bottom:8px;">
+      <div class="field" style="margin-bottom:0;flex:1;min-width:0;">${i===0?'<label>球隊A</label>':''}${teamSel('lgTeamA',i)}</div>
+      <div class="field" style="margin-bottom:0;width:46px;flex:none;">${i===0?'<label>比分</label>':''}<input type="text" inputmode="numeric" id="lgScoreA${i}" style="padding:9px 4px;text-align:center;"></div>
+      <div class="field" style="margin-bottom:0;width:46px;flex:none;">${i===0?'<label>比分</label>':''}<input type="text" inputmode="numeric" id="lgScoreB${i}" style="padding:9px 4px;text-align:center;"></div>
+      <div class="field" style="margin-bottom:0;flex:1;min-width:0;">${i===0?'<label>球隊B</label>':''}${teamSel('lgTeamB',i)}</div>
     </div>`).join("");
   return `<div class="modal-back" onclick="if(event.target===this){closeLeagueGamesModal();}">
     <div class="modal">
@@ -1834,7 +1830,11 @@ function renderLeagueGamesModal(){
         </table>
       </div>` : ``}
       <h3 style="font-size:15px;margin-top:8px;">新增（最多 ${LEAGUE_GAME_BATCH_ROWS} 筆，留空整列可略過）</h3>
-      <div style="max-height:320px;overflow-y:auto;margin-top:4px;">${rowInputs}</div>
+      <div class="field" style="max-width:200px;margin-top:6px;">
+        <label>比賽日期（整批共用，選填）</label>
+        <input type="date" id="lgDateAll">
+      </div>
+      <div style="max-height:340px;overflow-y:auto;margin-top:4px;">${rowInputs}</div>
       <button class="btn primary block" style="margin-top:10px;" onclick="saveLeagueGamesBatch()">儲存</button>
     </div>
   </div>`;
@@ -2659,6 +2659,25 @@ function fmtScheduleTime(t){
   if (!t || t.length!==4) return "";
   return t.slice(0,2)+":"+t.slice(2);
 }
+// Version 55: 一鍵清理賽程——刪除 2026-10-10 以前（不含當天）的所有賽程，以及
+// 所有「輪休」列。資料庫裡的 team/schedule 只在第一次讀取時才用
+// DEFAULT_SCHEDULE 當種子，所以改常數不會影響已存進資料庫的賽程；這個按鈕
+// 才是對現有資料真正動手的入口（管理員密碼把關＋刪前確認）。沒有符合條件的
+// 列時按鈕不會出現。
+const SCHEDULE_CLEAN_BEFORE = "2026-10-10";
+function isScheduleCleanable(s){
+  return (s.date||"") < SCHEDULE_CLEAN_BEFORE || /輪休/.test(s.note||"");
+}
+async function cleanSchedule(){
+  const all = AppState.schedule || [];
+  const doomed = all.filter(isScheduleCleanable);
+  if (!doomed.length) return;
+  if (!requireAdmin("清理賽程")) return;
+  if (!(await appConfirm(`將刪除 ${doomed.length} 筆賽程（${SCHEDULE_CLEAN_BEFORE.replace(/-/g,'/')} 以前的賽程，以及所有「輪休」列），保留 ${all.length-doomed.length} 筆。確定嗎？`))) return;
+  AppState.schedule = all.filter(s=>!isScheduleCleanable(s));
+  await Store.saveSchedule(AppState.schedule);
+  render();
+}
 function renderScheduleView(){
   const seasonFilter = AppState.ui.scheduleSeasonFilter || SEASON_DEFAULT;
   const seasonOptions = scheduleSeasonOptionsFor();
@@ -2709,6 +2728,10 @@ function renderScheduleView(){
         <button class="btn primary" onclick="openScheduleModal()">＋ 新增賽程</button>
       </div>
     </div>
+    ${(AppState.schedule||[]).some(isScheduleCleanable) ? `<div class="card">
+      <div class="hint" style="margin-bottom:8px;">賽程裡還有 ${(AppState.schedule||[]).filter(isScheduleCleanable).length} 筆 ${SCHEDULE_CLEAN_BEFORE.replace(/-/g,'/')} 以前或「輪休」的列。</div>
+      <button class="btn block" style="color:var(--danger);" onclick="cleanSchedule()">🧹 刪除 ${SCHEDULE_CLEAN_BEFORE.replace(/-/g,'/')} 前與輪休的賽程</button>
+    </div>` : ``}
     <div class="card">
       ${rows || '<div class="empty-state"><div class="em">📅</div>這個球季還沒有賽程資料</div>'}
     </div>
@@ -4295,6 +4318,15 @@ async function setGameSeason(v){
   AppState.game.season = v.trim() || SEASON_DEFAULT;
   await persistGame(); render();
 }
+// Version 55: 編輯紀錄可修改對手隊名。統計（對手分析、落點分析、賽程比對）
+// 都是讀取時才用 g.opponent 當 key，所以只要改這個欄位就會全部跟著換，
+// 不需要逐筆打席改寫。空白不接受，避免變成沒有名字的對手。
+async function setGameOpponent(v){
+  const name = (v||"").trim();
+  if (!name){ appAlert("對手隊名不能留白。"); render(); return; }
+  AppState.game.opponent = name;
+  await persistGame(); render();
+}
 async function setGameCompetitionType(v){
   AppState.game.competitionType = v;
   await persistGame(); render();
@@ -4445,6 +4477,15 @@ function renderEditGameModal(){
 
       <h3 style="font-size:16px;">逐局比分</h3>
       ${linescoreEditHTML}
+
+      <h3 style="font-size:16px;margin-top:16px;">對手隊名</h3>
+      <div class="hint" style="margin-bottom:8px;">建立比賽時選錯或填錯對手時可在這裡修正（可從清單選，也可直接輸入）；對手分析、落點紀錄等統計會依新隊名重新歸類。</div>
+      <div class="field" style="margin-bottom:12px;">
+        <input type="text" list="opp-list-edit" value="${esc(g.opponent)}" onchange="setGameOpponent(this.value)">
+        <datalist id="opp-list-edit">
+          ${opponentOptionsFor().map(o=>`<option value="${esc(o)}">`).join("")}
+        </datalist>
+      </div>
 
       <h3 style="font-size:16px;margin-top:16px;">賽季／賽事類別</h3>
       <div class="hint" style="margin-bottom:8px;">建立比賽時填錯球季或賽事類別（聯賽／盃賽／季後賽）時可在這裡修正；只有「聯賽」的比賽會計入球季／生涯數據。</div>
