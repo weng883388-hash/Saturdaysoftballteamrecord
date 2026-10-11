@@ -393,6 +393,12 @@
     .game-body .linescore{font-size:10.5px;}
     .game-body .linescore td.tot{font-size:13px;}
     .game-body .batter-card{margin-top:3px;}
+    .game-body .batter-card .field{margin-bottom:2px;}
+    .game-body .scoreboard .link-reset{font-size:9px;}
+    .game-body .batter-card .field label{font-size:9px;}
+    .game-body .batter-card .field input{padding:2px 4px;font-size:12px;}
+    .game-body .batter-card .confirm-box{padding:4px;margin-top:4px;}
+    .game-body .batter-card .chip{padding:2px 6px;font-size:9px;}
     .game-body .batter-num{width:20px;height:20px;font-size:11px;margin-right:3px;}
     .game-body .batter-name{font-size:11px;}
     .game-body .batter-meta{font-size:8.5px;margin-top:0;}
@@ -467,14 +473,14 @@
      部署到 GitHub Pages（或任何非 Claude 網址）之前，請先照《遷移到
      Supabase＋GitHub Pages 操作指南》建立 Supabase 專案，並把下方兩個值
      換成你自己的 Project URL 與 anon public key。
-     若這兩個值維持空白，網頁會自動改用瀏覽器本機儲存（localStorage）——
-     資料不會同步給其他人，僅供你自己這台裝置離線使用。
+  window.SUPABASE_URL = "https://jxoapjcghyigbeuiwvfu.supabase.co";       // 例如 https://xxxxxxxx.supabase.co
+  window.SUPABASE_ANON_KEY = "sb_publishable_IcLR-Z62kgkXpcId8hs2MQ_AyuUWWJt";  // Supabase 專案 Settings → API → anon public key
      在 Claude 網址（Artifact）上開啟時，即使這兩個值是空的，也會照舊
      使用 Claude 內建的 db（不受影響）。
 ================================================================ -->
 <script>
-  window.SUPABASE_URL = "https://jxoapjcghyigbeuiwvfu.supabase.co";       // 例如 https://xxxxxxxx.supabase.co
-  window.SUPABASE_ANON_KEY = "sb_publishable_IcLR-Z62kgkXpcId8hs2MQ_AyuUWWJt";  // Supabase 專案 Settings → API → anon public key
+  window.SUPABASE_URL = "";       // 例如 https://xxxxxxxx.supabase.co
+  window.SUPABASE_ANON_KEY = "";  // Supabase 專案 Settings → API → anon public key
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
@@ -1023,13 +1029,13 @@ const Store = withTeamRenames((function(){
    adapter above (no Claude account, so no server-side admin/viewer
    distinction). Editing/reopening/deleting an already-final game asks
    for this password once per browser session (kept in memory only,
-   never persisted); this is a same-team deterrent against accidental
+const ADMIN_PASSWORD = "qazwsxedc"; // <-- 部署前務必修改
    edits, NOT real security — anyone who reads the page source can see
    ADMIN_PASSWORD, so don't put anything truly sensitive behind it.
    When still running inside a Claude Artifact, this is skipped
    entirely (Claude's own admin/viewer sharing rules still apply).
 --------------------------------------------------------------------- */
-const ADMIN_PASSWORD = "qazwsxedc"; // <-- 部署前務必修改
+const ADMIN_PASSWORD = "請改成球隊自訂密碼"; // <-- 部署前務必修改
 let adminUnlocked = false;
 function requireAdmin(actionLabel){
   if (!(window.SUPABASE_URL && window.SUPABASE_ANON_KEY)) return true; // Claude Artifact: unaffected
@@ -1080,6 +1086,8 @@ const AppState = {
     showBox:false,
     showEndGame:false,
     showEditGame:false,
+    showPR:false, prTarget:null, // Version 59: 進攻中直接在打者卡上輸入代跑
+    showLineupEdit:false, // Version 58: 開賽後隨時填寫／調整我方名單
     showOppRoster:false, // Version 54: adjust 對方總棒次／名單 mid-game (not just at lineup setup)
     showLeagueGamesModal:false,
     showScheduleModal:false,
@@ -3183,6 +3191,7 @@ function setLineupPos(i,val){
 }
 function addLineupRow(){
   const g = AppState.game;
+  if (g.lineup.length >= 11){ appAlert("壘球最多 11 棒。"); return; }
   g.lineup.push({id:uid(), order:g.lineup.length+1, number:"", name:"", position:""});
   render();
 }
@@ -3280,9 +3289,19 @@ function renderOppRosterModal(){
 
 async function startGame(){
   const g = AppState.game;
-  const filled = g.lineup.filter(r=>r.number);
-  if (filled.length < 1){ appAlert("請至少填入一位打者背號"); return; }
-  g.lineup = g.lineup.filter(r=>r.number).map((r,idx)=>({...r, order:idx+1, name:rosterLookup(r.number)||("#"+r.number)}));
+  // Version 58: 背號可以先空著開賽，之後再補。保留到「最後一個有填背號的
+  // 棒次」為止（中間沒填的棒次保留成空位），最後面沒填的空列才捨棄；
+  // 完全沒填背號時保留全部列。補填方式見 openLineupEdit()。
+  let last = -1;
+  g.lineup.forEach((r,i)=>{ if (r.number) last = i; });
+  const kept = last>=0 ? g.lineup.slice(0, last+1) : g.lineup.slice();
+  // 壘球只有 10 或 11 棒：不足 10 棒的補空位到 10 棒
+  while (kept.length < 10) kept.push({id:uid(), order:kept.length+1, number:"", name:"", position:""});
+  const blanks = kept.filter(r=>!r.number).length;
+  if (blanks){
+    if (!(await appConfirm(`有 ${blanks} 個棒次還沒填背號，確定要先開始比賽嗎？\n開賽後隨時可以按「📝 我方名單」補填背號、守位，先前的打席紀錄會自動記到補填的球員身上。`))) return;
+  }
+  g.lineup = kept.map((r,idx)=>({...r, order:idx+1, name: r.number ? (rosterLookup(r.number)||("#"+r.number)) : ""}));
   // Version 51 新增：再上場規則（見 applySub／startingOccupantOf）要知道「這個
   // 棒次原本的先發是誰」，snapshot 一次先發打線（number/name/order），之後
   // 不會再變動——即使這個棒次被換過好幾輪人，仍然只拿這份原始名單判斷「誰
@@ -3295,6 +3314,248 @@ async function startGame(){
   await persistGame();
   await Store.setActiveGameId(g.id);
   render();
+}
+
+/* ---------- Version 58: 開賽後隨時填寫／調整我方名單 ---------- */
+// 打席紀錄只存背號／姓名的快照（見 confirmPending），所以背號還沒填時
+// 記下的打席，要靠「棒次列的 id」（batterSlotId／scorers[].slotId／
+// pitcherId）事後認得是誰；補填背號後由 backfillAttribution() 一次補回，
+// 個人成績、投手成績才會算到正確的球員身上。
+function slotLabel(r){
+  return r.number ? ("#"+r.number+(r.name?(" "+r.name):"")) : ("第"+r.order+"棒（未填背號）");
+}
+// 這個棒次列是否已經有（我方）打席紀錄——有的話背號不能再直接改，
+// 否則會跟已記下的紀錄對不起來（要換人請用「換人」）。
+function slotHasPlays(g, row){
+  return (g.plays||[]).some(p=> p.side==="us" && !p.type &&
+    (p.batterSlotId===row.id || (!p.batterSlotId && row.number && String(p.batterNumber)===String(row.number))));
+}
+// 把「當時還沒填背號」的紀錄補回正確球員：
+// 1) 我方打席／得分球員：用 batterSlotId／slotId 找回現在這一棒的球員。
+// 2) 投手：當時有人守「投」但背號沒填 → 依 pitcherId 補回；當時完全沒有
+//    投手 → 全部記到「最先被填為投手」的球員（g.firstPitcher）身上；之後
+//    換投的場次不受影響，因為換投之後的打席本來就各自帶著當時的投手。
+function backfillAttribution(g){
+  const byId = {};
+  (g.lineup||[]).forEach(r=>{ byId[r.id]=r; });
+  if (!g.firstPitcher){
+    const cp = currentPitcher(g);
+    if (cp && cp.number) g.firstPitcher = {number:cp.number, name:cp.name};
+  }
+  let changed = false;
+  (g.plays||[]).forEach(p=>{
+    if (p.type==="sub" || p.type==="posswap") return;
+    if (p.side==="us"){
+      const r = p.batterSlotId ? byId[p.batterSlotId] : null;
+      if (r && r.number && !p.batterNumber){ p.batterNumber=r.number; p.batterName=r.name; changed=true; }
+      if (Array.isArray(p.scorers)) p.scorers.forEach(sc=>{
+        const rr = sc.slotId ? byId[sc.slotId] : null;
+        if (rr && rr.number && !sc.number){ sc.number=rr.number; sc.name=rr.name; changed=true; }
+      });
+    } else if (p.side==="opp" && !p.pitcherNumber){
+      const r = p.pitcherId ? byId[p.pitcherId] : null;
+      if (r && r.number){ p.pitcherNumber=r.number; p.pitcherName=r.name; changed=true; }
+      else if (!p.pitcherId && g.firstPitcher){ p.pitcherNumber=g.firstPitcher.number; p.pitcherName=g.firstPitcher.name; changed=true; }
+    }
+  });
+  return changed;
+}
+function openLineupEdit(){ AppState.ui.showLineupEdit = true; render(); }
+function closeLineupEdit(){ AppState.ui.showLineupEdit = false; render(); }
+async function setLiveNumber(i, val){
+  const g = AppState.game, row = g.lineup[i];
+  val = (val||"").trim();
+  if (!row || val === row.number) { render(); return; }
+  if (row.number && slotHasPlays(g,row)){
+    appAlert("這一棒已經有打席紀錄，背號不能直接改。要換球員請用「換人」；打錯請用「✏️ 編輯紀錄」。");
+    render(); return;
+  }
+  if (val){
+    const name = rosterLookup(val);
+    if (!name){ appAlert("名單中找不到背號 "+val+"，請先於「名單」新增球員。"); render(); return; }
+    if (g.lineup.some((r,k)=>k!==i && r.number===val)){ appAlert("背號 "+val+" 已經在打線裡了。"); render(); return; }
+    row.number = val; row.name = name;
+    const bi = g.bench.findIndex(b=>b.number===val);
+    if (bi>=0) g.bench.splice(bi,1);
+  } else {
+    row.number = ""; row.name = "";
+  }
+  // 補填的是先發球員：同步到先發快照，再上場規則才認得
+  if (!Array.isArray(g.startingLineup)) g.startingLineup = [];
+  while (g.startingLineup.length < i) g.startingLineup.push({number:"", name:"", order:g.startingLineup.length+1});
+  g.startingLineup[i] = {number:row.number, name:row.name, order:row.order};
+  backfillAttribution(g);
+  await persistGame();
+  render();
+}
+async function setLivePos(i, pos){
+  const g = AppState.game, row = g.lineup[i];
+  if (!row) return;
+  if (row.position === pos) pos = "";   // 再點一次取消
+  if (pos){
+    const other = g.lineup.find(r=>r.id!==row.id && r.position===pos);
+    if (other) other.position = row.position || "";   // 被占用 → 兩人互換
+  }
+  row.position = pos;
+  backfillAttribution(g);
+  await persistGame();
+  render();
+}
+async function setLineupSlots(n){
+  const g = AppState.game, cur = g.lineup.length;
+  if (n === cur) return;
+  if (n < cur){
+    const dropped = g.lineup.slice(n);
+    const used = dropped.some(r=>r.number || slotHasPlays(g,r));
+    if (used && !(await appConfirm(`縮減為 ${n} 棒會移除第 ${n+1}～${cur} 棒（含已填的球員），確定嗎？`))) return;
+    g.lineup = g.lineup.slice(0,n);
+    if (g.startingLineup) g.startingLineup = g.startingLineup.slice(0,n);
+  } else {
+    while (g.lineup.length < n) g.lineup.push({id:uid(), order:g.lineup.length+1, number:"", name:"", position:""});
+  }
+  g.battingIdx = (g.battingIdx||0) % Math.max(1,g.lineup.length);
+  await persistGame();
+  render();
+}
+async function addLiveBench(){
+  const g = AppState.game;
+  const el = document.getElementById("live-bench-num");
+  const num = el ? el.value.trim() : "";
+  if (!num) return;
+  const name = rosterLookup(num);
+  if (!name){ appAlert("名單中找不到背號 "+num+"，請先於「名單」新增球員。"); return; }
+  if (g.lineup.some(r=>r.number===num) || g.bench.some(b=>b.number===num)){ appAlert("背號 "+num+" 已在打線或替補名單裡了。"); return; }
+  g.bench.push({number:num, name});
+  await persistGame();
+  render();
+}
+async function removeLiveBench(i){
+  AppState.game.bench.splice(i,1);
+  await persistGame();
+  render();
+}
+// ---------- Version 59: 進攻中直接在打者卡上輸入背號／代打／代跑 ----------
+// 沒填背號的棒次，輪到打席時直接在打者卡的輸入框填背號即可（等同補填）；
+// 已經有背號的打者，直接把輸入框改成別的背號就是代打。不用再開換人視窗、
+// 不用先把人加進替補名單（名單裡有的背號都可以直接輸入）。
+function playedAndLeft(g, num){
+  if ((g.startingLineup||[]).some(r=>r.number===num)) return true;
+  return (g.plays||[]).some(p=> p.type==="sub" ? (p.newNumber===num || p.oldNumber===num) : (p.side==="us" && p.batterNumber===num));
+}
+async function applyInlineSub(i, val, type){
+  const g = AppState.game, target = g.lineup[i];
+  val = (val||"").trim();
+  if (!target || !val || val===target.number){ render(); return; }
+  if (!target.number){ return setLiveNumber(i, val); }
+  const name = rosterLookup(val);
+  if (!name){ appAlert("名單中找不到背號 "+val+"，請先於「名單」新增球員。"); render(); return; }
+  if (g.lineup.some(r=>r.number===val)){ appAlert("#"+val+" 已經在場上打線裡了。"); render(); return; }
+  if (type==="PR" && !prEligibleSlotIdx(g).has(i)){ appAlert("代跑只能換目前打者前 5 棒。"); render(); return; }
+  const reentry = reentryCandidateFor(g, i);
+  const isReentry = !!(reentry && reentry.number===val);
+  if (!isReentry && playedAndLeft(g, val)){
+    appAlert("#"+val+" 已經出賽並被換下場，只有原本的先發球員可以回到原本那一棒再上場一次。");
+    render(); return;
+  }
+  g.plays.push({id:uid(), type:"sub", subType:type,
+    half:g.half, inning:g.inning,
+    oldNumber:target.number, oldName:target.name,
+    newNumber:val, newName:name, reentry:isReentry, ts:Date.now()});
+  const bi = g.bench.findIndex(b=>b.number===val);
+  if (bi>=0) g.bench.splice(bi,1);
+  target.number = val; target.name = name;
+  AppState.ui.showPR = false; AppState.ui.prTarget = null;
+  backfillAttribution(g);
+  await persistGame();
+  render();
+}
+async function onBatterNumberInput(i, val){
+  const g = AppState.game, row = g.lineup[i];
+  val = (val||"").trim();
+  if (!row || val===row.number || (!val && row.number)){ render(); return; }
+  if (!row.number || !val) return setLiveNumber(i, val);
+  // 這一棒還沒打過就改背號：可能是打錯要更正，也可能是代打——問一次
+  if (!slotHasPlays(g,row)){
+    if (!(await appConfirm(`第${row.order}棒 #${row.number} 換成 #${val}，是「代打」嗎？\n確定＝記一筆代打；取消＝不換（打錯要更正請到「📝 我方名單」）。`))){ render(); return; }
+  }
+  return applyInlineSub(i, val, "PH");
+}
+function togglePR(){
+  const g = AppState.game;
+  AppState.ui.showPR = !AppState.ui.showPR;
+  if (AppState.ui.showPR){
+    const el = [...prEligibleSlotIdx(g)].filter(k=>g.lineup[k].number);
+    const n = g.lineup.length;
+    el.sort((a,b)=> ((g.battingIdx-a+n)%n) - ((g.battingIdx-b+n)%n));
+    AppState.ui.prTarget = el.length ? el[0] : null;
+  }
+  render();
+}
+function setPRTarget(i){ AppState.ui.prTarget = i; render(); }
+function submitPR(){
+  const el = document.getElementById("pr-num");
+  const i = AppState.ui.prTarget;
+  if (i==null){ appAlert("目前打者前 5 棒沒有可以代跑的球員。"); return; }
+  if (!el || !el.value.trim()){ appAlert("請輸入代跑球員背號"); return; }
+  applyInlineSub(i, el.value, "PR");
+}
+function prInlineHTML(g){
+  const n = g.lineup.length;
+  const slots = [...prEligibleSlotIdx(g)].filter(k=>g.lineup[k].number)
+    .sort((a,b)=> ((g.battingIdx-a+n)%n) - ((g.battingIdx-b+n)%n));
+  if (!slots.length) return `<div class="hint" style="margin:6px 0 0;">目前打者前 5 棒沒有可以代跑的球員。</div>`;
+  return `<div class="confirm-box" style="text-align:left;">
+    <div class="k" style="font-size:13px;color:var(--ink-dim);margin-bottom:6px;">誰要被代跑？（目前打者前 5 棒）</div>
+    <div class="chip-picker">${slots.map(k=>{const r=g.lineup[k];return `<span class="chip ${AppState.ui.prTarget===k?'sel':''}" onclick="setPRTarget(${k})">第${r.order}棒 #${esc(r.number)} ${esc(r.name)}</span>`;}).join("")}</div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input id="pr-num" type="text" inputmode="numeric" maxlength="3" placeholder="代跑球員背號" style="flex:1;min-width:0;font-size:16px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);" onkeydown="if(event.key==='Enter'){submitPR();}">
+      <button class="btn primary" onclick="submitPR()">確認代跑</button>
+    </div>
+  </div>`;
+}
+function renderLineupEditModal(){
+  const g = AppState.game;
+  const n = g.lineup.length;
+  const rows = g.lineup.map((row,i)=>{
+    const locked = !!(row.number && slotHasPlays(g,row));
+    const holder = {};
+    g.lineup.forEach(r=>{ if (r.position) holder[r.position]=r; });
+    const cur = g.battingIdx % n;
+    return `<div class="lineup-row-group">
+      <div class="lineup-row">
+        <div class="order-num tabular">${row.order}</div>
+        <input class="num-input" type="text" inputmode="numeric" maxlength="3" value="${esc(row.number)}"
+          placeholder="背號" ${locked?'readonly style="opacity:.6;"':''} onchange="setLiveNumber(${i},this.value)">
+        <div class="lb-name ${row.name?'':'empty'}">${esc(row.name||'—')}</div>
+        <span class="roster-hint" style="flex:1;text-align:right;">${i===cur?'▶ 打擊中　':''}${row.position?('守位：'+esc(row.position)):'尚未選守位'}</span>
+      </div>
+      <div class="chip-picker lineup-pos-chips">
+        ${POSITIONS.map(p=>`<span class="chip ${row.position===p?'sel':''}" style="${holder[p]&&holder[p].id!==row.id?'opacity:.55;':''}" onclick="setLivePos(${i},'${p}')">${p}</span>`).join("")}
+      </div>
+    </div>`;
+  }).join("");
+  const benchChips = g.bench.map((b,i)=>`<span class="bench-chip">#${esc(b.number)} ${esc(b.name)}<button onclick="removeLiveBench(${i})">×</button></span>`).join("") || `<span class="roster-hint">尚未加入替補球員</span>`;
+  return `<div class="modal-back" onclick="if(event.target===this){closeLineupEdit();}">
+    <div class="modal">
+      <button class="close-x" onclick="closeLineupEdit();">×</button>
+      <h3>我方名單（背號／守位／棒次）</h3>
+      <div class="hint" style="margin-top:-4px;">背號還沒填的棒次可以先空著記錄，補填後先前的打席會自動算給該球員；投手還沒指定時，投手成績會全部記到「最先被選為投手」的球員身上（之後換投只影響換投之後）。點已被別人用掉的守位，會跟那一棒互換。已經有打席紀錄的棒次不能直接改背號（換球員請用「換人」）。</div>
+      <div class="field" style="max-width:260px;">
+        <label>我方打幾棒（10 或 11 棒）</label>
+        <div class="seg">
+          ${[10,11].map(k=>`<button class="${n===k?'active':''}" onclick="setLineupSlots(${k})">${k}棒</button>`).join("")}
+        </div>
+      </div>
+      ${rows}
+      <h3 style="margin-top:14px;">替補名單</h3>
+      <div style="display:flex;gap:8px;">
+        <input type="text" inputmode="numeric" id="live-bench-num" placeholder="背號" style="width:90px;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);">
+        <button class="btn" onclick="addLiveBench()">加入</button>
+      </div>
+      <div style="margin-top:10px;">${benchChips}</div>
+      <button class="btn primary block" style="margin-top:14px;" onclick="closeLineupEdit();">完成</button>
+    </div>
+  </div>`;
 }
 
 /* ---------- GAME (main scoring screen) ---------- */
@@ -3387,8 +3648,17 @@ function renderGame(){
   let batterCard = "";
   if (weAreUp){
     const b = g.lineup[g.battingIdx % g.lineup.length];
-    batterCard = `<div class="batter-card"><span class="batter-num">#${esc(b.number)}</span><span class="batter-name">${esc(b.name)}</span>
-      <div class="batter-meta">第${b.order}棒 · ${b.position||"—"}</div></div>`;
+    const bi = g.battingIdx % g.lineup.length;
+    batterCard = `<div class="batter-card">
+      <div class="field" style="max-width:240px;margin:0 auto 4px;">
+        <label>第${b.order}棒背號${b.number?'（直接改＝代打）':'（還沒填，直接輸入）'}</label>
+        <input type="text" inputmode="numeric" maxlength="3" value="${esc(b.number)}" placeholder="未填" style="text-align:center;font-weight:700;"
+          onchange="onBatterNumberInput(${bi},this.value)">
+      </div>
+      <span class="batter-name">${esc(b.name||'')}</span>
+      <div class="batter-meta">${b.position||"—"}　<a class="link-reset" onclick="togglePR()">🏃 代跑</a></div>
+      ${AppState.ui.showPR ? prInlineHTML(g) : ""}
+    </div>`;
   } else {
     batterCard = `<div class="batter-card"><span class="batter-num def">👤</span><span class="batter-name">${g.oppNumber?('#'+esc(g.oppNumber)+' '+esc(g.oppNote||'')):'尚未輸入背號'}</span>
       <div class="batter-meta">對方打者</div></div>`;
@@ -3473,9 +3743,12 @@ function renderGame(){
           <div class="linescore-wrap">${line}</div>
           ${batterCard}
           ${!weAreUp ? `<div style="text-align:center;margin-top:6px;">
-              <span class="roster-hint">目前投手：${pitcher?('#'+esc(pitcher.number)+' '+esc(pitcher.name)):'未指定'} </span>
-              <a class="link-reset" onclick="openSubModal()">設定</a>
+              <span class="roster-hint">目前投手：${pitcher?(pitcher.number?('#'+esc(pitcher.number)+' '+esc(pitcher.name)):'第'+pitcher.order+'棒（未填背號）'):'未指定'} </span>
+              <a class="link-reset" onclick="openLineupEdit()">設定</a>
             </div>` : ``}
+          <div style="text-align:center;margin:6px 0 8px;">
+            <a class="link-reset" onclick="openLineupEdit()">📝 我方名單（背號／守位／棒次）${(()=>{const b=g.lineup.filter(r=>!r.number).length;return b?('・<b style="color:var(--danger);">'+b+' 棒未填背號</b>'):'';})()}</a>
+          </div>
         </div>
         ${historyHTML}
       </div>
@@ -3498,6 +3771,7 @@ function renderGame(){
     ${AppState.ui.showEndGame ? renderEndGameModal() : ""}
     ${AppState.ui.showEditGame ? renderEditGameModal() : ""}
     ${AppState.ui.showOppRoster ? renderOppRosterModal() : ""}
+    ${AppState.ui.showLineupEdit ? renderLineupEditModal() : ""}
   `;
 }
 
@@ -3607,7 +3881,7 @@ function renderConfirmBoxMain(){
     <div style="margin-top:8px;">
       <div class="k" style="font-size:13px;color:var(--ink-dim);margin-bottom:6px;">失誤球員</div>
       <div class="chip-picker">
-        ${g.lineup.filter(r=>r.position).map(r=>`<span class="chip ${p.pendingErrorBy===r.id?'sel':''}" onclick="setErrorBy('${r.id}')">${r.position} #${esc(r.number)} ${esc(r.name)}</span>`).join("") || '<span class="roster-hint">尚未設定守位</span>'}
+        ${g.lineup.filter(r=>r.position).map(r=>`<span class="chip ${p.pendingErrorBy===r.id?'sel':''}" onclick="setErrorBy('${r.id}')">${r.position} ${esc(slotLabel(r))}</span>`).join("") || '<span class="roster-hint">尚未設定守位</span>'}
       </div>
     </div>` : "";
 
@@ -3615,7 +3889,7 @@ function renderConfirmBoxMain(){
     <div style="margin-top:8px;">
       <div class="k" style="font-size:13px;color:var(--ink-dim);margin-bottom:6px;">得分球員（可複選，本次得分 ${p.pendingScorers.length} 分）</div>
       <div class="chip-picker">
-        ${scorerCandidates(g).map(r=>`<span class="chip ${p.pendingScorers.includes(r.id)?'sel':''}" onclick="toggleScorer('${r.id}')">#${esc(r.number)} ${esc(r.name)}（第${r.order}棒）</span>`).join("")}
+        ${scorerCandidates(g).map(r=>`<span class="chip ${p.pendingScorers.includes(r.id)?'sel':''}" onclick="toggleScorer('${r.id}')">${r.number?('#'+esc(r.number)+' '+esc(r.name)+'（第'+r.order+'棒）'):esc(slotLabel(r))}</span>`).join("")}
       </div>
     </div>` : "";
 
@@ -3719,10 +3993,11 @@ async function confirmPending(){
   const side = p.pendingResult.side;
   const code = p.pendingResult.code;
 
-  let batterNumber="", batterName="";
+  let batterNumber="", batterName="", batterSlotId=null;
   if (side==="us"){
     const batterSlot = g.lineup[g.battingIdx % g.lineup.length];
     batterNumber = batterSlot.number; batterName = batterSlot.name;
+    batterSlotId = batterSlot.id;
   } else {
     batterNumber = g.oppNumber;
     batterName = g.oppNote || "";
@@ -3730,7 +4005,7 @@ async function confirmPending(){
 
   const scorers = side==="us" ? p.pendingScorers.map(id=>{
     const sl = g.lineup.find(l=>l.id===id);
-    return sl ? {number:sl.number, name:sl.name} : null;
+    return sl ? {number:sl.number, name:sl.name, slotId:sl.id} : null;
   }).filter(Boolean) : [];
   const runsThisPlay = side==="us" ? scorers.length : p.pendingRuns;
 
@@ -3746,11 +4021,12 @@ async function confirmPending(){
   // a slot's occupant can change via substitution, and stats must stay
   // attached to whoever actually pitched this particular play.
   const pitcherNow = side==="opp" ? currentPitcher(g) : null;
+  if (pitcherNow && pitcherNow.number && !g.firstPitcher) g.firstPitcher = {number:pitcherNow.number, name:pitcherNow.name};
 
   // log the play
   g.plays.push({
     id: uid(), half, inning: g.inning, side, code,
-    batterNumber, batterName,
+    batterNumber, batterName, batterSlotId,
     rbi: side==="us" ? p.pendingRbi : 0,
     runs: runsThisPlay,
     scorers: side==="us" ? scorers : undefined,
@@ -3772,12 +4048,14 @@ async function confirmPending(){
   }
 
   AppState.ui.pendingResult=null;
+  AppState.ui.showPR=false;
   await persistGame();
   render();
 }
 
 async function endHalfInning(){
   const g = AppState.game;
+  AppState.ui.showPR=false;
   g.outs = 0;
   if (g.half==="top"){
     g.half = "bottom";
@@ -3905,15 +4183,15 @@ function renderUpSubModal(){
     ...g.bench.map(b=>({number:b.number, name:b.name, re:false}))
   ];
   const targetPicker = type==="PH"
-    ? (target ? `<div class="hint" style="margin-bottom:6px;">替換目前打者：<b>第${target.order}棒 #${esc(target.number)} ${esc(target.name)}</b></div>` : "")
+    ? (target ? `<div class="hint" style="margin-bottom:6px;">替換目前打者：<b>第${target.order}棒 ${target.number?('#'+esc(target.number)+' '+esc(target.name)):'（未填背號，請先到「我方名單」填寫）'}</b></div>` : "")
     : `<div class="field"><label>誰要被代跑？（目前打者前 5 棒）</label>
-        <div class="chip-picker">${prSlots.map(i=>{const r=g.lineup[i];return `<span class="chip ${ti===i?'sel':''}" onclick="setSubTarget(${i})">第${r.order}棒 #${esc(r.number)} ${esc(r.name)}</span>`;}).join("")}</div>
+        <div class="chip-picker">${prSlots.map(i=>{const r=g.lineup[i];return `<span class="chip ${ti===i?'sel':''}" onclick="setSubTarget(${i})">第${r.order}棒 ${r.number?('#'+esc(r.number)+' '+esc(r.name)):'（未填）'}</span>`;}).join("")}</div>
       </div>`;
   const benchPicker = benchList.length
     ? `<div class="field"><label>換上哪位替補？</label>
         <div class="chip-picker">${benchList.map(b=>`<span class="chip ${pick===b.number?'sel':''}" onclick="setSubBench('${esc(b.number)}')">${b.re?'🔁 再上場：':''}#${esc(b.number)} ${esc(b.name)}</span>`).join("")}</div>
       </div>`
-    : `<div class="hint">目前沒有替補球員可換（替補名單在「編排打線」時設定）。</div>`;
+    : `<div class="hint">目前沒有替補球員可換（替補名單可在「📝 我方名單」新增）。</div>`;
   return `<div class="modal-back" onclick="if(event.target===this){AppState.ui.showSub=false;AppState.ui.subTargetIdx=null;render();}">
     <div class="modal">
       <button class="close-x" onclick="AppState.ui.showSub=false;AppState.ui.subTargetIdx=null;render();">×</button>
@@ -3944,8 +4222,8 @@ function renderSubModal(){
   const rows = g.lineup.map((r,i)=>`
     <div class="lineup-row">
       <div class="order-num tabular">${r.order}</div>
-      <div class="name-out">#${esc(r.number)} ${esc(r.name)} <span class="roster-hint">(${r.position||'—'})</span></div>
-      <button class="btn" style="padding:6px 10px;font-size:12.5px;" onclick="openSubFor(${i})">替換</button>
+      <div class="name-out">${esc(slotLabel(r))} <span class="roster-hint">(${r.position||'—'})</span></div>
+      ${r.number ? `<button class="btn" style="padding:6px 10px;font-size:12.5px;" onclick="openSubFor(${i})">替換</button>` : `<span class="roster-hint">請先填背號</span>`}
     </div>`).join("");
 
   let subForm = "";
@@ -3957,7 +4235,7 @@ function renderSubModal(){
     const reentry = reentryCandidateFor(g, i);
     const reentryOpt = reentry ? `<option value="${esc(reentry.number)}">🔁 再上場：#${esc(reentry.number)} ${esc(reentry.name)}（原本這一棒的先發，限一次）</option>` : "";
     const benchOpts = reentryOpt + g.bench.map(b=>`<option value="${esc(b.number)}">#${esc(b.number)} ${esc(b.name)}</option>`).join("");
-    const fieldSwapOpts = g.lineup.map((r,idx)=> idx===i ? "" : `<option value="${idx}">#${esc(r.number)} ${esc(r.name)}（${r.position||'—'}）</option>`).join("");
+    const fieldSwapOpts = g.lineup.map((r,idx)=> (idx===i || !r.number) ? "" : `<option value="${idx}">#${esc(r.number)} ${esc(r.name)}（${r.position||'—'}）</option>`).join("");
 
     const typeToggle = weAreUp ? `
         <div class="field"><label>替補類型</label>
@@ -4054,6 +4332,7 @@ async function applySub(){
   const target = g.lineup[i];
   const weAreUp = isOurHalf(g);
   const isDef = !weAreUp || AppState.ui.subType==='DEF';
+  if (!target || !target.number){ appAlert("這一棒還沒填背號，請先到「📝 我方名單」填寫背號（這不算換人）。"); return; }
 
   if (isDef && AppState.ui.defMode==='swap'){
     const swapEl = document.getElementById("sub-field-swap");
@@ -4113,6 +4392,7 @@ async function applySub(){
   AppState.ui.subTargetIdx=null;
   AppState.ui.subBenchPick="";
   if (weAreUp) AppState.ui.showSub=false; // Version 56: 進攻中換完直接關閉視窗
+  backfillAttribution(g);
   await persistGame();
   render();
 }
@@ -4127,7 +4407,7 @@ function computeBoxScore(game){
   game.plays.forEach(p=>{
     if (p.type==="sub" || p.type==="posswap") return;
     if (p.side==="us"){
-      const r = ensure(p.batterNumber||"?", p.batterName||"?");
+      const r = ensure(p.batterNumber||"?", p.batterName||(p.batterNumber?"?":"未填背號"));
       r.PA++;
       if (p.code!=="BB" && p.code!=="SF") r.AB++;
       if (["1B","2B","3B","HR"].includes(p.code)){ r.H++; r[p.code]++; }
@@ -4137,12 +4417,12 @@ function computeBoxScore(game){
       if (p.code==="DP") r.DP++;
       r.RBI += p.rbi||0;
       if (Array.isArray(p.scorers)){
-        p.scorers.forEach(sc=>{ ensure(sc.number, sc.name).R++; });
+        p.scorers.forEach(sc=>{ ensure(sc.number||"?", sc.name||"未填背號").R++; });
       }
     }
     if (p.errorBy){
       const slot = game.lineup.find(l=>l.id===p.errorBy);
-      if (slot){ const r = ensure(slot.number, slot.name); r.E++; }
+      if (slot){ const r = ensure(slot.number||"?", slot.name||"未填背號"); r.E++; }
     }
   });
   // Admin manual overrides — win over whatever the play log computed.
@@ -4724,6 +5004,15 @@ async function confirmEndGame(){
   const g = AppState.game;
   const wasFinal = g.status==="final";
   if (wasFinal && !requireAdmin("修改已完賽的勝投／MVP")) return;
+  if (!wasFinal){
+    backfillAttribution(g);
+    const noBatter = g.plays.filter(p=>p.side==="us" && !p.type && !p.batterNumber).length;
+    const noPitcher = g.plays.filter(p=>p.side==="opp" && !p.type && !p.pitcherNumber).length;
+    if (noBatter || noPitcher){
+      const msg = [noBatter?`有 ${noBatter} 筆我方打席還沒有背號，不會計入任何球員的個人成績`:"", noPitcher?`有 ${noPitcher} 筆對方打席還沒有投手，不會計入任何投手的成績`:""].filter(Boolean).join("；");
+      if (!(await appConfirm(msg+"。\n要先回去「📝 我方名單」補填嗎？（按「取消」回去補填，按「確定」直接結束比賽）"))) return;
+    }
+  }
   g.status = "final";
   g.finalWinPitcher = AppState.ui.endWinPitcher || null;
   g.finalMvp = AppState.ui.endMvp || null;
