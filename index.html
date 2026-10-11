@@ -698,12 +698,12 @@ function createSupabaseDb(url, anonKey){
    Storage adapter: Supabase (if configured) → Claude db capability
    (if running inside a Claude Artifact) → else localStorage.
 --------------------------------------------------------------------- */
-// Version 56: 球隊正式名稱更正（逢甲都市狼→逢甲都市汁狼、大里農會→大里區農會）。
+// Version 56: 球隊正式名稱更正（逢甲都市狼→逢甲都市汁狼、大里農會→大里區農會）；Version 57 再補上舊資料裡的簡寫「逢甲都汁」。
 // 資料庫裡既有的比賽／賽程／其他球隊比分仍存著舊名稱，如果不處理，對手
 // 分析、歷史落點分析（用「隊名||背號」當 key）、賽程狀態比對都會把新舊名稱
 // 當成兩支不同的球隊而對不起來。所以在 Store 讀出資料的這一層統一把舊名稱
 // 換成新名稱（只換整串完全相同的隊名），之後任何一次存檔就會自然寫回新名稱。
-const TEAM_RENAMES = {"逢甲都市狼":"逢甲都市汁狼", "大里農會":"大里區農會"};
+const TEAM_RENAMES = {"逢甲都市狼":"逢甲都市汁狼", "逢甲都汁":"逢甲都市汁狼", "大里農會":"大里區農會"};
 function renameTeam(n){ return (typeof n==="string" && TEAM_RENAMES[n]) ? TEAM_RENAMES[n] : n; }
 function withTeamRenames(store){
   const fixGame = g => { if (g && g.opponent) g.opponent = renameTeam(g.opponent); return g; };
