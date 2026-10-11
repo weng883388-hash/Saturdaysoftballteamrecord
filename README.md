@@ -96,6 +96,10 @@
 - **代跑**：打者卡上的「🏃 代跑」展開前 5 棒（沒背號的不列），點選被代跑的人、輸入代跑背號、按「確認代跑」或 Enter。
 - **10／11 棒**：我方棒次只提供 10 或 11 棒。「🔁 換人」視窗仍保留。
 
+### 打者卡精簡版面與編輯紀錄調整（Version 60）
+- **打者卡一列顯示**：我方進攻時，「第N棒＋背號輸入框（兩三碼寬）＋較大的姓名（＋守位）」同一列，下一列放「🏃 代跑」「📝 我方名單」，打擊結果格子不用往下滑就看得到。守備時「目前投手」與「我方名單」也併成一列。
+- **編輯紀錄**：視窗內的說明文字全部拿掉；「對手隊名」欄位新增「從聯賽 8 隊選擇」下拉選單，原本的輸入框保留（可輸入其他隊名）。
+
 ## 開發紀錄
 
 \
@@ -373,6 +377,12 @@ Live artifact: https://claude.ai/code/artifact/733c6672-f0b4-4d85-8e8b-48e776394
   4. **代跑直接輸入**：打者卡「🏃 代跑」展開 `prInlineHTML()`（前 5 棒由近到遠，沒背號的不列）＋背號輸入欄＋「確認代跑」（Enter 同效）。`showPR`／`prTarget` 於記錄打席與換半局時重置。「🔁 換人」視窗保留不動。
   5. **測試**：新增 `test_v59.py`／`test_v59b.py`（空位輸入補填、背號欄代打、先發被換下不可進別棒、代跑前 5 棒（空位不列）、重複背號提示、未打過時的代打確認）；`test_v58.py` 與 v51／v53／v54 測試改用 10 棒打線；其餘既有測試全數通過；`node --check` 無誤。
 
+- **Version 60**：使用者要求（1）我方打者卡的背號格縮小到兩三碼寬、姓名放大放在背號右邊、代跑／我方名單併在同一列，讓打擊結果格子不用往下滑；（2）編輯紀錄的說明文字全部拿掉，對手隊名欄加「聯賽 8 隊」下拉選單；（3）使用者回報「之前的比賽紀錄都不見了」。
+  1. **打者卡版面**：`renderGame()` 的我方打者卡改為 `.bc-row`（第N棒標籤＋`.bc-num` 背號輸入框 64px＋`.bc-name` 26px 姓名＋`.bc-pos` 守位）加 `.bc-links`（🏃 代跑、📝 我方名單＋未填棒數）；守備時的「目前投手」與「我方名單」併成同一列；橫向版面同步縮小。移除 Version 59 的獨立背號欄標籤與獨立連結列。
+  2. **編輯紀錄**：`renderEditGameModal()` 刪除所有 `.hint` 說明文字（共 5 段）；對手隊名欄新增 `<select>`（選項來自 `OPPONENT_TEAMS`，選了就呼叫 `setGameOpponent()`），保留原本的輸入框＋datalist。
+  3. **「紀錄不見」的原因與修正（重要）**：Version 59 打包 standalone 時，用「行號」（第 476、477、1032 行）把 Supabase 網址／金鑰／管理密碼寫回檔案；但 Version 59 在檔案前段的 CSS 多了幾行，行號位移，憑證被寫到錯的地方，真正的 `window.SUPABASE_URL`／`SUPABASE_ANON_KEY` 仍是空字串，網頁因此沒連到資料庫、顯示空白紀錄（資料庫裡的資料其實完好）。**修正**：改用 `/tmp/apply_creds.py`——以「整串文字取代」（`window.SUPABASE_URL = "";`、`window.SUPABASE_ANON_KEY = "";`、`const ADMIN_PASSWORD = "請改成球隊自訂密碼";` 各須恰好出現一次）寫入憑證，再用 `<script>` 區塊內容驗證三個值確實存在，不再依賴行號。**之後每次打包都必須用這個腳本，並在交付前驗證 `index.html` 的 script 區塊含有 `jxoapjcghyigbeuiwvfu`、`sb_publishable_` 與管理密碼。**
+  4. **測試**：`test_v58.py`／`test_v59b.py` 配合新版面調整；其餘既有測試全數通過（standalone 測試在憑證寫錯位置時會因語法／渲染失敗而被抓到）；`node --check` 對 standalone 的每個 `<script>` 區塊檢查無誤。
+
 ### 測試方式慣例
 - 用 Playwright（`/opt/pw-browsers/chromium`，390×844 viewport）開本機檔案 `file:///home/claude/softball-scorer.html` 測試（`Store` 在沒有 `window.claude` db 時會自動 fallback 到 localStorage，方便本機測試不需連正式資料庫；`team/season_2025` 等文件對應 localStorage 的 `sb_season_2025_v1` 等 key）。
 - 用 `node --check` 對抽出的 `<script>` 內容做語法檢查。
@@ -387,3 +397,4 @@ Live artifact: https://claude.ai/code/artifact/733c6672-f0b4-4d85-8e8b-48e776394
 - **使用者回報「生涯統計沒有算到某個封存球季」時，優先檢查該統計是不是只從 `games`／`games_final` 逐場累計，而封存球季幾乎沒有對應的比賽文件**：這個 App 有好幾類統計（球隊戰績、投手成績、出席率⋯）預設都是逐場從 App 自己記錄的比賽文件累計，但「2025」「2025-2026聯賽」這兩個封存球季當時幾乎都不是用這個 App 逐場記錄的，只匯入了球季/球隊層級的彙總數據（`team/season_2025`、`team/season_2025_2026`、`team/teamrecord_*`）。凡是新增一項「逐場累計」性質的統計，都要記得額外檢查這兩個封存球季是否需要對應的匯入欄位／`importedXxx()` 疊加邏輯（比照 Version 19 的 `SEASON_GAME_COUNTS`、Version 20/22 的 `W`/`G`、Version 23 的 `GP`），不能只靠 App 本身的比賽文件，否則封存球季（以及因此連帶的「生涯」）該項數據會顯示成 0 或嚴重低估。
 - **使用者回報「編輯／儲存好像沒生效」時，不要跳過「權限被擋」以外的可能性，尤其是使用者已經明確排除帳號/權限原因時**：這個 App 過去確實有 `games_final` 需要 admin 才能寫入的真實設計（見上方 `db` capability 存取規則），容易讓人先入為主覺得任何「編輯已完賽紀錄失敗」都是這個規則在擋。但 Version 26/27 的教訓是：使用者的說法（「我自己就是要編輯的人」「我就是用現在這個帳號」「就真的改了資料庫沒跟著改」）是很直接的訊號，一旦使用者明確排除某個假設，就不該只是換句話術重複同一個解釋，而要認真找別的根因，也不能停在「UI 層有一個講得通的解釋」就滿足——`render()` 整頁重建造成的捲動歸零、單一欄位編輯不必要的重繪，這兩個都是真實存在、值得修的問題，但都不是使用者真正卡住的根因，只是恰好都能解釋「感覺畫面沒反應」的一部分症狀。**真正的根因要靠實際比對資料庫內容前後差異才挖出來**：`read_db` 逐欄位比對使用者編輯前後的整份文件，發現「存檔動作發生了，但除了 `updatedAt` 以外什麼都沒變」，這種「寫入成功、內容卻是舊的」的訊號，比任何 UI 層的推測都更接近真相——這時應該懷疑「送去存的那個物件，資料本身可能沒有真的被改到」，而不是繼續在 UI／時機／捲動這類表面症狀上打轉。最後靠著在畫面上加一行直接讀取 `document.getElementById` 寫入、完全不經過 `render()` 的暫時診斷文字（請使用者截圖回報實際收到的參數與賦值後讀回的值），才直接看到「賦值那行執行了、但讀回來還是舊值」這個不合常理的現象，逼著去查 `db` capability 的官方型別定義，才發現「snapshot 與其 `data()` 是凍結物件」這個明確寫在文件裡、但先前一直沒注意到的規則——`Store` 只做了 `{id, ...snap.data()}` 這種淺層展開，巢狀的 `plays`／`lineup`／`statOverrides` 全部還是凍結參照，非嚴格模式下賦值靜默失效。**教訓**：(a) 遇到「畫面沒反應/沒更新」類回報，資料庫前後 diff 永遠該是第一步，比任何 UI 層假設都更快排除大量錯誤方向；(b) 當一個修正「講得通、也真的修了某個問題」卻沒有解決使用者實際回報的症狀時，不代表方向錯了要整個推翻，但一定要老實承認「這還沒解決」並繼續往下查，不能因為已經有一個合理故事就停手；(c) 任何直接對「從 `db` capability 讀回來的物件」做屬性賦值的地方，都要先確認這份資料有沒有經過真正的深層複製（這個 App 統一用既有的 `clone()`）——包括這次修的 `getRoster`／`getSeasonStats`／`getTeamRecord`／`listGames`／`loadGame`，以後新增任何從 `db` 讀資料的函式都要照做，不能只淺層展開最外層就直接回傳；(d) 這個 bug 完全沒有被既有的 Playwright 測試抓到，因為所有測試都在沒有 `window.claude` 的環境下跑、`Store` 全部 fallback 到 `localStorage`（`JSON.parse()` 天生就是全新可變物件，不會踩到凍結問題）——`test_r27_frozen_snapshot.py` 特別用 `page.add_init_script` 模擬一個會真正 `Object.freeze` 回傳資料的假 `db` capability，是目前唯一會真正跑到「透過 db capability 讀寫」這條路徑的測試，之後任何懷疑跟 `db` capability 讀寫行為有關的 bug，都應該比照這個做法寫測試，而不能只靠 localStorage fallback 路徑的測試就宣稱「測試都過了」。
 - **這個 App 現在有兩種部署形態（Version 41 起）：Claude Artifact（原本的 `softball-scorer.html` 片段，靠 `window.claude.use("db")`）與獨立 standalone HTML（`softball-scorer-standalone.html`，靠 Supabase，供 GitHub Pages 等免登入環境用）——兩者共用同一套 `Store`／功能程式碼，差異只在 `Store` 初始化時選到哪一層 db 實作**：之後任何新功能／修正，都只需要改 `softball-scorer.html` 這一份原始碼一次；只要沒有動到 `Store` 的 db 初始化那一段判斷邏輯本身，兩種部署形態會自動維持行為一致，不需要分別測試兩份檔案的業務邏輯——但每次改完仍建議重新跑一次 standalone 版本的開機煙霧測試（確認包裝腳本沒有壞、`<div id="app">` 切分點沒有跟著程式碼變動而位移），並在真的要交付新的 standalone 檔案給使用者部署前，記得把使用者自己填入的 Supabase URL／anon key／自訂管理密碼這三個值套用進去，不要漏帶或用空字串蓋掉。
+- standalone 打包流程：`wrap_standalone.py` 產生 standalone → `apply_creds.py`（整串文字取代＋驗證，**不可用行號**）→ 對 standalone 每個 `<script>` 區塊 `node --check` → 跑 standalone 測試 → 才複製成 `index.html` 交付。

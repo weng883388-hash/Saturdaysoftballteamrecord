@@ -155,6 +155,14 @@
   .batter-name{font-size:18.5px;font-weight:700;vertical-align:middle;}
   .batter-meta{font-size:13px;color:var(--ink-dim);margin-top:2px;}
 
+  /* Version 60: 我方打者卡——一列放棒次＋背號輸入框＋姓名，下一列放代跑／我方名單 */
+  .batter-card-us{margin-top:10px;}
+  .bc-row{display:flex;align-items:center;justify-content:center;gap:8px;}
+  .bc-order{font-size:13px;color:var(--ink-dim);font-weight:700;white-space:nowrap;}
+  .bc-num{width:64px;flex:none;text-align:center;font-family:var(--font-display);font-size:26px;font-weight:700;padding:3px 4px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);}
+  .bc-name{font-size:26px;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bc-pos{font-size:13px;color:var(--ink-dim);font-weight:700;border:1px solid var(--line);border-radius:6px;padding:0 6px;white-space:nowrap;}
+  .bc-links{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:14px;}
   /* ============ Sections / cards ============ */
   .card{
     background:var(--surface);border:1px solid var(--line);border-radius:16px;
@@ -393,11 +401,13 @@
     .game-body .linescore{font-size:10.5px;}
     .game-body .linescore td.tot{font-size:13px;}
     .game-body .batter-card{margin-top:3px;}
-    .game-body .batter-card .field{margin-bottom:2px;}
     .game-body .scoreboard .link-reset{font-size:9px;}
-    .game-body .batter-card .field label{font-size:9px;}
-    .game-body .batter-card .field input{padding:2px 4px;font-size:12px;}
     .game-body .batter-card .confirm-box{padding:4px;margin-top:4px;}
+    .game-body .bc-order,.game-body .bc-pos{font-size:9px;}
+    .game-body .bc-num{width:40px;font-size:14px;padding:1px 2px;}
+    .game-body .bc-name{font-size:14px;}
+    .game-body .bc-links{font-size:9px;gap:8px;margin-top:2px;}
+    .game-body .batter-card-us{margin-top:3px;}
     .game-body .batter-card .chip{padding:2px 6px;font-size:9px;}
     .game-body .batter-num{width:20px;height:20px;font-size:11px;margin-right:3px;}
     .game-body .batter-name{font-size:11px;}
@@ -473,14 +483,14 @@
      部署到 GitHub Pages（或任何非 Claude 網址）之前，請先照《遷移到
      Supabase＋GitHub Pages 操作指南》建立 Supabase 專案，並把下方兩個值
      換成你自己的 Project URL 與 anon public key。
-  window.SUPABASE_URL = "https://jxoapjcghyigbeuiwvfu.supabase.co";       // 例如 https://xxxxxxxx.supabase.co
-  window.SUPABASE_ANON_KEY = "sb_publishable_IcLR-Z62kgkXpcId8hs2MQ_AyuUWWJt";  // Supabase 專案 Settings → API → anon public key
+     若這兩個值維持空白，網頁會自動改用瀏覽器本機儲存（localStorage）——
+     資料不會同步給其他人，僅供你自己這台裝置離線使用。
      在 Claude 網址（Artifact）上開啟時，即使這兩個值是空的，也會照舊
      使用 Claude 內建的 db（不受影響）。
 ================================================================ -->
 <script>
-  window.SUPABASE_URL = "";       // 例如 https://xxxxxxxx.supabase.co
-  window.SUPABASE_ANON_KEY = "";  // Supabase 專案 Settings → API → anon public key
+  window.SUPABASE_URL = "https://jxoapjcghyigbeuiwvfu.supabase.co";       // 例如 https://xxxxxxxx.supabase.co
+  window.SUPABASE_ANON_KEY = "sb_publishable_IcLR-Z62kgkXpcId8hs2MQ_AyuUWWJt";  // Supabase 專案 Settings → API → anon public key
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
@@ -1029,13 +1039,13 @@ const Store = withTeamRenames((function(){
    adapter above (no Claude account, so no server-side admin/viewer
    distinction). Editing/reopening/deleting an already-final game asks
    for this password once per browser session (kept in memory only,
-const ADMIN_PASSWORD = "qazwsxedc"; // <-- 部署前務必修改
+   never persisted); this is a same-team deterrent against accidental
    edits, NOT real security — anyone who reads the page source can see
    ADMIN_PASSWORD, so don't put anything truly sensitive behind it.
    When still running inside a Claude Artifact, this is skipped
    entirely (Claude's own admin/viewer sharing rules still apply).
 --------------------------------------------------------------------- */
-const ADMIN_PASSWORD = "請改成球隊自訂密碼"; // <-- 部署前務必修改
+const ADMIN_PASSWORD = "qazwsxedc"; // <-- 部署前務必修改
 let adminUnlocked = false;
 function requireAdmin(actionLabel){
   if (!(window.SUPABASE_URL && window.SUPABASE_ANON_KEY)) return true; // Claude Artifact: unaffected
@@ -3649,14 +3659,21 @@ function renderGame(){
   if (weAreUp){
     const b = g.lineup[g.battingIdx % g.lineup.length];
     const bi = g.battingIdx % g.lineup.length;
-    batterCard = `<div class="batter-card">
-      <div class="field" style="max-width:240px;margin:0 auto 4px;">
-        <label>第${b.order}棒背號${b.number?'（直接改＝代打）':'（還沒填，直接輸入）'}</label>
-        <input type="text" inputmode="numeric" maxlength="3" value="${esc(b.number)}" placeholder="未填" style="text-align:center;font-weight:700;"
-          onchange="onBatterNumberInput(${bi},this.value)">
+    const blankN = g.lineup.filter(r=>!r.number).length;
+    // Version 60: 一列放「第N棒＋背號輸入框（兩三碼就夠）＋姓名」，下面一列放代跑／我方名單，
+    // 讓打擊結果格子不用往下滑就看得到。
+    batterCard = `<div class="batter-card batter-card-us">
+      <div class="bc-row">
+        <span class="bc-order">第${b.order}棒</span>
+        <input class="bc-num" type="text" inputmode="numeric" maxlength="3" value="${esc(b.number)}" placeholder="背號"
+          title="${b.number?'直接改成別的背號＝代打':'還沒填背號，直接輸入'}" onchange="onBatterNumberInput(${bi},this.value)">
+        <span class="bc-name">${esc(b.name||(b.number?'':'（輸入背號）'))}</span>
+        ${b.position?`<span class="bc-pos">${esc(b.position)}</span>`:''}
       </div>
-      <span class="batter-name">${esc(b.name||'')}</span>
-      <div class="batter-meta">${b.position||"—"}　<a class="link-reset" onclick="togglePR()">🏃 代跑</a></div>
+      <div class="bc-links">
+        <a class="link-reset" onclick="togglePR()">🏃 代跑</a>
+        <a class="link-reset" onclick="openLineupEdit()">📝 我方名單${blankN?`<b style="color:var(--danger);">・${blankN}棒未填</b>`:''}</a>
+      </div>
       ${AppState.ui.showPR ? prInlineHTML(g) : ""}
     </div>`;
   } else {
@@ -3742,13 +3759,11 @@ function renderGame(){
           </div>
           <div class="linescore-wrap">${line}</div>
           ${batterCard}
-          ${!weAreUp ? `<div style="text-align:center;margin-top:6px;">
+          ${!weAreUp ? `<div class="bc-links" style="margin-top:6px;">
               <span class="roster-hint">目前投手：${pitcher?(pitcher.number?('#'+esc(pitcher.number)+' '+esc(pitcher.name)):'第'+pitcher.order+'棒（未填背號）'):'未指定'} </span>
               <a class="link-reset" onclick="openLineupEdit()">設定</a>
+              <a class="link-reset" onclick="openLineupEdit()">📝 我方名單${(()=>{const bn=g.lineup.filter(r=>!r.number).length;return bn?('<b style="color:var(--danger);">・'+bn+'棒未填</b>'):'';})()}</a>
             </div>` : ``}
-          <div style="text-align:center;margin:6px 0 8px;">
-            <a class="link-reset" onclick="openLineupEdit()">📝 我方名單（背號／守位／棒次）${(()=>{const b=g.lineup.filter(r=>!r.number).length;return b?('・<b style="color:var(--danger);">'+b+' 棒未填背號</b>'):'';})()}</a>
-          </div>
         </div>
         ${historyHTML}
       </div>
@@ -4842,29 +4857,29 @@ function renderEditGameModal(){
         <span style="width:64px;flex:none;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(topIsUs?g.opponent:g.ourTeamName)}</span>
         ${lsCellInputs('bottom')}
       </div>
-    </div>
-    <div class="hint" style="margin-top:6px;margin-bottom:0;">目前總比分 ${esc(g.ourTeamName)} ${ourTotal(g)} : ${oppTotal(g)} ${esc(g.opponent)}，會自動依每一局重新加總。</div>`;
+    </div>`;
 
   return `<div class="modal-back" onclick="if(event.target===this){closeEditGame();}">
     <div class="modal">
       <button class="close-x" onclick="closeEditGame();">×</button>
       <h3>編輯紀錄</h3>
-      <div class="hint" style="margin-bottom:8px;">可直接修改或刪除每一筆打席／守備紀錄；不確定發生了哪一筆時，也可以在下方直接覆寫最終統計數字（如打點、三振），覆寫的欄位會取代自動統計的結果，其餘欄位仍照紀錄計算。${g.status==='final' ? (window.SUPABASE_URL ? '修改已完賽的比賽需要輸入管理密碼。' : '修改已完賽的比賽僅管理員能儲存成功。') : ''}</div>
 
       <h3 style="font-size:16px;">逐局比分</h3>
       ${linescoreEditHTML}
 
       <h3 style="font-size:16px;margin-top:16px;">對手隊名</h3>
-      <div class="hint" style="margin-bottom:8px;">建立比賽時選錯或填錯對手時可在這裡修正（可從清單選，也可直接輸入）；對手分析、落點紀錄等統計會依新隊名重新歸類。</div>
-      <div class="field" style="margin-bottom:12px;">
-        <input type="text" list="opp-list-edit" value="${esc(g.opponent)}" onchange="setGameOpponent(this.value)">
+      <div class="field" style="margin-bottom:12px;gap:8px;">
+        <select onchange="if(this.value){setGameOpponent(this.value);}">
+          <option value="">從聯賽 8 隊選擇…</option>
+          ${OPPONENT_TEAMS.map(t=>`<option value="${esc(t)}" ${g.opponent===t?'selected':''}>${esc(t)}</option>`).join("")}
+        </select>
+        <input type="text" list="opp-list-edit" value="${esc(g.opponent)}" placeholder="或直接輸入隊名" onchange="setGameOpponent(this.value)">
         <datalist id="opp-list-edit">
           ${opponentOptionsFor().map(o=>`<option value="${esc(o)}">`).join("")}
         </datalist>
       </div>
 
       <h3 style="font-size:16px;margin-top:16px;">賽季／賽事類別</h3>
-      <div class="hint" style="margin-bottom:8px;">建立比賽時填錯球季或賽事類別（聯賽／盃賽／季後賽）時可在這裡修正；只有「聯賽」的比賽會計入球季／生涯數據。</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
         <div class="field" style="flex:1;min-width:160px;margin-bottom:0;">
           <label>賽事類別</label>
@@ -4884,7 +4899,6 @@ function renderEditGameModal(){
       </div>
 
       <h3 style="font-size:16px;margin-top:10px;">打席／守備紀錄</h3>
-      <div class="hint" style="margin-bottom:6px;">比賽進行中想修改之前的某一次打席時，可以先點下面的捷徑直接跳到那一筆；捷徑只列出最近幾筆，更早的紀錄請直接往下捲動尋找。</div>
       <div class="chip-picker" style="margin-bottom:8px;">${jumpChips}</div>
       <div style="max-height:280px;overflow-y:auto;">${playRows}</div>
 
