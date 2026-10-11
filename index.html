@@ -161,6 +161,8 @@
   .bc-order{font-size:13px;color:var(--ink-dim);font-weight:700;white-space:nowrap;}
   .bc-num{width:64px;flex:none;text-align:center;font-family:var(--font-display);font-size:26px;font-weight:700;padding:3px 4px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);}
   .bc-name{font-size:26px;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .batter-card-opp .bc-row{padding:0 12px;box-sizing:border-box;}
+  .bc-note{flex:1;width:0;min-width:0;font-size:18px;font-weight:700;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);}
   .bc-pos{font-size:13px;color:var(--ink-dim);font-weight:700;border:1px solid var(--line);border-radius:6px;padding:0 6px;white-space:nowrap;}
   .bc-links{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:14px;}
   /* ============ Sections / cards ============ */
@@ -411,6 +413,7 @@
     .game-body .bc-order,.game-body .bc-pos{font-size:9px;}
     .game-body .bc-num{width:40px;font-size:14px;padding:1px 2px;}
     .game-body .bc-name{font-size:14px;}
+    .game-body .bc-note{font-size:12px;padding:2px 6px;}
     .game-body .bc-links{font-size:9px;gap:8px;margin-top:2px;}
     .game-body .batter-card-us{margin-top:3px;}
     .game-body .batter-card .chip{padding:2px 6px;font-size:9px;}
@@ -3708,8 +3711,15 @@ function renderGame(){
       ${AppState.ui.showPR ? prInlineHTML(g) : ""}
     </div>`;
   } else {
-    batterCard = `<div class="batter-card"><span class="batter-num def">👤</span><span class="batter-name">${g.oppNumber?('#'+esc(g.oppNumber)+' '+esc(g.oppNote||'')):'尚未輸入背號'}</span>
-      <div class="batter-meta">對方打者</div></div>`;
+    // Version 63: 對方打者卡與下方「對方背號／備註」欄位整合成同一格：
+    // 背號輸入框＋備註輸入框在同一列，不再有說明文字。
+    batterCard = `<div class="batter-card batter-card-us batter-card-opp">
+      <div class="bc-row">
+        <span class="bc-order">對方</span>
+        <input class="bc-num" type="text" inputmode="numeric" maxlength="3" value="${esc(g.oppNumber)}" placeholder="背號" onchange="editOppBatterNumber(this.value)">
+        <input class="bc-note" type="text" value="${esc(g.oppNote)}" placeholder="備註／綽號" onchange="AppState.game.oppNote=this.value;persistGame();render();">
+      </div>
+    </div>`;
   }
 
   const halfDone = g.outs>=3;
@@ -3746,21 +3756,7 @@ function renderGame(){
     actionMid = renderResultGrid('us');
     actionZone = `<div class="card zone-hint-card"><div class="hint" style="margin:0;">選擇打擊結果後，可在這裡記錄落點。</div></div>`;
   } else {
-    actionMid = `
-      <div class="card">
-        <div style="display:flex;gap:8px;">
-          <div class="field" style="flex:1;margin-bottom:0;">
-            <label>對方背號</label>
-            <input type="text" inputmode="numeric" maxlength="3" value="${esc(g.oppNumber)}" placeholder="未填" onchange="editOppBatterNumber(this.value)">
-          </div>
-          <div class="field" style="flex:2;margin-bottom:0;">
-            <label>備註／綽號（選填）</label>
-            <input type="text" value="${esc(g.oppNote)}" onchange="AppState.game.oppNote=this.value;persistGame();render();">
-          </div>
-        </div>
-        <div class="hint" style="margin:0;">開賽前沒填到的背號可以直接在這裡補上；代打上場時也可以直接改成新打者的背號，右側的歷史落點分析會立刻換成該背號的資料。<a class="link-reset" onclick="AppState.ui.showOppRoster=true;render();">調整對方棒次／名單</a></div>
-      </div>
-      ${renderResultGrid('opp')}`;
+    actionMid = `${renderResultGrid('opp')}`;
     actionZone = oppDefenseZoneCardHTML(g);
   }
 
@@ -3791,8 +3787,9 @@ function renderGame(){
           <div class="linescore-wrap">${line}</div>
           ${batterCard}
           ${!weAreUp ? `<div class="bc-links" style="margin-top:6px;">
-              <span class="roster-hint">目前投手：${pitcher?(pitcher.number?('#'+esc(pitcher.number)+' '+esc(pitcher.name)):'第'+pitcher.order+'棒（未填背號）'):'未指定'} </span>
+              <span class="roster-hint">投手：${pitcher?(pitcher.number?('#'+esc(pitcher.number)+' '+esc(pitcher.name)):'第'+pitcher.order+'棒（未填背號）'):'未指定'} </span>
               <a class="link-reset" onclick="openLineupEdit()">設定</a>
+              <a class="link-reset" onclick="AppState.ui.showOppRoster=true;render();">對方名單</a>
               <a class="link-reset" onclick="openLineupEdit()">📝 我方名單${(()=>{const bn=g.lineup.filter(r=>!r.number).length;return bn?('<b style="color:var(--danger);">・'+bn+'棒未填</b>'):'';})()}</a>
             </div>` : ``}
         </div>
