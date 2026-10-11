@@ -255,6 +255,9 @@
   .chip-picker{display:flex;flex-wrap:wrap;gap:6px;}
   .chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:14.5px;font-weight:600;cursor:pointer;}
   .chip.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+  /* Version 61: 得分球員一列三位，六位候選剛好兩列 */
+  .scorer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .scorer-grid .chip{text-align:center;padding:8px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
   .field-svg{width:100%;max-width:320px;display:block;margin:0 auto;}
   .field-svg-lg{max-width:480px;}
@@ -401,6 +404,8 @@
     .game-body .linescore{font-size:10.5px;}
     .game-body .linescore td.tot{font-size:13px;}
     .game-body .batter-card{margin-top:3px;}
+    .game-body .scorer-grid{gap:3px;}
+    .game-body .scorer-grid .chip{font-size:9px;padding:2px 2px;}
     .game-body .scoreboard .link-reset{font-size:9px;}
     .game-body .batter-card .confirm-box{padding:4px;margin-top:4px;}
     .game-body .bc-order,.game-body .bc-pos{font-size:9px;}
@@ -1048,6 +1053,7 @@ const Store = withTeamRenames((function(){
 const ADMIN_PASSWORD = "qazwsxedc"; // <-- 部署前務必修改
 let adminUnlocked = false;
 function requireAdmin(actionLabel){
+  if (AppState.game && AppState.game.practice) return true; // Version 62: 練習紀錄不存檔，不需要管理密碼
   if (!(window.SUPABASE_URL && window.SUPABASE_ANON_KEY)) return true; // Claude Artifact: unaffected
   if (adminUnlocked) return true;
   const pw = window.prompt((actionLabel ? actionLabel+"——" : "")+"此操作僅供管理員，請輸入管理密碼：");
@@ -1281,6 +1287,9 @@ function scorerCandidates(game){
 }
 
 async function persistGame(){
+  // Version 62: 練習／測試紀錄只存在這個畫面的記憶體裡，從不寫進資料庫，
+  // 所以不會出現在比賽紀錄、也不會計入任何成績。
+  if (AppState.game.practice) return {ok:true};
   if (AppState.game.status==="final" && !requireAdmin("修改已完賽的紀錄")){
     return {ok:false, code:"admin-required"};
   }
@@ -2966,6 +2975,8 @@ function renderHome(){
       <div class="hint">點選任一場比賽可繼續記錄或查看戰績</div>
       ${rows}
     </div>
+    <button class="btn block" style="margin-top:12px;" onclick="goPractice()">🧪 練習／測試紀錄（不計入成績）</button>
+    <div class="hint" style="text-align:center;margin-top:6px;">讓隊友練習操作用，記錄的內容不會儲存、也不會出現在比賽紀錄或任何成績裡。</div>
   `;
 }
 
@@ -2987,6 +2998,11 @@ async function openGame(id){
 // is not. If the game being deleted is the one currently open on screen,
 // also clears it and returns to the home screen.
 async function deleteGameFromList(id, status){
+  if (AppState.game && AppState.game.practice && AppState.game.id===id){
+    if (!(await appConfirm("結束這場練習並回首頁嗎？練習紀錄不會保存。"))) return;
+    AppState.game = null; AppState.view = "home"; AppState.ui.showBox = false; render();
+    return;
+  }
   if (!(await appConfirm("確定要刪除這場比賽紀錄嗎？此動作無法復原。"))) return;
   const wasFinal = status==="final";
   const res = await Store.deleteGame(id, wasFinal);
@@ -3028,8 +3044,14 @@ async function goSetup(prefill){
   // 的「開始這場」快速開局，也會先帶好 opponent/batFirst/date 再呼叫這裡）。
   AppState.schedule = await Store.getSchedule();
   AppState.game = newGame(prefill||{});
+  if (prefill && prefill.practice){ AppState.game.practice = true; AppState.game.season = "練習"; AppState.game.competitionType = "練習"; }
   AppState.view = "setup";
   render();
+}
+// Version 62: 練習／測試紀錄入口（首頁按鈕）
+function goPractice(){ return goSetup({practice:true}); }
+function practiceBannerHTML(){
+  return `<div class="card" style="background:var(--clay-soft);border-color:var(--clay);text-align:center;padding:8px;margin-top:10px;"><b style="color:var(--clay);">🧪 練習模式</b><span class="roster-hint">　這裡記錄的不會儲存、也不會計入任何成績</span></div>`;
 }
 // 從「賽程表」頁面點「開始這場」：帶入該筆賽程的對手／攻守／日期直接開新比賽。
 // 備註列（沒有對手，如輪休／盃賽提醒）沒有對手可帶，點了沒作用。
@@ -3051,6 +3073,7 @@ function renderSetup(){
       <div class="brand" style="justify-content:center;"><span class="brand-mark" style="font-size:18px;">新比賽設定</span></div>
       <span style="width:56px;"></span>
     </div></div>
+    ${g.practice ? practiceBannerHTML() : ""}
     <div class="card">
       <div class="field">
         <label>對手隊名</label>
@@ -3097,7 +3120,13 @@ function renderSetup(){
 }
 function setBatFirst(v){ AppState.game.batFirst=v; render(); }
 function setCompetitionType(v){ AppState.game.competitionType=v; render(); }
-function backHome(){ AppState.game=null; AppState.view="home"; render(); }
+async function backHome(){
+  const g = AppState.game;
+  if (g && g.practice && g.status!=="final" && (g.plays||[]).length){
+    if (!(await appConfirm("練習紀錄不會保存，確定要離開嗎？"))) return;
+  }
+  AppState.game=null; AppState.view="home"; render();
+}
 function confirmSetup(){
   const g = AppState.game;
   const oppSel = document.getElementById("f-opp-select").value;
@@ -3160,6 +3189,7 @@ function renderLineupBuilder(){
       <div class="brand" style="justify-content:center;"><span class="brand-mark" style="font-size:18px;">編排打線</span></div>
       <span style="width:56px;"></span>
     </div></div>
+    ${g.practice ? practiceBannerHTML() : ""}
 
     <div class="card">
       <h2>先發打線</h2>
@@ -3322,7 +3352,7 @@ async function startGame(){
   AppState.view = "game";
   syncOppBatter(g);
   await persistGame();
-  await Store.setActiveGameId(g.id);
+  if (!g.practice) await Store.setActiveGameId(g.id);
   render();
 }
 
@@ -3590,6 +3620,7 @@ function renderFinalSummary(){
       <button class="btn" style="flex:1;" onclick="openEndGame()">修改勝投／MVP</button>
       <button class="btn primary" style="flex:1;" onclick="AppState.ui.showBox=true;render();">查看戰績</button>
     </div>
+    ${g.practice ? `${practiceBannerHTML()}<div class="btn-row" style="margin-top:8px;"><button class="btn block" onclick="AppState.game=null;AppState.view='home';AppState.ui.showBox=false;render();">回首頁（練習紀錄不保存）</button></div>` : `
     <div class="btn-row" style="margin-top:8px;">
       <button class="btn ghost" style="flex:1;" onclick="openEditGame()">✏️ 編輯紀錄</button>
       <button class="btn ghost" style="flex:1;" onclick="reopenGame()">🔓 重新開放編輯</button>
@@ -3597,7 +3628,7 @@ function renderFinalSummary(){
     <div class="btn-row" style="margin-top:8px;">
       <button class="btn danger block" onclick="deleteFinishedGame()">🗑 刪除這場紀錄</button>
     </div>
-    <div class="hint" style="text-align:center;margin-top:8px;">編輯／重新開放／刪除已完賽紀錄僅限管理員身份</div>
+    <div class="hint" style="text-align:center;margin-top:8px;">編輯／重新開放／刪除已完賽紀錄僅限管理員身份</div>`}
     ${AppState.ui.showBox ? renderBoxModal() : ""}
     ${AppState.ui.showEndGame ? renderEndGameModal() : ""}
     ${AppState.ui.showEditGame ? renderEditGameModal() : ""}
@@ -3741,7 +3772,7 @@ function renderGame(){
       <button class="icon-btn" onclick="backHome()">‹</button>
       <div class="brand" style="justify-content:center;flex-direction:column;align-items:center;gap:0;">
         <span class="brand-mark" style="font-size:16px;">${esc(g.ourTeamName)} vs ${esc(g.opponent)}</span>
-        <span class="roster-hint">${gameSeasonTagHTML(g)}</span>
+        <span class="roster-hint">${g.practice?'<b style="color:var(--clay);">🧪 練習模式・不計入成績</b>':gameSeasonTagHTML(g)}</span>
       </div>
       <button class="icon-btn" onclick="openEditGame()" title="跳到之前的打席修改">✏️</button>
       <button class="icon-btn" onclick="AppState.ui.showBox=true;render();">戰績</button>
@@ -3903,8 +3934,8 @@ function renderConfirmBoxMain(){
   const scorerSection = (side==="us") ? `
     <div style="margin-top:8px;">
       <div class="k" style="font-size:13px;color:var(--ink-dim);margin-bottom:6px;">得分球員（可複選，本次得分 ${p.pendingScorers.length} 分）</div>
-      <div class="chip-picker">
-        ${scorerCandidates(g).map(r=>`<span class="chip ${p.pendingScorers.includes(r.id)?'sel':''}" onclick="toggleScorer('${r.id}')">${r.number?('#'+esc(r.number)+' '+esc(r.name)+'（第'+r.order+'棒）'):esc(slotLabel(r))}</span>`).join("")}
+      <div class="scorer-grid">
+        ${scorerCandidates(g).map(r=>`<span class="chip ${p.pendingScorers.includes(r.id)?'sel':''}" onclick="toggleScorer('${r.id}')">${r.number?('#'+esc(r.number)+' '+esc(r.name)):('第'+r.order+'棒')}</span>`).join("")}
       </div>
     </div>` : "";
 
@@ -4202,11 +4233,10 @@ function renderUpSubModal(){
     : `<div class="field"><label>誰要被代跑？（目前打者前 5 棒）</label>
         <div class="chip-picker">${prSlots.map(i=>{const r=g.lineup[i];return `<span class="chip ${ti===i?'sel':''}" onclick="setSubTarget(${i})">第${r.order}棒 ${r.number?('#'+esc(r.number)+' '+esc(r.name)):'（未填）'}</span>`;}).join("")}</div>
       </div>`;
-  const benchPicker = benchList.length
-    ? `<div class="field"><label>換上哪位替補？</label>
-        <div class="chip-picker">${benchList.map(b=>`<span class="chip ${pick===b.number?'sel':''}" onclick="setSubBench('${esc(b.number)}')">${b.re?'🔁 再上場：':''}#${esc(b.number)} ${esc(b.name)}</span>`).join("")}</div>
-      </div>`
-    : `<div class="hint">目前沒有替補球員可換（替補名單可在「📝 我方名單」新增）。</div>`;
+  const benchPicker = `<div class="field"><label>換上哪位？直接輸入背號，或點下面的替補</label>
+        <input id="sub-num-input" type="text" inputmode="numeric" maxlength="3" placeholder="背號" style="max-width:140px;text-align:center;font-weight:700;" onkeydown="if(event.key==='Enter'){applySub();}">
+        ${benchList.length?`<div class="chip-picker" style="margin-top:6px;">${benchList.map(b=>`<span class="chip ${pick===b.number?'sel':''}" onclick="setSubBench('${esc(b.number)}')">${b.re?'🔁 再上場：':''}#${esc(b.number)} ${esc(b.name)}</span>`).join("")}</div>`:''}
+      </div>`;
   return `<div class="modal-back" onclick="if(event.target===this){AppState.ui.showSub=false;AppState.ui.subTargetIdx=null;render();}">
     <div class="modal">
       <button class="close-x" onclick="AppState.ui.showSub=false;AppState.ui.subTargetIdx=null;render();">×</button>
@@ -4269,8 +4299,11 @@ function renderSubModal(){
           </div>
         </div>` : "";
     const benchSectionWithPos = `
-        <div class="field"><label>選擇板凳球員</label>
-          <select id="sub-bench-num">${benchOpts || '<option value="">（無板凳名單）</option>'}</select>
+        <div class="field"><label>換上哪位？直接輸入背號</label>
+          <input id="sub-num-input" type="text" inputmode="numeric" maxlength="3" placeholder="背號" style="max-width:140px;text-align:center;font-weight:700;">
+        </div>
+        <div class="field"><label>或選擇板凳球員</label>
+          <select id="sub-bench-num">${'<option value="">（不選）</option>' + benchOpts}</select>
         </div>
         <div class="field"><label>守位</label>
           <select id="sub-pos">${POSITIONS.map(p=>`<option value="${p}" ${target.position===p?'selected':''}>${p}</option>`).join("")}</select>
@@ -4280,8 +4313,11 @@ function renderSubModal(){
     // 打／代跑本來就是沿用原本的守位，多問反而容易讓人誤以為可以在這裡
     // 順便改守位）。
     const benchSectionPlain = `
-        <div class="field"><label>選擇板凳球員</label>
-          <select id="sub-bench-num">${benchOpts || '<option value="">（無板凳名單）</option>'}</select>
+        <div class="field"><label>換上哪位？直接輸入背號</label>
+          <input id="sub-num-input" type="text" inputmode="numeric" maxlength="3" placeholder="背號" style="max-width:140px;text-align:center;font-weight:700;">
+        </div>
+        <div class="field"><label>或選擇板凳球員</label>
+          <select id="sub-bench-num">${'<option value="">（不選）</option>' + benchOpts}</select>
         </div>`;
     const swapSection = `
         <div class="field"><label>選擇要互換守位的在場球員</label>
@@ -4370,10 +4406,21 @@ async function applySub(){
 
   if (weAreUp && AppState.ui.subType==="PR" && !prEligibleSlotIdx(g).has(i)){ appAlert("請先選擇要被代跑的球員（目前打者前 5 棒）"); return; }
   const numEl = document.getElementById("sub-bench-num");
-  const newNum = numEl.value;
-  if (!newNum){ appAlert("請選擇板凳球員"); return; }
+  const typedEl = document.getElementById("sub-num-input");
+  const typed = typedEl ? typedEl.value.trim() : "";
+  const newNum = typed || (numEl ? numEl.value : "");
+  if (!newNum){ appAlert("請輸入換上場的球員背號，或選一位替補"); return; }
   const bIdx = g.bench.findIndex(b=>b.number===newNum);
   const newName = bIdx>=0 ? g.bench[bIdx].name : rosterLookup(newNum);
+  if (!newName){ appAlert("名單中找不到背號 "+newNum+"，請先於「名單」新增球員。"); return; }
+  if (g.lineup.some(r=>r.number===newNum)){ appAlert("#"+newNum+" 已經在場上打線裡了。"); return; }
+  {
+    const re0 = reentryCandidateFor(g, i);
+    if (!(re0 && re0.number===newNum) && playedAndLeft(g, newNum)){
+      appAlert("#"+newNum+" 已經出賽並被換下場，只有原本的先發球員可以回到原本那一棒再上場一次。");
+      return;
+    }
+  }
 
   let newPos = target.position; // 代打／代跑：沿用這一棒原本的守位，不變動
   if (isDef){
@@ -5017,6 +5064,14 @@ function renderEndGameModal(){
 async function confirmEndGame(){
   const g = AppState.game;
   const wasFinal = g.status==="final";
+  if (g.practice){
+    g.status = "final";
+    g.finalWinPitcher = AppState.ui.endWinPitcher || null;
+    g.finalMvp = AppState.ui.endMvp || null;
+    AppState.ui.showEndGame=false; AppState.ui.showBox=false;
+    render();
+    return;
+  }
   if (wasFinal && !requireAdmin("修改已完賽的勝投／MVP")) return;
   if (!wasFinal){
     backfillAttribution(g);

@@ -100,6 +100,14 @@
 - **打者卡一列顯示**：我方進攻時，「第N棒＋背號輸入框（兩三碼寬）＋較大的姓名（＋守位）」同一列，下一列放「🏃 代跑」「📝 我方名單」，打擊結果格子不用往下滑就看得到。守備時「目前投手」與「我方名單」也併成一列。
 - **編輯紀錄**：視窗內的說明文字全部拿掉；「對手隊名」欄位新增「從聯賽 8 隊選擇」下拉選單，原本的輸入框保留（可輸入其他隊名）。
 
+### 換人直接輸入背號與得分球員版面（Version 61）
+- **換人直接填背號**：「🔁 換人」視窗新增背號輸入框（Enter 可確認），名單裡有的背號都能直接輸入，不必先加入替補名單；板凳球員／再上場仍可點選或下拉選擇。驗證：背號須在球員名單、不能已在場上、已出賽被換下的人不能再上（僅原先發可回原本那一棒一次）。進攻（代打／代跑）與守備（換板凳上場）都適用。
+- **得分球員**：不顯示棒次，一列三位，最近 6 位共兩列。
+
+### 練習／測試紀錄模式（Version 62）
+- 首頁「比賽紀錄」卡片下方的「🧪 練習／測試紀錄」：給隊友練習操作。流程與正式比賽相同（設定→編排打線→記錄→換人→結束），畫面標示「🧪 練習模式・不計入成績」。
+- **完全不存檔**：`g.practice=true` 的比賽不呼叫任何資料庫寫入（`persistGame()` 直接略過、不設為進行中比賽），不會出現在比賽紀錄，也不會計入個人／球隊／對手／出席率等任何統計；不需要管理密碼。重新整理或回首頁就消失，中途按返回會先提醒。
+
 ## 開發紀錄
 
 \
@@ -382,6 +390,16 @@ Live artifact: https://claude.ai/code/artifact/733c6672-f0b4-4d85-8e8b-48e776394
   2. **編輯紀錄**：`renderEditGameModal()` 刪除所有 `.hint` 說明文字（共 5 段）；對手隊名欄新增 `<select>`（選項來自 `OPPONENT_TEAMS`，選了就呼叫 `setGameOpponent()`），保留原本的輸入框＋datalist。
   3. **「紀錄不見」的原因與修正（重要）**：Version 59 打包 standalone 時，用「行號」（第 476、477、1032 行）把 Supabase 網址／金鑰／管理密碼寫回檔案；但 Version 59 在檔案前段的 CSS 多了幾行，行號位移，憑證被寫到錯的地方，真正的 `window.SUPABASE_URL`／`SUPABASE_ANON_KEY` 仍是空字串，網頁因此沒連到資料庫、顯示空白紀錄（資料庫裡的資料其實完好）。**修正**：改用 `/tmp/apply_creds.py`——以「整串文字取代」（`window.SUPABASE_URL = "";`、`window.SUPABASE_ANON_KEY = "";`、`const ADMIN_PASSWORD = "請改成球隊自訂密碼";` 各須恰好出現一次）寫入憑證，再用 `<script>` 區塊內容驗證三個值確實存在，不再依賴行號。**之後每次打包都必須用這個腳本，並在交付前驗證 `index.html` 的 script 區塊含有 `jxoapjcghyigbeuiwvfu`、`sb_publishable_` 與管理密碼。**
   4. **測試**：`test_v58.py`／`test_v59b.py` 配合新版面調整；其餘既有測試全數通過（standalone 測試在憑證寫錯位置時會因語法／渲染失敗而被抓到）；`node --check` 對 standalone 的每個 `<script>` 區塊檢查無誤。
+
+- **Version 61**：使用者要求（1）「得分球員」欄不要寫棒次，一列三位、兩列放完；（2）「換人」也要能直接填背號，不必先放進替補名單。
+  1. **得分球員**：改用 `.scorer-grid`（3 欄 grid），chip 只顯示「#背號 姓名」（沒背號的棒次顯示「第N棒」）；候選仍是最近 6 位（`scorerCandidates()`），剛好兩列；橫向版面縮小字級。
+  2. **換人直接輸入背號**：`renderUpSubModal()` 與守備 `renderSubModal()` 的替補區新增 `#sub-num-input`（Enter 確認）；`applySub()` 以輸入的背號優先，其次才是點選／下拉的板凳球員；新增驗證：背號須存在於球員名單（`rosterLookup`）、不可已在場上、`playedAndLeft()` 的球員只有原先發（再上場規則）可回原本那一棒。守備下拉選單加「（不選）」預設項。
+  3. **測試**：新增 `test_v61.py`（得分球員 6 位、3 欄、無棒次文字；代打／代跑／守備直接輸入背號；找不到背號、已在場、已被換下場的提示）；`test_v56.py` 提示文字配合更新；其餘既有測試全數通過；standalone 以 `apply_creds.py` 寫入連線設定並驗證，`node --check` 無誤。
+
+- **Version 62**：使用者要求在首頁「比賽紀錄」卡片下方加一個按鈕，讓隊友測試／練習記錄，且練習內容不計入任何成績。（同版本一併發布 Version 61 的得分球員版面與換人直接輸入背號。）
+  1. **練習模式**：`goPractice()` → `goSetup({practice:true})`，建立的 game 帶 `practice:true`（`season`／`competitionType` 設為「練習」）。**不寫入資料庫**：`persistGame()` 遇到 `practice` 直接回傳 `{ok:true}`；`startGame()` 不 `setActiveGameId`；`confirmEndGame()` 對練習賽只在記憶體把狀態改成 final，不呼叫 `moveGame`；`requireAdmin()` 對練習賽一律放行。因為從未進入 `AppState.games`／資料庫，所以不會出現在比賽紀錄，也不會計入任何統計（個人、球隊、對手、出席率、OPS+ 等）。
+  2. **介面**：首頁按鈕＋說明文字；新比賽設定、編排打線、記錄畫面頂端標示「🧪 練習模式」；結束後的總結畫面隱藏編輯／重新開放／刪除（管理員功能），改顯示「回首頁（練習紀錄不保存）」；`backHome()` 在練習賽有紀錄且未結束時先 `appConfirm`；戰績視窗的刪除鈕對練習賽改為「結束練習並回首頁」。
+  3. **測試**：新增 `test_v62.py`（攔截 `Store.saveGame`／`moveGame`／`setActiveGameId`，整場練習從設定到結束呼叫次數為 0；結束後比賽清單仍為 0 場；總結畫面無管理員按鈕；中途返回有提醒）；全部既有測試通過；standalone 以 `apply_creds.py` 寫入連線設定並驗證，`node --check` 無誤。
 
 ### 測試方式慣例
 - 用 Playwright（`/opt/pw-browsers/chromium`，390×844 viewport）開本機檔案 `file:///home/claude/softball-scorer.html` 測試（`Store` 在沒有 `window.claude` db 時會自動 fallback 到 localStorage，方便本機測試不需連正式資料庫；`team/season_2025` 等文件對應 localStorage 的 `sb_season_2025_v1` 等 key）。
